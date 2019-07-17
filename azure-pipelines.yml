@@ -5,8 +5,6 @@ jobs:
   pool: 'Hosted macOS'
   strategy:
     matrix:
-      Python35:
-        python.version: '3.5'
       Python36:
         python.version: '3.6'
       Python37:

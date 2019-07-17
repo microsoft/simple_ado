@@ -22,13 +22,14 @@ classifiers = [
     'Environment :: MacOS X',
     'Intended Audience :: Developers',
     'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
     'Topic :: Software Development',
     'Topic :: Utilities'
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.6"
 requests = "^2.21"
 
 [tool.poetry.dev-dependencies]
