@@ -23,6 +23,7 @@ class ADOGitStatusState(enum.Enum):
     """Possible values of git status states."""
 
     NOT_SET: str = "notSet"
+    NOT_APPLICABLE: str = "notApplicable"
     PENDING: str = "pending"
     SUCCEEDED: str = "succeeded"
     FAILED: str = "failed"
