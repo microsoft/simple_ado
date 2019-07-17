@@ -99,7 +99,7 @@ def exception_retry(
 
                 except ADOHTTPException as ex:
                     # We can't retry non-server errors
-                    if ex.status_code < 500:
+                    if ex.response.status_code < 500:
                         raise
 
                     if should_retry is not None and not should_retry(ex):
@@ -201,7 +201,7 @@ class ADOHTTPClient:
 
     @exception_retry(
         should_retry=lambda exception: isinstance(exception, ADOHTTPException)
-        and exception.status_code not in range(400, 500)
+        and exception.response.status_code not in range(400, 500)
     )
     def get(
         self, request_url: str, *, additional_headers: Optional[Dict[str, str]] = None
@@ -318,8 +318,7 @@ class ADOHTTPClient:
         if response.status_code < 200 or response.status_code >= 300:
             raise ADOHTTPException(
                 f"ADO returned a non-200 status code, configuration={self}",
-                response.status_code,
-                response.text,
+                response,
             )
 
         try:

@@ -575,9 +575,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         )
 
         if response.status_code != 204:
-            raise ADOHTTPException(
-                f"Failed to delete '{identifier}'", response.status_code, response.text
-            )
+            raise ADOHTTPException(f"Failed to delete '{identifier}'", response)
 
         return self._http_client.decode_response(response)
 

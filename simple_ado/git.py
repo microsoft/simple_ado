@@ -185,7 +185,7 @@ class ADOGitClient(ADOBaseClient):
             chunk_size = 1024 * 16
 
             if response.status_code < 200 or response.status_code >= 300:
-                raise ADOHTTPException("Failed to fetch zip", response.status_code, response.text)
+                raise ADOHTTPException("Failed to fetch zip", response)
 
             with open(output_path, "wb") as output_file:
 

@@ -5,6 +5,8 @@
 
 """ADO exceptions."""
 
+import requests
+
 
 class ADOException(Exception):
     """All ADO exceptions inherit from this or instantiate it."""
@@ -14,23 +16,20 @@ class ADOHTTPException(ADOException):
     """All ADO HTTP exceptions use this class.
 
     :param message: The message for the exception
-    :param status_code: The HTTP status code causing this exception
-    :param text: The text of the response causing this exception
+    :param response: The response to the HTTP request
     """
 
     message: str
-    status_code: int
-    text: str
+    response: requests.Response
 
-    def __init__(self, message: str, status_code: int, text: str) -> None:
+    def __init__(self, message: str, response: requests.Response) -> None:
         super().__init__()
         self.message = message
-        self.status_code = status_code
-        self.text = text
+        self.response = response
 
     def __str__(self) -> str:
         """Generate and return the string representation of the object.
 
         :return: A string representation of the object
         """
-        return f"{self.message}, status_code={self.status_code}, text={self.text}"
+        return f"{self.message}, status_code={self.response.status_code}, text={self.response.text}"
