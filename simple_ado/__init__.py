@@ -33,6 +33,8 @@ class ADOClient:
     :param Optional[logging.Logger] log: The logger to use for logging (a new one will be used if one is not supplied)
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     log: logging.Logger
 
     _context: ADOContext

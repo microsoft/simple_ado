@@ -6,7 +6,7 @@
 """ADO comment utilities"""
 
 import enum
-from typing import Any, ClassVar, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union
 
 
 class ADOCommentStatus(enum.Enum):

@@ -30,7 +30,11 @@ class ADOBuildClient(ADOBaseClient):
         super().__init__(context, http_client, log.getChild("build"))
 
     def queue_build(
-        self, definition_id: int, source_branch: str, variables: Dict[str, str], requesting_identity: Optional[TeamFoundationId] = None
+        self,
+        definition_id: int,
+        source_branch: str,
+        variables: Dict[str, str],
+        requesting_identity: Optional[TeamFoundationId] = None
     ) -> ADOResponse:
         """Queue a new build.
 
