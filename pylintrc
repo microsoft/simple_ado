@@ -1,0 +1,53 @@
+[MASTER]
+
+# Pickle collected data for later comparisons.
+persistent=yes
+
+[MESSAGES CONTROL]
+
+# C0330 bad-continuation: Wrong hanging indentation before block
+# C0413 wrong-import-position: Import “%s” should be placed at the top of the module Used when code and imports are mixed
+# C1801 len-as-condition: Do not use `len(SEQUENCE)` as condition value
+# W0511 fixme: TODO statements
+# W0703 broad-except: Catching too general exception "Exception"
+# W1201 logging-not-lazy: Specify string format arguments as logging function parameters
+# W1202 logging-format-interpolation: Use % formatting in logging functions and pass the % parameters as arguments
+# W1203 logging-fstring-interpolation: Use % formatting in logging functions and pass the % parameters as arguments
+disable=C0330,C0413,C1801,W0511,W0703,W1201,W1202,W1203
+
+
+[REPORTS]
+
+# Set the output format. Available formats are text, parseable, colorized, json
+# and msvs (visual studio).You can also give a reporter class, eg
+# mypackage.mymodule.MyReporterClass.
+output-format=parseable
+
+[FORMAT]
+
+# Maximum number of characters on a single line.
+max-line-length=120
+
+
+[DESIGN]
+
+# Maximum number of arguments for function / method
+max-args=6
+
+# Minimum number of public methods for a class (see R0903).
+min-public-methods=0
+
+
+[SIMILARITIES]
+
+# Minimum lines number of a similarity.
+min-similarity-lines=10
+
+# Ignore comments when computing similarities.
+ignore-comments=yes
+
+# Ignore docstrings when computing similarities.
+ignore-docstrings=yes
+
+# Ignore imports when computing similarities.
+ignore-imports=no
