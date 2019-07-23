@@ -8,7 +8,7 @@
 import enum
 import logging
 import os
-from typing import Optional
+from typing import Any, Dict, Optional
 import urllib.parse
 
 import requests
@@ -201,3 +201,95 @@ class ADOGitClient(ADOBaseClient):
                     if total_size != 0:
                         progress = int((total_downloaded * 100.0) / total_size)
                         self.log.info(f"Download progress: {progress}%")
+
+    def get_refs(
+            self,
+            *,
+            filter_startswith: Optional[str] = None,
+            filter_contains: Optional[str] = None,
+            include_links: Optional[bool] = None,
+            include_statuses: Optional[bool] = None,
+            include_my_branches: Optional[bool] = None,
+            latest_statuses_only: Optional[bool] = None,
+            peel_tags: Optional[bool] = None,
+            top: Optional[int] = None,
+            continuation_token: Optional[str] = None,
+    ) -> ADOResponse:
+        """Set a status on a PR.
+
+        All non-specified options use the ADO default.
+
+        :param Optional[str] filter_startswith: A filter to apply to the refs
+                                                (starts with)
+        :param Optional[str] filter_contains: A filter to apply to the refs
+                                              (contains)
+        :param Optional[bool] include_links: Specifies if referenceLinks should
+                                             be included in the result
+        :param Optional[bool] include_statuses: Includes up to the first 1000
+                                                commit statuses for each ref
+        :param Optional[bool] include_my_branches: Includes only branches that
+                                                   the user owns, the branches
+                                                   the user favorites, and the
+                                                   default branch. Cannot be
+                                                   combined with the filter
+                                                   parameter.
+        :param Optional[bool] latest_statuses_only: True to include only the tip
+                                                    commit status for each ref.
+                                                    This requires
+                                                    `include_statuses` to be set
+                                                    to `True`.
+        :param Optional[bool] peel_tags: Annotated tags will populate the
+                                         `PeeledObjectId` property.
+        :param Optional[int] top: Maximum number of refs to return. It cannot be
+                                  bigger than 1000. If it is not provided, but
+                                  `continuation_token` is, top will default to
+                                  100.
+        :param Optional[str] continuation_token: The continuation token used for
+                                                 pagination
+
+        :returns: The ADO response with the data in it
+        """
+
+        self.log.debug(f"Getting refs")
+
+        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}/refs?"
+
+        parameters: Dict[str, Any] = {}
+
+        if filter_startswith:
+            parameters["filter"] = filter_startswith
+
+        if filter_contains:
+            parameters["filterContains"] = filter_contains
+
+        if include_links:
+            parameters["includeLinks"] = "true" if include_links else "false"
+
+        if include_statuses:
+            parameters["includeStatuses"] = "true" if include_statuses else "false"
+
+        if include_my_branches:
+            parameters["includeMyBranches"] = "true" if include_my_branches else "false"
+
+        if latest_statuses_only:
+            parameters["latestStatusesOnly"] = "true" if latest_statuses_only else "false"
+
+        if peel_tags:
+            parameters["peelTags"] = "true" if peel_tags else "false"
+
+        if top:
+            parameters["$top"] = top
+
+        if continuation_token:
+            parameters["continuationToken"] = continuation_token
+
+        request_url += urllib.parse.urlencode(parameters)
+
+        if len(parameters) > 0:
+            request_url += "&"
+
+        request_url += "api-version=5.0"
+
+        response = self._http_client.get(request_url)
+        response_data = self._http_client.decode_response(response)
+        return self._http_client.extract_value(response_data)

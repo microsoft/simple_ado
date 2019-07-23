@@ -36,3 +36,8 @@ class LibraryTests(unittest.TestCase):
         """Test list repos."""
         repos = self.client.git.all_repositories()
         self.assertTrue(len(repos) > 0, "Failed to find any repos")
+
+    def test_list_refs(self):
+        """Test list refs."""
+        refs = self.client.git.get_refs()
+        self.assertTrue(len(refs) > 0, "Failed to find any refs")
