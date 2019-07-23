@@ -293,3 +293,30 @@ class ADOGitClient(ADOBaseClient):
         response = self._http_client.get(request_url)
         response_data = self._http_client.decode_response(response)
         return self._http_client.extract_value(response_data)
+
+    def get_commit(
+            self,
+            commit_id: str,
+            *,
+            change_count: Optional[int] = None,
+    ) -> ADOResponse:
+        """Set a status on a PR.
+
+        All non-specified options use the ADO default.
+
+        :param str commit_id: The id of the commit
+        :param Optional[int] change_count: The number of changes to include in
+                                           the result
+
+        :returns: The ADO response with the data in it
+        """
+
+        self.log.debug(f"Getting commit: {commit_id}")
+
+        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}/commits/{commit_id}?api-version=5.0"
+
+        if change_count:
+            request_url += f"&changeCount={change_count}"
+
+        response = self._http_client.get(request_url)
+        return self._http_client.decode_response(response)

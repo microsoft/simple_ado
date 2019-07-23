@@ -41,3 +41,11 @@ class LibraryTests(unittest.TestCase):
         """Test list refs."""
         refs = self.client.git.get_refs()
         self.assertTrue(len(refs) > 0, "Failed to find any refs")
+
+    def test_get_commit(self):
+        """Test get commit."""
+        refs = self.client.git.get_refs()
+        ref = refs[0]
+        commit_id = ref["objectId"]
+        commit = self.client.git.get_commit(commit_id)
+        self.assertIsNotNone(commit)
