@@ -488,7 +488,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         response = self._http_client.post(
             request_url,
-            [operation.raw() for operation in operations],
+            json_data=[operation.raw() for operation in operations],
             additional_headers={"Content-Type": "application/json-patch+json"},
         )
 
