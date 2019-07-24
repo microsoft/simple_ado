@@ -364,7 +364,7 @@ class ADOHTTPClient:
         if additional_headers is None:
             return headers
 
-        for header_name, header_value in additional_headers:
+        for header_name, header_value in additional_headers.items():
             headers[header_name] = header_value
 
         return headers
