@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "simple_ado"
-version = "0.8.0"
+version = "0.9.0"
 description = "A simple wrapper around the Azure DevOps REST API"
 
 license = "MIT"
