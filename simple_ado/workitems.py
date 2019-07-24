@@ -278,7 +278,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         request_url += f"&suppressNotifications={supress_notifications}"
         request_url += f"&api-version=4.1"
 
-        response = self.http_client.patch(
+        response = self._http_client.patch(
             request_url,
             [operation.raw()],
             additional_headers={"Content-Type": "application/json-patch+json"},
@@ -323,7 +323,7 @@ class ADOWorkItemsClient(ADOBaseClient):
             f"{self._http_client.base_url()}/wit/attachments?fileName={filename}&api-version=1.0"
         )
 
-        response = self.http_client.post_file(request_url, path_to_attachment)
+        response = self._http_client.post_file(request_url, path_to_attachment)
 
         response_data = self._http_client.decode_response(response)
 
@@ -343,7 +343,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         request_url += f"&suppressNotifications={supress_notifications}"
         request_url += f"&api-version=4.1"
 
-        response = self.http_client.patch(
+        response = self._http_client.patch(
             request_url,
             [operation.raw()],
             additional_headers={"Content-Type": "application/json-patch+json"},
@@ -387,7 +387,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         request_url += f"&suppressNotifications={supress_notifications}"
         request_url += f"&api-version=4.1"
 
-        response = self.http_client.patch(
+        response = self._http_client.patch(
             request_url,
             [operation.raw()],
             additional_headers={"Content-Type": "application/json-patch+json"},
@@ -486,7 +486,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         request_url += f"&suppressNotifications={supress_notifications}"
         request_url += f"&api-version=4.1"
 
-        response = self.http_client.post(
+        response = self._http_client.post(
             request_url,
             [operation.raw() for operation in operations],
             additional_headers={"Content-Type": "application/json-patch+json"},
@@ -522,7 +522,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         request_url += f"&suppressNotifications={supress_notifications}"
         request_url += f"&api-version=4.1"
 
-        response = self.http_client.patch(
+        response = self._http_client.patch(
             request_url,
             [operation.raw() for operation in operations],
             additional_headers={"Content-Type": "application/json-patch+json"},
@@ -542,7 +542,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         request_url = f"{self._http_client.base_url()}/wit/wiql?api-version=4.1"
 
-        response = self.http_client.post(request_url, {"query": query_string})
+        response = self._http_client.post(request_url, {"query": query_string})
 
         return self._http_client.decode_response(response)
 
@@ -570,7 +570,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         request_url += f"&destroy={str(permanent).lower()}"
         request_url += f"&api-version=4.1"
 
-        response = self.http_client.delete(
+        response = self._http_client.delete(
             request_url, additional_headers={"Content-Type": "application/json-patch+json"}
         )
 
@@ -600,6 +600,6 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         request_url = f"{self._http_client.base_url(is_project=False)}/wit/$batch"
 
-        response = self.http_client.post(request_url, full_body)
+        response = self._http_client.post(request_url, full_body)
 
         return self._http_client.decode_response(response)
