@@ -8,7 +8,7 @@
 import enum
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 import urllib.parse
 
 import requests
@@ -28,6 +28,45 @@ class ADOGitStatusState(enum.Enum):
     SUCCEEDED: str = "succeeded"
     FAILED: str = "failed"
     ERROR: str = "error"
+
+
+
+class ADOReferenceUpdate:
+    """Contains the relevant details about a reference update.
+
+    :param name: The full name of the reference to update. e.g. refs/heads/my_branch
+    :param old_object_id: The ID that the reference previously pointed to
+    :param new_object_id: The ID that the reference should point to
+    """
+
+    name: str
+    old_object_id: str
+    new_object_id: str
+
+    def __init__(self, name: str, old_object_id: Optional[str], new_object_id: Optional[str]) -> None:
+        self.name = name
+
+        if old_object_id:
+            self.old_object_id = old_object_id
+        else:
+            self.old_object_id = "0000000000000000000000000000000000000000"
+
+        if new_object_id:
+            self.new_object_id = new_object_id
+        else:
+            self.new_object_id = "0000000000000000000000000000000000000000"
+
+    def json_data(self) -> Dict[str, str]:
+        """Return the JSON representation for sending to ADO.
+
+        :returns: The JSON representation
+        """
+
+        return {
+            "name": self.name,
+            "oldObjectId": self.old_object_id,
+            "newObjectId": self.new_object_id,
+        }
 
 
 class ADOGitClient(ADOBaseClient):
@@ -313,10 +352,40 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Getting commit: {commit_id}")
 
-        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}/commits/{commit_id}?api-version=5.0"
+        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url += f"/commits/{commit_id}?api-version=5.0"
 
         if change_count:
             request_url += f"&changeCount={change_count}"
 
         response = self._http_client.get(request_url)
         return self._http_client.decode_response(response)
+
+    def update_refs(self, updates: List[ADOReferenceUpdate]) -> ADOResponse:
+        """Update a list of references.
+
+        :param updates: The list of updates to make
+
+        :returns: The ADO response with the data in it
+        """
+
+        self.log.debug("Updating references")
+
+        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url += "/refs?api-version=5.0"
+
+        data = [update.json_data() for update in updates]
+
+        response = self._http_client.post(request_url, json_data=data)
+        response_data = self._http_client.decode_response(response)
+        return self._http_client.extract_value(response_data)
+
+    def delete_branch(self, branch_name: str, object_id: str) -> ADOResponse:
+        """Delete a branch
+
+        :param branch_name: The full name of the branch. e.g. refs/heads/my_branch
+        :param object_id: The ID of the object the branch currently points to
+
+        :returns: The ADO response
+        """
+        return self.update_refs([ADOReferenceUpdate(branch_name, object_id, None)])

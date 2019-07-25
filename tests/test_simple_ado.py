@@ -49,3 +49,10 @@ class LibraryTests(unittest.TestCase):
         commit_id = ref["objectId"]
         commit = self.client.git.get_commit(commit_id)
         self.assertIsNotNone(commit)
+
+    # TODO: We can't test this until we can also create branches
+    #def test_delete_branch(self):
+    #    """Test delete branch."""
+    #    response = self.client.git.delete_branch("refs/heads/?", "?")
+    #    for value in response:
+    #        self.assertTrue(value["success"])
