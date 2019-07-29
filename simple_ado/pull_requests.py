@@ -94,34 +94,46 @@ class ADOPullRequestClient(ADOBaseClient):
         *,
         comment_location: Optional[ADOCommentLocation] = None,
         status: Optional[ADOCommentStatus] = None,
+        comment_identifier: Optional[str] = None,
     ) -> ADOResponse:
         """Create a thread using a single root comment.
 
         :param str comment_text: The text to set in the comment.
         :param Optional[ADOCommentLocation] comment_location: The location to place the comment.
         :param Optional[ADOCommentStatus] status: The status of the comment
+        :param Optional[str] comment_identifier: A unique identifier for the comment that can be used for identification
+                                                 at a later date
 
         :returns: The ADO response with the data in it
         """
 
         self.log.debug(f"Creating comment: ({self.pull_request_id}) {comment_text}")
         comment = ADOComment(comment_text, comment_location)
-        return self.create_comment(comment, status=status)
+        return self.create_comment(comment, status=status, comment_identifier=comment_identifier)
 
     def create_comment(
-        self, comment: ADOComment, *, status: Optional[ADOCommentStatus] = None
+        self,
+        comment: ADOComment,
+        *,
+        status: Optional[ADOCommentStatus] = None,
+        comment_identifier: Optional[str] = None
     ) -> ADOResponse:
         """Create a thread using a single root comment.
 
         :param ADOComment comment: The comment to add.
         :param Optional[ADOCommentStatus] status: The status of the comment
+        :param Optional[str] comment_identifier: A unique identifier for the comment that can be used for identification
+                                                 at a later date
 
         :returns: The ADO response with the data in it
         """
 
         self.log.debug(f"Creating comment: ({self.pull_request_id}) {comment}")
         return self.create_thread(
-            [comment.generate_representation()], thread_location=comment.location, status=status
+            [comment.generate_representation()],
+            thread_location=comment.location,
+            status=status,
+            comment_identifier=comment_identifier
         )
 
     def create_thread(
@@ -130,16 +142,15 @@ class ADOPullRequestClient(ADOBaseClient):
         *,
         thread_location: Optional[ADOCommentLocation] = None,
         status: Optional[ADOCommentStatus] = None,
-        comment_identifier: str = "",
+        comment_identifier: Optional[str] = None,
     ) -> ADOResponse:
         """Create a thread on a PR.
 
         :param List[Dict[str,Any]] comments: The comments to add to the thread.
         :param Optional[ADOCommentLocation] thread_location: The location the thread should be added
         :param Optional[ADOCommentStatus] status: The status of the comment
-        :param Optional[ADOCommentStatus] comment_identifier: A unique identifier for the comment
-                                                              that can be used for identification at
-                                                              a later date
+        :param Optional[str] comment_identifier: A unique identifier for the comment that can be used for identification
+                                                 at a later date
 
         :returns: The ADO response with the data in it
         """
@@ -151,8 +162,10 @@ class ADOPullRequestClient(ADOBaseClient):
 
         properties = {
             ADOCommentProperty.SUPPORTS_MARKDOWN: ADOCommentProperty.create_bool(True),
-            ADOCommentProperty.COMMENT_IDENTIFIER: ADOCommentProperty.create_string(comment_identifier),
         }
+
+        if comment_identifier:
+            properties[ADOCommentProperty.COMMENT_IDENTIFIER] = ADOCommentProperty.create_string(comment_identifier)
 
         body = {
             "comments": comments,
@@ -190,10 +203,12 @@ class ADOPullRequestClient(ADOBaseClient):
                 headers=self._http_client.construct_headers(),
             )
 
-    def create_thread_list(self, threads: List[ADOComment]) -> None:
+    def create_thread_list(self, threads: List[ADOComment], comment_identifier: Optional[str] = None) -> None:
         """Create a list of threads
 
         :param List[ADOComment] threads: The threads to create
+        :param Optional[str] comment_identifier: A unique identifier for the comments that can be used for
+                                                 identification at a later date
 
         :raises ADOException: If a thread is not an ADO comment
         """
@@ -207,7 +222,7 @@ class ADOPullRequestClient(ADOBaseClient):
 
         for thread in threads:
             self.log.debug("Adding thread")
-            self.create_comment(thread)
+            self.create_comment(thread, comment_identifier=comment_identifier)
 
     def set_status(
         self,
