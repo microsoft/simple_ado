@@ -58,7 +58,9 @@ class ADOBuildClient(ADOBaseClient):
         }
 
         if requesting_identity:
-            body["requestedFor"] = requesting_identity
+            body["requestedFor"] = {
+                "id": requesting_identity
+            }
 
         response = self._http_client.post(request_url, json_data=body)
         return self._http_client.decode_response(response)
