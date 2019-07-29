@@ -15,6 +15,7 @@ from simple_ado.base_client import ADOBaseClient
 from simple_ado.context import ADOContext
 from simple_ado.exceptions import ADOException, ADOHTTPException
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
+from simple_ado.utilities import boolstr
 
 
 class BatchRequest:
@@ -274,8 +275,8 @@ class ADOWorkItemsClient(ADOBaseClient):
         operation = WorkItemFieldOperationAdd(field, value)
 
         request_url = f"{self._http_client.base_url()}/wit/workitems/{identifier}"
-        request_url += f"?bypassRules={bypass_rules}"
-        request_url += f"&suppressNotifications={supress_notifications}"
+        request_url += f"?bypassRules={boolstr(bypass_rules)}"
+        request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
 
         response = self._http_client.patch(
@@ -339,8 +340,8 @@ class ADOWorkItemsClient(ADOBaseClient):
         )
 
         request_url = f"{self._http_client.base_url()}/wit/workitems/{identifier}"
-        request_url += f"?bypassRules={bypass_rules}"
-        request_url += f"&suppressNotifications={supress_notifications}"
+        request_url += f"?bypassRules={boolstr(bypass_rules)}"
+        request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
 
         response = self._http_client.patch(
@@ -383,8 +384,8 @@ class ADOWorkItemsClient(ADOBaseClient):
         )
 
         request_url = f"{self._http_client.base_url()}/wit/workitems/{parent_identifier}"
-        request_url += f"?bypassRules={bypass_rules}"
-        request_url += f"&suppressNotifications={supress_notifications}"
+        request_url += f"?bypassRules={boolstr(bypass_rules)}"
+        request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
 
         response = self._http_client.patch(
@@ -482,8 +483,8 @@ class ADOWorkItemsClient(ADOBaseClient):
         self.log.debug(f"Creating a new {item_type}")
 
         request_url = f"{self._http_client.base_url()}/wit/workitems/${item_type}"
-        request_url += f"?bypassRules={bypass_rules}"
-        request_url += f"&suppressNotifications={supress_notifications}"
+        request_url += f"?bypassRules={boolstr(bypass_rules)}"
+        request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
 
         response = self._http_client.post(
@@ -518,8 +519,8 @@ class ADOWorkItemsClient(ADOBaseClient):
         self.log.debug(f"Updating {identifier}")
 
         request_url = f"{self._http_client.base_url()}/wit/workitems/{identifier}"
-        request_url += f"?bypassRules={bypass_rules}"
-        request_url += f"&suppressNotifications={supress_notifications}"
+        request_url += f"?bypassRules={boolstr(bypass_rules)}"
+        request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
 
         response = self._http_client.patch(
@@ -566,8 +567,8 @@ class ADOWorkItemsClient(ADOBaseClient):
         self.log.debug(f"Deleting {identifier}")
 
         request_url = f"{self._http_client.base_url()}/wit/workitems/{identifier}"
-        request_url += f"?suppressNotifications={supress_notifications}"
-        request_url += f"&destroy={str(permanent).lower()}"
+        request_url += f"?suppressNotifications={boolstr(supress_notifications)}"
+        request_url += f"&destroy={boolstr(permanent)}"
         request_url += f"&api-version=4.1"
 
         response = self._http_client.delete(
