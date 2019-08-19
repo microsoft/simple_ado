@@ -6,8 +6,10 @@
 """ADO API wrapper."""
 
 import logging
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
+import urllib.parse
 
+import requests
 
 from simple_ado.builds import ADOBuildClient
 from simple_ado.context import ADOContext
@@ -132,3 +134,26 @@ class ADOClient:
         response = self._http_client.get(request_url)
         response_data = self._http_client.decode_response(response)
         return self._http_client.extract_value(response_data)
+
+    def custom_get(self, *, url_fragment: str, parameters: Dict[str, Any]) -> ADOResponse:
+        """Perform a custom GET REST request.
+
+        We don't always expose everything that would be preferred to the end
+        user, so to make it a little easier, we expose this method which lets
+        the user perform an arbitrary GET request, but where we supply the base
+        information.
+
+        We only support GET requests as anything else is too complex to be
+        exposed in a generic manner. For these cases, the requests should be
+        built manually.
+
+        :param str url_fragment: The part of the URL that comes after `_apis/`
+        :param Dict[str,Any] parameters: The URL parameters to append
+
+        :returns: The raw response
+        """
+
+        encoded_parameters = urllib.parse.urlencode(parameters)
+        request_url = f"{self._http_client.base_url()}/{url_fragment}?{encoded_parameters}"
+
+        return self._http_client.get(request_url)
