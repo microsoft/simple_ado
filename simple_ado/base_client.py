@@ -32,4 +32,4 @@ class ADOBaseClient:
         self.log = log
 
         self._context = context
-        self._http_client = http_client
+        self.http_client = http_client

@@ -232,10 +232,10 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug(f"Getting work item: {identifier}")
         request_url = (
-            f"{self._http_client.base_url()}/wit/workitems/{identifier}?api-version=4.1&$expand=all"
+            f"{self.http_client.base_url()}/wit/workitems/{identifier}?api-version=4.1&$expand=all"
         )
-        response = self._http_client.get(request_url)
-        return self._http_client.decode_response(response)
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
 
     def get_work_item_types(self) -> ADOResponse:
         """Get the types of work items supported by the project.
@@ -243,9 +243,9 @@ class ADOWorkItemsClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
         self.log.debug("Getting work item types")
-        request_url = f"{self._http_client.base_url()}/wit/workitemtypes?api-version=4.1"
-        response = self._http_client.get(request_url)
-        return self._http_client.decode_response(response)
+        request_url = f"{self.http_client.base_url()}/wit/workitemtypes?api-version=4.1"
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
 
     def add_property(
         self,
@@ -274,18 +274,18 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         operation = WorkItemFieldOperationAdd(field, value)
 
-        request_url = f"{self._http_client.base_url()}/wit/workitems/{identifier}"
+        request_url = f"{self.http_client.base_url()}/wit/workitems/{identifier}"
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
 
-        response = self._http_client.patch(
+        response = self.http_client.patch(
             request_url,
             [operation.raw()],
             additional_headers={"Content-Type": "application/json-patch+json"},
         )
 
-        return self._http_client.decode_response(response)
+        return self.http_client.decode_response(response)
 
     def add_attachment(
         self,
@@ -321,12 +321,12 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         # Upload the file
         request_url = (
-            f"{self._http_client.base_url()}/wit/attachments?fileName={filename}&api-version=1.0"
+            f"{self.http_client.base_url()}/wit/attachments?fileName={filename}&api-version=1.0"
         )
 
-        response = self._http_client.post_file(request_url, path_to_attachment)
+        response = self.http_client.post_file(request_url, path_to_attachment)
 
-        response_data = self._http_client.decode_response(response)
+        response_data = self.http_client.decode_response(response)
 
         url = response_data.get("url")
 
@@ -339,18 +339,18 @@ class ADOWorkItemsClient(ADOBaseClient):
             {"rel": "AttachedFile", "url": url, "attributes": {"comment": ""}},
         )
 
-        request_url = f"{self._http_client.base_url()}/wit/workitems/{identifier}"
+        request_url = f"{self.http_client.base_url()}/wit/workitems/{identifier}"
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
 
-        response = self._http_client.patch(
+        response = self.http_client.patch(
             request_url,
             [operation.raw()],
             additional_headers={"Content-Type": "application/json-patch+json"},
         )
 
-        return self._http_client.decode_response(response)
+        return self.http_client.decode_response(response)
 
     def _add_link(
         self,
@@ -383,18 +383,18 @@ class ADOWorkItemsClient(ADOBaseClient):
             {"rel": relation_type.value, "url": child_url, "attributes": {"comment": ""}},
         )
 
-        request_url = f"{self._http_client.base_url()}/wit/workitems/{parent_identifier}"
+        request_url = f"{self.http_client.base_url()}/wit/workitems/{parent_identifier}"
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
 
-        response = self._http_client.patch(
+        response = self.http_client.patch(
             request_url,
             [operation.raw()],
             additional_headers={"Content-Type": "application/json-patch+json"},
         )
 
-        return self._http_client.decode_response(response)
+        return self.http_client.decode_response(response)
 
     def link_tickets(
         self,
@@ -420,7 +420,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
         child_url = (
-            f"{self._http_client.base_url(is_project=False)}/wit/workitems/{child_identifier}"
+            f"{self.http_client.base_url(is_project=False)}/wit/workitems/{child_identifier}"
         )
         return self._add_link(
             parent_identifier=parent_identifier,
@@ -482,18 +482,18 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug(f"Creating a new {item_type}")
 
-        request_url = f"{self._http_client.base_url()}/wit/workitems/${item_type}"
+        request_url = f"{self.http_client.base_url()}/wit/workitems/${item_type}"
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
 
-        response = self._http_client.post(
+        response = self.http_client.post(
             request_url,
             json_data=[operation.raw() for operation in operations],
             additional_headers={"Content-Type": "application/json-patch+json"},
         )
 
-        return self._http_client.decode_response(response)
+        return self.http_client.decode_response(response)
 
     def update(
         self,
@@ -518,18 +518,18 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug(f"Updating {identifier}")
 
-        request_url = f"{self._http_client.base_url()}/wit/workitems/{identifier}"
+        request_url = f"{self.http_client.base_url()}/wit/workitems/{identifier}"
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
 
-        response = self._http_client.patch(
+        response = self.http_client.patch(
             request_url,
             [operation.raw() for operation in operations],
             additional_headers={"Content-Type": "application/json-patch+json"},
         )
 
-        return self._http_client.decode_response(response)
+        return self.http_client.decode_response(response)
 
     def execute_query(self, query_string: str) -> ADOResponse:
         """Execute a WIQL query.
@@ -541,11 +541,11 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug(f"Executing query: {query_string}")
 
-        request_url = f"{self._http_client.base_url()}/wit/wiql?api-version=4.1"
+        request_url = f"{self.http_client.base_url()}/wit/wiql?api-version=4.1"
 
-        response = self._http_client.post(request_url, {"query": query_string})
+        response = self.http_client.post(request_url, {"query": query_string})
 
-        return self._http_client.decode_response(response)
+        return self.http_client.decode_response(response)
 
     def delete(
         self, identifier: str, *, permanent: bool = False, supress_notifications: bool = False
@@ -566,19 +566,19 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug(f"Deleting {identifier}")
 
-        request_url = f"{self._http_client.base_url()}/wit/workitems/{identifier}"
+        request_url = f"{self.http_client.base_url()}/wit/workitems/{identifier}"
         request_url += f"?suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&destroy={boolstr(permanent)}"
         request_url += f"&api-version=4.1"
 
-        response = self._http_client.delete(
+        response = self.http_client.delete(
             request_url, additional_headers={"Content-Type": "application/json-patch+json"}
         )
 
         if response.status_code != 204:
             raise ADOHTTPException(f"Failed to delete '{identifier}'", response)
 
-        return self._http_client.decode_response(response)
+        return self.http_client.decode_response(response)
 
     def batch(self, operations: List[BatchRequest]) -> ADOResponse:
         """Run a batch operation.
@@ -599,8 +599,8 @@ class ADOWorkItemsClient(ADOBaseClient):
         for operation in operations:
             full_body.append(operation.body())
 
-        request_url = f"{self._http_client.base_url(is_project=False)}/wit/$batch"
+        request_url = f"{self.http_client.base_url(is_project=False)}/wit/$batch"
 
-        response = self._http_client.post(request_url, full_body)
+        response = self.http_client.post(request_url, full_body)
 
-        return self._http_client.decode_response(response)
+        return self.http_client.decode_response(response)

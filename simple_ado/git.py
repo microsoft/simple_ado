@@ -88,10 +88,10 @@ class ADOGitClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
         self.log.debug("Getting repositories")
-        request_url = f"{self._http_client.base_url()}/git/repositories/?api-version=1.0"
-        response = self._http_client.get(request_url)
-        response_data = self._http_client.decode_response(response)
-        return self._http_client.extract_value(response_data)
+        request_url = f"{self.http_client.base_url()}/git/repositories/?api-version=1.0"
+        response = self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
 
     def get_status(self, sha: str) -> ADOResponse:
         """Set a status on a PR.
@@ -108,12 +108,12 @@ class ADOGitClient(ADOBaseClient):
         if len(sha) != 40:
             raise ADOException("The SHA for a commit must be the full 40 character version")
 
-        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}/commits/{sha}/"
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}/commits/{sha}/"
         request_url += "statuses?api-version=2.1"
 
-        response = self._http_client.get(request_url)
-        response_data = self._http_client.decode_response(response)
-        return self._http_client.extract_value(response_data)
+        response = self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
 
     def set_status(
         self,
@@ -146,7 +146,7 @@ class ADOGitClient(ADOBaseClient):
         if state == ADOGitStatusState.NOT_SET:
             raise ADOException("The NOT_SET state cannot be used for statuses on commits")
 
-        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}/commits/{sha}/"
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}/commits/{sha}/"
         request_url += "statuses?api-version=2.1"
 
         body = {
@@ -158,8 +158,8 @@ class ADOGitClient(ADOBaseClient):
         if target_url is not None:
             body["targetUrl"] = target_url
 
-        response = self._http_client.post(request_url, json_data=body)
-        return self._http_client.decode_response(response)
+        response = self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
 
     def diff_between_commits(self, base_commit: str, target_commit: str) -> ADOResponse:
         """Get the diff between two commits.
@@ -174,15 +174,15 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Fetching commit diff: {base_commit}..{target_commit}")
 
-        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}/diffs/commits?"
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}/diffs/commits?"
         request_url += f"api-version=1.0"
         request_url += f"&baseVersionType=commit"
         request_url += f"&baseVersion={base_commit}"
         request_url += f"&targetVersionType=commit"
         request_url += f"&targetVersion={target_commit}"
 
-        response = self._http_client.get(request_url)
-        return self._http_client.decode_response(response)
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
 
     def download_zip(self, branch: str, output_path: str) -> None:
         """Download the zip of the branch specified.
@@ -196,7 +196,7 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Downloading branch: {branch}")
         request_url = (
-            f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}/Items?"
+            f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}/Items?"
         )
 
         parameters = {
@@ -216,8 +216,8 @@ class ADOGitClient(ADOBaseClient):
 
         with requests.get(
             request_url,
-            auth=self._http_client.credentials,
-            headers=self._http_client.construct_headers(),
+            auth=self.http_client.credentials,
+            headers=self.http_client.construct_headers(),
             stream=True,
         ) as response:
 
@@ -291,7 +291,7 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Getting refs")
 
-        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}/refs?"
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}/refs?"
 
         parameters: Dict[str, Any] = {}
 
@@ -329,9 +329,9 @@ class ADOGitClient(ADOBaseClient):
 
         request_url += "api-version=5.0"
 
-        response = self._http_client.get(request_url)
-        response_data = self._http_client.decode_response(response)
-        return self._http_client.extract_value(response_data)
+        response = self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
 
     def get_commit(
             self,
@@ -352,14 +352,14 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Getting commit: {commit_id}")
 
-        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
         request_url += f"/commits/{commit_id}?api-version=5.0"
 
         if change_count:
             request_url += f"&changeCount={change_count}"
 
-        response = self._http_client.get(request_url)
-        return self._http_client.decode_response(response)
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
 
     def update_refs(self, updates: List[ADOReferenceUpdate]) -> ADOResponse:
         """Update a list of references.
@@ -371,14 +371,14 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug("Updating references")
 
-        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
         request_url += "/refs?api-version=5.0"
 
         data = [update.json_data() for update in updates]
 
-        response = self._http_client.post(request_url, json_data=data)
-        response_data = self._http_client.decode_response(response)
-        return self._http_client.extract_value(response_data)
+        response = self.http_client.post(request_url, json_data=data)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
 
     def delete_branch(self, branch_name: str, object_id: str) -> ADOResponse:
         """Delete a branch

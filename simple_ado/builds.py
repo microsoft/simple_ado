@@ -46,7 +46,7 @@ class ADOBuildClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self._http_client.base_url()}/build/builds?api-version=4.1"
+        request_url = f"{self.http_client.base_url()}/build/builds?api-version=4.1"
         variable_json = json.dumps(variables)
 
         self.log.debug(f"Queueing build ({definition_id}): {variable_json}")
@@ -62,8 +62,8 @@ class ADOBuildClient(ADOBaseClient):
                 "id": requesting_identity
             }
 
-        response = self._http_client.post(request_url, json_data=body)
-        return self._http_client.decode_response(response)
+        response = self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
 
     def build_info(self, build_id: int) -> ADOResponse:
         """Get the info for a build.
@@ -73,6 +73,6 @@ class ADOBuildClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self._http_client.base_url()}/build/builds/{build_id}?api-version=4.1"
-        response = self._http_client.get(request_url)
-        return self._http_client.decode_response(response)
+        request_url = f"{self.http_client.base_url()}/build/builds/{build_id}?api-version=4.1"
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)

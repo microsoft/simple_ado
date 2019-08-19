@@ -84,7 +84,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self._http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.1-preview.1"
+        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.1-preview.1"
 
         body = {
             "type": {"id": ADOBranchPolicy.BUILD.value},
@@ -108,8 +108,8 @@ class ADOSecurityClient(ADOBaseClient):
             },
         }
 
-        response = self._http_client.post(request_url, json_data=body)
-        return self._http_client.decode_response(response)
+        response = self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
 
     def add_branch_required_reviewers_policy(
         self, branch: str, *, identities: List[str]
@@ -123,7 +123,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self._http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.1-preview.1"
+        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.1-preview.1"
 
         body = {
             "type": {"id": ADOBranchPolicy.REQUIRED_REVIEWERS.value},
@@ -147,8 +147,8 @@ class ADOSecurityClient(ADOBaseClient):
             },
         }
 
-        response = self._http_client.post(request_url, json_data=body)
-        return self._http_client.decode_response(response)
+        response = self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
 
     def set_branch_approval_count_policy(
         self,
@@ -168,7 +168,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self._http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.1-preview.1"
+        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.1-preview.1"
 
         body = {
             "type": {"id": ADOBranchPolicy.APPROVAL_COUNT.value},
@@ -190,8 +190,8 @@ class ADOSecurityClient(ADOBaseClient):
             },
         }
 
-        response = self._http_client.post(request_url, json_data=body)
-        return self._http_client.decode_response(response)
+        response = self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
 
     def set_branch_work_item_policy(self, branch: str, *, required: bool = True) -> ADOResponse:
         """Set the work item policy for a branch.
@@ -202,7 +202,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self._http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.1-preview.1"
+        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.1-preview.1"
 
         body = {
             "type": {"id": ADOBranchPolicy.WORK_ITEM.value},
@@ -221,8 +221,8 @@ class ADOSecurityClient(ADOBaseClient):
             },
         }
 
-        response = self._http_client.post(request_url, json_data=body)
-        return self._http_client.decode_response(response)
+        response = self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
 
     def set_branch_permissions(
         self,
@@ -242,7 +242,7 @@ class ADOSecurityClient(ADOBaseClient):
 
         descriptor_info = self._get_descriptor_info(branch, identity)
 
-        request_url = self._http_client.base_url(is_project=True, is_internal=True)
+        request_url = self.http_client.base_url(is_project=True, is_internal=True)
         request_url += "/_security/ManagePermissions?__v=5"
 
         updates = []
@@ -270,8 +270,8 @@ class ADOSecurityClient(ADOBaseClient):
 
         body = {"updatePackage": json.dumps(package)}
 
-        response = self._http_client.post(request_url, json_data=body)
-        return self._http_client.decode_response(response)
+        response = self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
 
     def _get_descriptor_info(self, branch: str, team_foundation_id: TeamFoundationId) -> Dict[str, str]:
         """Fetch the descriptor identity information for a given identity.
@@ -284,7 +284,7 @@ class ADOSecurityClient(ADOBaseClient):
         :raises ADOException: If we can't determine the descriptor info from the response
         """
 
-        request_url = f"{self._http_client.base_url(is_project=True, is_internal=True)}/_security/DisplayPermissions?"
+        request_url = f"{self.http_client.base_url(is_project=True, is_internal=True)}/_security/DisplayPermissions?"
 
         parameters = {
             "tfid": team_foundation_id,
@@ -295,8 +295,8 @@ class ADOSecurityClient(ADOBaseClient):
 
         request_url += urllib.parse.urlencode(parameters)
 
-        response = self._http_client.get(request_url)
-        response_data = self._http_client.decode_response(response)
+        response = self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
 
         try:
             descriptor_info = {
@@ -318,7 +318,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The permission token
         """
         encoded_branch = branch.replace("/", "^")
-        return f"repoV2/{self._http_client.project_id}/{self._context.repository_id}/refs^heads^{encoded_branch}/"
+        return f"repoV2/{self.http_client.project_id}/{self._context.repository_id}/refs^heads^{encoded_branch}/"
 
     def _generate_updates_token(self, branch: str) -> str:
         """Generate the token required for updating permissions.
@@ -333,4 +333,4 @@ class ADOSecurityClient(ADOBaseClient):
 
         encoded_branch = "/".join(encoded_branch_nodes)
 
-        return f"repoV2/{self._http_client.project_id}/{self._context.repository_id}/refs/heads/{encoded_branch}/"
+        return f"repoV2/{self.http_client.project_id}/{self._context.repository_id}/refs/heads/{encoded_branch}/"

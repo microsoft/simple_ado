@@ -40,7 +40,7 @@ class ADOClient:
     log: logging.Logger
 
     _context: ADOContext
-    _http_client: ADOHTTPClient
+    http_client: ADOHTTPClient
 
     git: ADOGitClient
     builds: ADOBuildClient
@@ -71,7 +71,7 @@ class ADOClient:
             username=username, repository_id=repository_id, status_context=status_context
         )
 
-        self._http_client = ADOHTTPClient(
+        self.http_client = ADOHTTPClient(
             tenant=tenant,
             project_id=project_id,
             credentials=credentials,
@@ -79,11 +79,11 @@ class ADOClient:
             extra_headers=extra_headers,
         )
 
-        self.git = ADOGitClient(self._context, self._http_client, self.log)
-        self.builds = ADOBuildClient(self._context, self._http_client, self.log)
-        self.security = ADOSecurityClient(self._context, self._http_client, self.log)
-        self.user = ADOUserClient(self._context, self._http_client, self.log)
-        self.workitems = ADOWorkItemsClient(self._context, self._http_client, self.log)
+        self.git = ADOGitClient(self._context, self.http_client, self.log)
+        self.builds = ADOBuildClient(self._context, self.http_client, self.log)
+        self.security = ADOSecurityClient(self._context, self.http_client, self.log)
+        self.user = ADOUserClient(self._context, self.http_client, self.log)
+        self.workitems = ADOWorkItemsClient(self._context, self.http_client, self.log)
 
     def verify_access(self) -> bool:
         """Verify that we have access to ADO.
@@ -91,12 +91,12 @@ class ADOClient:
         :returns: True if we have access, False otherwise
         """
 
-        request_url = f"{self._http_client.base_url()}/git/repositories?api-version=1.0"
+        request_url = f"{self.http_client.base_url()}/git/repositories?api-version=1.0"
 
         try:
-            response = self._http_client.get(request_url)
-            response_data = self._http_client.decode_response(response)
-            self._http_client.extract_value(response_data)
+            response = self.http_client.get(request_url)
+            response_data = self.http_client.decode_response(response)
+            self.http_client.extract_value(response_data)
         except ADOException:
             return False
 
@@ -109,7 +109,7 @@ class ADOClient:
 
         :returns: A new ADOPullRequest client for the pull request specified
         """
-        return ADOPullRequestClient(self._context, self._http_client, self.log, pull_request_id)
+        return ADOPullRequestClient(self._context, self.http_client, self.log, pull_request_id)
 
     def list_all_pull_requests(self, *, branch_name: Optional[str] = None) -> ADOResponse:
         """Get the pull requests for a branch from ADO.
@@ -122,7 +122,7 @@ class ADOClient:
 
         self.log.debug("Fetching PRs")
 
-        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}/pullRequests?"
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}/pullRequests?"
 
         if branch_name is not None:
             if not branch_name.startswith("refs/heads/"):
@@ -131,9 +131,9 @@ class ADOClient:
 
         request_url += "api-version=3.0-preview"
 
-        response = self._http_client.get(request_url)
-        response_data = self._http_client.decode_response(response)
-        return self._http_client.extract_value(response_data)
+        response = self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
 
     def custom_get(self, *, url_fragment: str, parameters: Dict[str, Any]) -> ADOResponse:
         """Perform a custom GET REST request.
@@ -154,6 +154,6 @@ class ADOClient:
         """
 
         encoded_parameters = urllib.parse.urlencode(parameters)
-        request_url = f"{self._http_client.base_url()}/{url_fragment}?{encoded_parameters}"
+        request_url = f"{self.http_client.base_url()}/{url_fragment}?{encoded_parameters}"
 
-        return self._http_client.get(request_url)
+        return self.http_client.get(request_url)

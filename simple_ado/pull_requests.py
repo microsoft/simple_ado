@@ -51,10 +51,10 @@ class ADOPullRequestClient(ADOBaseClient):
         """
 
         self.log.debug(f"Getting PR: {self.pull_request_id}")
-        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
         request_url += f"/pullRequests/{self.pull_request_id}?api-version=3.0-preview"
-        response = self._http_client.get(request_url)
-        return self._http_client.decode_response(response)
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
 
     def workitems(self) -> ADOResponse:
         """Get the workitems associated with the PR from ADO.
@@ -63,10 +63,10 @@ class ADOPullRequestClient(ADOBaseClient):
         """
 
         self.log.debug(f"Getting workitems: {self.pull_request_id}")
-        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
         request_url += f"/pullRequests/{self.pull_request_id}/workitems?api-version=5.0"
-        response = self._http_client.get(request_url)
-        return self._http_client.decode_response(response)
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
 
     def get_threads(self, *, include_deleted: bool = False) -> List[ADOThread]:
         """Get the comments on the PR from ADO.
@@ -77,11 +77,11 @@ class ADOPullRequestClient(ADOBaseClient):
         """
 
         self.log.debug(f"Getting threads: {self.pull_request_id}")
-        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
         request_url += f"/pullRequests/{self.pull_request_id}/threads?api-version=3.0-preview"
-        response = self._http_client.get(request_url)
-        response_data = self._http_client.decode_response(response)
-        comments: List[ADOThread] = self._http_client.extract_value(response_data)
+        response = self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        comments: List[ADOThread] = self.http_client.extract_value(response_data)
 
         if include_deleted:
             return comments
@@ -157,7 +157,7 @@ class ADOPullRequestClient(ADOBaseClient):
 
         self.log.debug(f"Creating thread ({self.pull_request_id})")
 
-        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
         request_url += f"/pullRequests/{self.pull_request_id}/threads?api-version=3.0-preview"
 
         properties = {
@@ -176,8 +176,8 @@ class ADOPullRequestClient(ADOBaseClient):
         if thread_location is not None:
             body["threadContext"] = thread_location.generate_representation()
 
-        response = self._http_client.post(request_url, json_data=body)
-        return self._http_client.decode_response(response)
+        response = self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
 
     def delete_thread(self, thread: ADOThread) -> None:
         """Delete a comment thread from a pull request.
@@ -193,14 +193,14 @@ class ADOPullRequestClient(ADOBaseClient):
             comment_id = comment["id"]
             self.log.debug(f"Deleting comment: {comment_id}")
             request_url = (
-                f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}"
+                f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
             )
             request_url += f"/pullRequests/{self.pull_request_id}/threads/{thread_id}"
             request_url += f"/comments/{comment_id}?api-version=3.0-preview"
             requests.delete(
                 request_url,
-                auth=self._http_client.credentials,
-                headers=self._http_client.construct_headers(),
+                auth=self.http_client.credentials,
+                headers=self.http_client.construct_headers(),
             )
 
     def create_thread_list(self, threads: List[ADOComment], comment_identifier: Optional[str] = None) -> None:
@@ -248,7 +248,7 @@ class ADOPullRequestClient(ADOBaseClient):
             f"Setting PR status ({state}) on PR ({self.pull_request_id}): {identifier} -> {description}"
         )
 
-        request_url = f"{self._http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
         request_url += f"/pullRequests/{self.pull_request_id}/statuses?api-version=4.0-preview"
 
         body = {
@@ -263,8 +263,8 @@ class ADOPullRequestClient(ADOBaseClient):
         if target_url is not None:
             body["targetUrl"] = target_url
 
-        response = self._http_client.post(request_url, json_data=body)
-        return self._http_client.decode_response(response)
+        response = self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
 
     def _thread_matches_identifier(self, thread: ADOThread, identifier: str) -> bool:
         """Check if the ADO thread matches the user and identifier

@@ -38,7 +38,7 @@ class ADOUserClient(ADOBaseClient):
         :raises ADOException: If we can't get the identity from the response
         """
 
-        request_url = self._http_client.base_url(is_default_collection=False, is_project=False)
+        request_url = self.http_client.base_url(is_default_collection=False, is_project=False)
         request_url += "/IdentityPicker/Identities?api-version=5.1-preview.1"
 
         body = {
@@ -49,8 +49,8 @@ class ADOUserClient(ADOBaseClient):
             "filterByAncestorEntityIds": [],
             "filterByEntityIds": [],
         }
-        response = self._http_client.post(request_url, json_data=body)
-        response_data = self._http_client.decode_response(response)
+        response = self.http_client.post(request_url, json_data=body)
+        response_data = self.http_client.decode_response(response)
 
         try:
             result = response_data["results"][0]["identities"][0]
