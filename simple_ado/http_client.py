@@ -204,17 +204,18 @@ class ADOHTTPClient:
         and exception.response.status_code not in range(400, 500)
     )
     def get(
-        self, request_url: str, *, additional_headers: Optional[Dict[str, str]] = None
+        self, request_url: str, *, additional_headers: Optional[Dict[str, str]] = None, stream: bool = False
     ) -> requests.Response:
         """Issue a GET request with the correct credentials and headers.
 
         :param str request_url: The URL to issue the request to
         :param Optional[Dict[str,str]] additional_headers: Any additional headers to add to the request
+        :param bool stream: Set to True to stream the response back
 
         :returns: The raw response object from the API
         """
         headers = self.construct_headers(additional_headers=additional_headers)
-        return requests.get(request_url, auth=self.credentials, headers=headers)
+        return requests.get(request_url, auth=self.credentials, headers=headers, stream=stream)
 
     @exception_retry(
         should_retry=lambda exception: "Operation timed out" in str(exception)

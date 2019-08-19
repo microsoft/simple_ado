@@ -8,12 +8,14 @@
 import json
 import logging
 from typing import Dict, Optional
+import urllib.parse
 
 
 from simple_ado.base_client import ADOBaseClient
 from simple_ado.context import ADOContext
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 from simple_ado.types import TeamFoundationId
+from simple_ado.utilities import download_from_response_stream
 
 
 class ADOBuildClient(ADOBaseClient):
@@ -76,3 +78,62 @@ class ADOBuildClient(ADOBaseClient):
         request_url = f"{self.http_client.base_url()}/build/builds/{build_id}?api-version=4.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
+
+    def get_artifact_info(
+        self,
+        build_id: int,
+        artifact_name: str
+    ) -> ADOResponse:
+        """Fetch an artifacts details from a build.
+
+        :param build_id: The ID of the build
+        :param artifact_name: The name of the artifact to fetch
+
+        :returns: The ADO response with the data in it
+        """
+
+        parameters = {
+            "artifactName": artifact_name,
+            "api-version": "4.1",
+        }
+
+        request_url = f"{self.http_client.base_url()}/build/builds/{build_id}/artifacts?"
+        request_url += urllib.parse.urlencode(parameters)
+
+        self.log.debug(f"Fetching artifact {artifact_name} from build {build_id}...")
+
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
+
+    def download_artifact(
+        self,
+        build_id: int,
+        artifact_name: str,
+        output_path: str
+    ) -> ADOResponse:
+        """Download an artifact from a build.
+
+        :param build_id: The ID of the build
+        :param artifact_name: The name of the artifact to fetch
+        :param str output_path: The path to write the output to.
+
+        :returns: The ADO response with the data in it
+        """
+
+        parameters = {
+            "artifactName": artifact_name,
+            "$format": "zip",
+            "api-version": "4.1",
+        }
+
+        request_url = f"{self.http_client.base_url()}/build/builds/{build_id}/artifacts?"
+        request_url += urllib.parse.urlencode(parameters)
+
+        self.log.debug(f"Fetching artifact {artifact_name} from build {build_id}...")
+
+        with self.http_client.get(request_url, stream=True) as response:
+            download_from_response_stream(
+                response=response,
+                output_path=output_path,
+                log=self.log
+            )

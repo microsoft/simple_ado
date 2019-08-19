@@ -11,12 +11,11 @@ import os
 from typing import Any, Dict, List, Optional
 import urllib.parse
 
-import requests
-
 from simple_ado.base_client import ADOBaseClient
 from simple_ado.context import ADOContext
-from simple_ado.exceptions import ADOException, ADOHTTPException
+from simple_ado.exceptions import ADOException
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
+from simple_ado.utilities import download_from_response_stream
 
 
 class ADOGitStatusState(enum.Enum):
@@ -214,32 +213,12 @@ class ADOGitClient(ADOBaseClient):
         if os.path.exists(output_path):
             raise ADOException("The output path already exists")
 
-        with requests.get(
-            request_url,
-            auth=self.http_client.credentials,
-            headers=self.http_client.construct_headers(),
-            stream=True,
-        ) as response:
-
-            chunk_size = 1024 * 16
-
-            if response.status_code < 200 or response.status_code >= 300:
-                raise ADOHTTPException("Failed to fetch zip", response)
-
-            with open(output_path, "wb") as output_file:
-
-                content_length_string = response.headers.get("content-length", "0")
-
-                total_size = int(content_length_string)
-                total_downloaded = 0
-
-                for data in response.iter_content(chunk_size=chunk_size):
-                    total_downloaded += len(data)
-                    output_file.write(data)
-
-                    if total_size != 0:
-                        progress = int((total_downloaded * 100.0) / total_size)
-                        self.log.info(f"Download progress: {progress}%")
+        with self.http_client.get(request_url, stream=True) as response:
+            download_from_response_stream(
+                response=response,
+                output_path=output_path,
+                log=self.log
+            )
 
     def get_refs(
             self,
