@@ -110,7 +110,7 @@ class ADOBuildClient(ADOBaseClient):
         build_id: int,
         artifact_name: str,
         output_path: str
-    ) -> ADOResponse:
+    ) -> None:
         """Download an artifact from a build.
 
         :param build_id: The ID of the build
