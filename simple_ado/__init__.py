@@ -6,7 +6,7 @@
 """ADO API wrapper."""
 
 import logging
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import urllib.parse
 
 import requests
@@ -122,18 +122,35 @@ class ADOClient:
 
         self.log.debug("Fetching PRs")
 
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}/pullRequests?"
+        offset = 0
+        all_prs: List[Any] = []
 
-        if branch_name is not None:
-            if not branch_name.startswith("refs/heads/"):
-                branch_name = "refs/heads/" + branch_name
-            request_url += f"sourceRefName={branch_name}&"
+        while True:
 
-        request_url += "api-version=3.0-preview"
+            request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}/pullRequests?"
 
-        response = self.http_client.get(request_url)
-        response_data = self.http_client.decode_response(response)
-        return self.http_client.extract_value(response_data)
+            request_url += f"$top=100&$skip={offset}"
+
+            if branch_name is not None:
+                if not branch_name.startswith("refs/heads/"):
+                    branch_name = "refs/heads/" + branch_name
+                request_url += f"&sourceRefName={branch_name}"
+
+            request_url += "&api-version=3.0-preview"
+
+            response = self.http_client.get(request_url)
+            response_data = self.http_client.decode_response(response)
+
+            extracted = self.http_client.extract_value(response_data)
+
+            if len(extracted) == 0:
+                break
+
+            all_prs.extend(extracted)
+
+            offset += 100
+
+        return all_prs
 
     def custom_get(self, *, url_fragment: str, parameters: Dict[str, Any]) -> ADOResponse:
         """Perform a custom GET REST request.

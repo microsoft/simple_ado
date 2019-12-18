@@ -56,3 +56,8 @@ class LibraryTests(unittest.TestCase):
     #    response = self.client.git.delete_branch("refs/heads/?", "?")
     #    for value in response:
     #        self.assertTrue(value["success"])
+
+    def test_get_pull_requests(self):
+        """Test get pull requests."""
+        refs = self.client.list_all_pull_requests()
+        self.assertTrue(len(refs) > 0)
