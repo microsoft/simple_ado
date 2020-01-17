@@ -16,6 +16,7 @@ from simple_ado.context import ADOContext
 from simple_ado.exceptions import ADOException
 from simple_ado.git import ADOGitClient
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
+from simple_ado.pools import ADOPoolsClient
 from simple_ado.pull_requests import ADOPullRequestClient
 from simple_ado.security import ADOSecurityClient
 from simple_ado.user import ADOUserClient
@@ -44,6 +45,7 @@ class ADOClient:
 
     git: ADOGitClient
     builds: ADOBuildClient
+    pools: ADOPoolsClient
     security: ADOSecurityClient
     user: ADOUserClient
     workitems: ADOWorkItemsClient
@@ -81,6 +83,7 @@ class ADOClient:
 
         self.git = ADOGitClient(self._context, self.http_client, self.log)
         self.builds = ADOBuildClient(self._context, self.http_client, self.log)
+        self.pools = ADOPoolsClient(self._context, self.http_client, self.log)
         self.security = ADOSecurityClient(self._context, self.http_client, self.log)
         self.user = ADOUserClient(self._context, self.http_client, self.log)
         self.workitems = ADOWorkItemsClient(self._context, self.http_client, self.log)

@@ -61,3 +61,15 @@ class LibraryTests(unittest.TestCase):
         """Test get pull requests."""
         refs = self.client.list_all_pull_requests()
         self.assertTrue(len(refs) > 0)
+
+    def test_get_pools(self):
+        """Test get pools."""
+        response = self.client.pools.get_pools()
+        self.assertGreater(len(response), 0)
+
+    def test_capabilities(self):
+        """Test setting capabilities."""
+        pool = self.client.pools.get_pools(action_filter=simple_ado.pools.TaskAgentPoolActionFilter.manage)[0]
+        agent = self.client.pools.get_agents(pool_id=pool["id"])[0]
+        agent["userCapabilities"]["whatever"] = "Hello World"
+        self.client.pools.update_agent(pool_id=pool["id"], agent_id=agent["id"], agent_data=agent)
