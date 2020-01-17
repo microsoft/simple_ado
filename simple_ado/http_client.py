@@ -258,6 +258,25 @@ class ADOHTTPClient:
         headers = self.construct_headers(additional_headers=additional_headers)
         return requests.patch(request_url, auth=self.credentials, headers=headers, json=json_data)
 
+    def put(
+        self,
+        request_url: str,
+        json_data: Optional[Any] = None,
+        *,
+        additional_headers: Optional[Dict[str, Any]] = None,
+    ) -> requests.Response:
+        """Issue a PUT request with the correct credentials and headers.
+
+        :param str request_url: The URL to issue the request to
+        :param Optional[Dict[str,str]] additional_headers: Any additional headers to add to the request
+        :param Optional[Dict[str,Any]] json_data: The JSON data to send with the request
+
+        :returns: The raw response object from the API
+        """
+        headers = self.construct_headers(additional_headers=additional_headers)
+        return requests.put(request_url, auth=self.credentials, headers=headers, json=json_data)
+
+
     def delete(
         self, request_url: str, *, additional_headers: Optional[Dict[str, Any]] = None
     ) -> requests.Response:

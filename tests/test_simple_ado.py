@@ -71,5 +71,10 @@ class LibraryTests(unittest.TestCase):
         """Test setting capabilities."""
         pool = self.client.pools.get_pools(action_filter=simple_ado.pools.TaskAgentPoolActionFilter.manage)[0]
         agent = self.client.pools.get_agents(pool_id=pool["id"])[0]
-        agent["userCapabilities"]["whatever"] = "Hello World"
-        self.client.pools.update_agent(pool_id=pool["id"], agent_id=agent["id"], agent_data=agent)
+        capabilities = agent["userCapabilities"]
+        capabilities["hello"] = "world"
+        self.client.pools.update_agent_capabilities(
+            pool_id=pool["id"],
+            agent_id=agent["id"],
+            capabilities=capabilities
+        )
