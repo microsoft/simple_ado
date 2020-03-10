@@ -54,7 +54,7 @@ class ADOGraphClient(ADOBaseClient):
         return groups
 
     def get_group(self, descriptor: str) -> ADOResponse:
-        """Get the groups in the organization.
+        """Get the group
 
         :param descriptor: The descriptor for the group
 
@@ -62,5 +62,17 @@ class ADOGraphClient(ADOBaseClient):
         """
 
         request_url = f"{self.http_client.base_url(is_vssps=True)}/graph/groups/{descriptor}?api-version=5.1-preview.1"
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
+
+    def get_user(self, descriptor: str) -> ADOResponse:
+        """Get the user
+
+        :param descriptor: The descriptor for the user
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = f"{self.http_client.base_url(is_vssps=True)}/graph/users/{descriptor}?api-version=5.1-preview.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
