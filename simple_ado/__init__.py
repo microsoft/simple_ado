@@ -155,7 +155,15 @@ class ADOClient:
 
         return all_prs
 
-    def custom_get(self, *, url_fragment: str, parameters: Dict[str, Any]) -> ADOResponse:
+    def custom_get(
+        self,
+        *,
+        url_fragment: str,
+        parameters: Dict[str, Any],
+        is_default_collection: bool = True,
+        is_project: bool = True,
+        is_internal: bool = False
+    ) -> ADOResponse:
         """Perform a custom GET REST request.
 
         We don't always expose everything that would be preferred to the end
@@ -169,11 +177,19 @@ class ADOClient:
 
         :param str url_fragment: The part of the URL that comes after `_apis/`
         :param Dict[str,Any] parameters: The URL parameters to append
+        :param bool is_default_collection: Whether this URL should start with the path "/DefaultCollection"
+        :param bool is_project: Whether this URL should scope down to include `project_id`
+        :param bool is_internal: Whether this URL should use internal API endpoint "/_api"
 
         :returns: The raw response
         """
 
         encoded_parameters = urllib.parse.urlencode(parameters)
-        request_url = f"{self.http_client.base_url()}/{url_fragment}?{encoded_parameters}"
+        request_url = self.http_client.base_url(
+            is_default_collection=is_default_collection,
+            is_project=is_project,
+            is_internal=is_internal
+        )
+        request_url += f"/{url_fragment}?{encoded_parameters}"
 
         return self.http_client.get(request_url)
