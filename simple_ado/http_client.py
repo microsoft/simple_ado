@@ -174,15 +174,20 @@ class ADOHTTPClient:
         is_default_collection: bool = True,
         is_project: bool = True,
         is_internal: bool = False,
+        is_vssps: bool = False,
     ) -> str:
         """Generate the base url for all API calls (this varies depending on the API).
 
         :param bool is_default_collection: Whether this URL should start with the path "/DefaultCollection"
         :param bool is_project: Whether this URL should scope down to include `project_id`
         :param bool is_internal: Whether this URL should use internal API endpoint "/_api"
+        :param bool is_vssps: Whether this URL is a VSSPS URL (all other parameters are ignored in that case)
 
         :returns: The constructed base URL
         """
+
+        if is_vssps:
+            return f"https://vssps.dev.azure.com/{self.tenant}/_apis"
 
         url = f"https://{self.tenant}.visualstudio.com"
 
