@@ -4,6 +4,7 @@
 """ADO graph API wrapper."""
 
 import logging
+from typing import Any, List
 
 
 from simple_ado.base_client import ADOBaseClient
@@ -24,13 +25,42 @@ class ADOGraphClient(ADOBaseClient):
     ) -> None:
         super().__init__(context, http_client, log.getChild("graph"))
 
-    def list_groups(self) -> ADOResponse:
+    def list_groups(self) -> List[Any]:
         """Get the groups in the organization.
 
         :returns: The ADO response with the data in it
         """
 
-        # TODO: Add continuation support
         request_url = f"{self.http_client.base_url(is_vssps=True)}/graph/groups?api-version=5.1-preview.1"
+
+        groups = []
+        continuation_token = None
+
+        while True:
+            if continuation_token:
+                url = request_url + f"&continuationToken={continuation_token}"
+            else:
+                url = request_url
+
+            response = self.http_client.get(url)
+            decoded = self.http_client.decode_response(response)
+            groups += decoded["value"]
+
+            if "X-MS-ContinuationToken" not in response.headers:
+                break
+
+            continuation_token = response.headers["X-MS-ContinuationToken"]
+
+        return groups
+
+    def get_group(self, descriptor: str) -> ADOResponse:
+        """Get the groups in the organization.
+
+        :param descriptor: The descriptor for the group
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = f"{self.http_client.base_url(is_vssps=True)}/graph/groups/{descriptor}?api-version=5.1-preview.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
