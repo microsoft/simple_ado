@@ -84,7 +84,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.1-preview.1"
+        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
 
         body = {
             "type": {"id": ADOBranchPolicy.BUILD.value},
@@ -123,7 +123,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.1-preview.1"
+        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
 
         body = {
             "type": {"id": ADOBranchPolicy.REQUIRED_REVIEWERS.value},
@@ -168,7 +168,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.1-preview.1"
+        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
 
         body = {
             "type": {"id": ADOBranchPolicy.APPROVAL_COUNT.value},
@@ -183,7 +183,7 @@ class ADOSecurityClient(ADOBaseClient):
                 "scope": [
                     {
                         "refName": f"refs/heads/{branch}",
-                        "matchKind": "Exact",
+                        "matchKind": "exact",
                         "repositoryId": self._context.repository_id,
                     }
                 ],
@@ -202,7 +202,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.1-preview.1"
+        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
 
         body = {
             "type": {"id": ADOBranchPolicy.WORK_ITEM.value},
