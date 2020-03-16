@@ -115,7 +115,7 @@ class ADOClient:
         *,
         title: Optional[str] = None,
         description: Optional[str] = None,
-        reviewer_ids: List[str] = [],
+        reviewer_ids: Optional[List[str]] = None,
     ) -> ADOPullRequestClient:
         """Creates a pull request with the given information
 
@@ -125,7 +125,7 @@ class ADOClient:
         :param description: The description of the pull request
         :param reviewer_ids: The reviewer IDs to be added to the pull request
 
-        :returns: A new ADOPullRequestClient for the pull request created
+        :returns: The ADO response with the data in it
 
         :raises ADOException: If we fail to create the pull request
         """
@@ -135,8 +135,8 @@ class ADOClient:
         request_url += "/pullRequests?api-version=5.1"
 
         body: Dict[str, Any] = {
-            "sourceRefName": _cleanup_branch_name(source_branch),
-            "targetRefName": _cleanup_branch_name(target_branch),
+            "sourceRefName": _canonicalize_branch_name(source_branch),
+            "targetRefName": _canonicalize_branch_name(target_branch),
         }
 
         if title is not None:
@@ -145,18 +145,11 @@ class ADOClient:
         if description is not None:
             body["description"] = description
 
-        if len(reviewer_ids) > 0:
+        if reviewer_ids is not None and len(reviewer_ids) > 0:
             body["reviewers"] = [{"id": reviewer_id} for reviewer_id in reviewer_ids]
 
         response = self.http_client.post(request_url, json_data=body)
-        ado_response = self.http_client.decode_response(response)
-
-        try:
-            pr_id = ado_response["pullRequestId"]
-            return self.pull_request(pr_id)
-        except KeyError:
-            self.log.error("Create pull request request was successful, but unable to find ID")
-            raise ADOException("Unable to find pull request ID")
+        return self.http_client.decode_response(response)
 
     def pull_request(self, pull_request_id: int) -> ADOPullRequestClient:
         """Get an ADOPullRequestClient for the PR identifier.
@@ -188,7 +181,7 @@ class ADOClient:
             request_url += f"$top=100&$skip={offset}"
 
             if branch_name is not None:
-                request_url += f"&sourceRefName={_cleanup_branch_name(branch_name)}"
+                request_url += f"&sourceRefName={_canonicalize_branch_name(branch_name)}"
 
             request_url += "&api-version=3.0-preview"
 
@@ -245,7 +238,7 @@ class ADOClient:
 
         return self.http_client.get(request_url)
 
-def _cleanup_branch_name(branch_name: str) -> str:
+def _canonicalize_branch_name(branch_name: str) -> str:
     """Cleanup the branch name before sending it via ADO request
 
     :param branch_name: The name of the branch to cleanup
