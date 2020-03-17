@@ -31,9 +31,11 @@ class ADOGraphClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.base_url(is_vssps=True)}/graph/groups?api-version=5.1-preview.1"
+        request_url = (
+            f"{self.http_client.base_url(is_vssps=True)}/graph/groups?api-version=5.1-preview.1"
+        )
 
-        groups = []
+        groups: List[Any] = []
         continuation_token = None
 
         while True:
