@@ -11,7 +11,7 @@ import os
 import sys
 import unittest
 
-from . import load_test_details
+from . import TestDetails
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "..")))
 import simple_ado  # pylint: disable=wrong-import-order
@@ -22,7 +22,7 @@ class LibraryTests(unittest.TestCase):
 
     def setUp(self) -> None:
         """Set up method."""
-        self.test_config = load_test_details()
+        self.test_config = TestDetails()
         self.client = simple_ado.ADOClient(
             username=self.test_config.username,
             tenant=self.test_config.tenant,
