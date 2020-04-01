@@ -29,7 +29,6 @@ class ADOGitStatusState(enum.Enum):
     ERROR: str = "error"
 
 
-
 class ADOReferenceUpdate:
     """Contains the relevant details about a reference update.
 
@@ -42,7 +41,9 @@ class ADOReferenceUpdate:
     old_object_id: str
     new_object_id: str
 
-    def __init__(self, name: str, old_object_id: Optional[str], new_object_id: Optional[str]) -> None:
+    def __init__(
+        self, name: str, old_object_id: Optional[str], new_object_id: Optional[str]
+    ) -> None:
         self.name = name
 
         if old_object_id:
@@ -214,24 +215,20 @@ class ADOGitClient(ADOBaseClient):
             raise ADOException("The output path already exists")
 
         with self.http_client.get(request_url, stream=True) as response:
-            download_from_response_stream(
-                response=response,
-                output_path=output_path,
-                log=self.log
-            )
+            download_from_response_stream(response=response, output_path=output_path, log=self.log)
 
     def get_refs(
-            self,
-            *,
-            filter_startswith: Optional[str] = None,
-            filter_contains: Optional[str] = None,
-            include_links: Optional[bool] = None,
-            include_statuses: Optional[bool] = None,
-            include_my_branches: Optional[bool] = None,
-            latest_statuses_only: Optional[bool] = None,
-            peel_tags: Optional[bool] = None,
-            top: Optional[int] = None,
-            continuation_token: Optional[str] = None,
+        self,
+        *,
+        filter_startswith: Optional[str] = None,
+        filter_contains: Optional[str] = None,
+        include_links: Optional[bool] = None,
+        include_statuses: Optional[bool] = None,
+        include_my_branches: Optional[bool] = None,
+        latest_statuses_only: Optional[bool] = None,
+        peel_tags: Optional[bool] = None,
+        top: Optional[int] = None,
+        continuation_token: Optional[str] = None,
     ) -> ADOResponse:
         """Set a status on a PR.
 
@@ -270,7 +267,9 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Getting refs")
 
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}/refs?"
+        request_url = (
+            f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}/refs?"
+        )
 
         parameters: Dict[str, Any] = {}
 
@@ -312,12 +311,7 @@ class ADOGitClient(ADOBaseClient):
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
 
-    def get_commit(
-            self,
-            commit_id: str,
-            *,
-            change_count: Optional[int] = None,
-    ) -> ADOResponse:
+    def get_commit(self, commit_id: str, *, change_count: Optional[int] = None,) -> ADOResponse:
         """Set a status on a PR.
 
         All non-specified options use the ADO default.
@@ -331,7 +325,9 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Getting commit: {commit_id}")
 
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = (
+            f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        )
         request_url += f"/commits/{commit_id}?api-version=5.0"
 
         if change_count:
@@ -350,7 +346,9 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug("Updating references")
 
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = (
+            f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        )
         request_url += "/refs?api-version=5.0"
 
         data = [update.json_data() for update in updates]
@@ -368,3 +366,97 @@ class ADOGitClient(ADOBaseClient):
         :returns: The ADO response
         """
         return self.update_refs([ADOReferenceUpdate(branch_name, object_id, None)])
+
+    class VersionControlRecursionType(enum.Enum):
+        """Specifies the level of recursion to use when getting an item."""
+
+        full = "full"
+        none = "none"
+        one_level = "oneLevel"
+        one_level_plus_nested_empty_folders = "oneLevelPlusNestedEmptyFolders"
+
+    class GitVersionOptions(enum.Enum):
+        """Version options."""
+
+        first_parent = "firstParent"
+        none = "none"
+        previous_change = "previousChange"
+
+    class GitVersionType(enum.Enum):
+        """Version type. Determines how the ID of an item is interpreted."""
+
+        branch = "branch"
+        commit = "commit"
+        tag = "tag"
+
+    def get_item(
+        self,
+        *,
+        path: str,
+        scope_path: Optional[str] = None,
+        recursion_level: Optional[VersionControlRecursionType] = None,
+        include_content_metadata: Optional[bool] = None,
+        latest_processed_changes: Optional[bool] = None,
+        version_options: Optional[GitVersionOptions] = None,
+        version: Optional[str] = None,
+        version_type: Optional[GitVersionType] = None,
+        include_content: Optional[bool] = None,
+        resolve_lfs: Optional[bool] = None,
+    ) -> ADOResponse:
+        """Get a git item.
+
+        All non-specified options use the ADO default.
+
+        :param str path: The item path,
+        :param Optional[str] scope_path: The path scope
+        :param Optional[VersionControlRecursionType] recursion_level: The recursion level
+        :param Optional[bool] include_content_metadata: Set to include content metadata
+        :param Optional[bool] latest_processed_changes: Set to include the latest changes
+        :param Optional[GitVersionOptions] version_options: Specify additional modifiers to version
+        :param Optional[str] version: Version string identifier (name of tag/branch, SHA1 of commit)
+        :param Optional[GitVersionType] version_type: Version type (branch, tag or commit).
+        :param Optional[bool] include_content: Set to true to include item content when requesting JSON
+        :param Optional[bool]resolve_lfs: Set to true to resolve LFS pointer files to resolve actual content
+
+        :returns: The ADO response with the data in it
+        """
+
+        self.log.debug(f"Getting item")
+
+        request_url = (
+            f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}/items?"
+        )
+
+        parameters: Dict[str, Any] = {"path": path, "api-version": "5.1"}
+
+        if scope_path is not None:
+            parameters["scopePath"] = scope_path
+
+        if recursion_level is not None:
+            parameters["recursionLevel"] = recursion_level.value
+
+        if include_content_metadata is not None:
+            parameters["includeContentMetadata"] = "true" if include_content_metadata else "false"
+
+        if latest_processed_changes is not None:
+            parameters["latestProcessedChange"] = "true" if latest_processed_changes else "false"
+
+        if version_options is not None:
+            parameters["versionDescriptor.versionOptions"] = version_options.value
+
+        if version is not None:
+            parameters["versionDescriptor.version"] = version
+
+        if version_type is not None:
+            parameters["versionDescriptor.versionType"] = version_type.value
+
+        if include_content is not None:
+            parameters["includeContent"] = "true" if include_content else "false"
+
+        if resolve_lfs is not None:
+            parameters["resolveLfs"] = "true" if resolve_lfs else "false"
+
+        request_url += urllib.parse.urlencode(parameters)
+
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
