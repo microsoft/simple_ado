@@ -8,3 +8,7 @@ lib/
 pip-wheel-metadata/
 pyvenv.cfg
 simple_ado.egg-info/
+coverage.xml
+htmlcov
+.coverage
+test-results.xml
