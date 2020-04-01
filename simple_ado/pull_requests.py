@@ -8,6 +8,7 @@
 import logging
 from typing import Any, Dict, List, Optional
 
+import deserialize
 import requests
 
 from simple_ado.base_client import ADOBaseClient
@@ -21,6 +22,8 @@ from simple_ado.context import ADOContext
 from simple_ado.exceptions import ADOException
 from simple_ado.git import ADOGitStatusState
 from simple_ado.http_client import ADOHTTPClient, ADOResponse, ADOThread
+
+from simple_ado.models import PatchOperation, AddOperation, DeleteOperation, PropertyValue
 
 
 class ADOPullRequestClient(ADOBaseClient):
@@ -352,3 +355,67 @@ class ADOPullRequestClient(ADOBaseClient):
         for thread in self.threads_with_identifier(identifier):
             self.log.debug(f"Deleting thread: {thread}")
             self.delete_thread(thread)
+
+    def get_properties(self) -> Dict[str, PropertyValue]:
+        """Get the properties on the PR from ADO.
+
+        :returns: The properties that were found
+        """
+
+        self.log.debug(f"Getting properties: {self.pull_request_id}")
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url += f"/pullRequests/{self.pull_request_id}/properties?api-version=5.1-preview.1"
+        response = self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        raw_properties = self.http_client.extract_value(response_data)
+
+        properties = deserialize.deserialize(Dict[str, PropertyValue], raw_properties)
+
+        return properties
+
+    def patch_properties(self, operations: List[PatchOperation]) -> Dict[str, PropertyValue]:
+        """Patch the properties on the PR.
+
+        Usually add_property(), delete_property() and update_property() are
+        going to be what you need instead of this base function.
+
+        :param operations: The raw operations
+
+        :returns: The new properties
+        """
+
+        self.log.debug(f"Patching properties: {self.pull_request_id}")
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url += f"/pullRequests/{self.pull_request_id}/properties?api-version=5.1-preview.1"
+
+        response = self.http_client.patch(request_url, operations=operations)
+
+        response_data = self.http_client.decode_response(response)
+        raw_properties = self.http_client.extract_value(response_data)
+
+        properties = deserialize.deserialize(Dict[str, PropertyValue], raw_properties)
+
+        return properties
+
+    def add_property(self, name: str, value: str) -> Dict[str, PropertyValue]:
+        """Add a property to the PR.
+
+        :param name: The name of the property to add
+        :param value: The value of the property to add
+
+        :returns: The new properties
+        """
+
+        operation = AddOperation("/" + name, value)
+        return self.patch_properties([operation])
+
+    def delete_property(self, name: str) -> Dict[str, PropertyValue]:
+        """Delete a property from the PR.
+
+        :param name: The name of the property to delete
+
+        :returns: The new properties
+        """
+
+        operation = DeleteOperation("/" + name)
+        return self.patch_properties([operation])

@@ -32,6 +32,20 @@ class LibraryTests(unittest.TestCase):
             status_context="simple_ado",
         )
 
+    def test_properties(self):
+        """Test get properties."""
+        all_prs = self.client.list_all_pull_requests()
+        latest_pr = all_prs[0]
+        pr_id = latest_pr["pullRequestId"]
+        pr_id = 441259
+        base_properties = self.client.pull_request(pr_id).get_properties()
+        base_count = len(base_properties)
+        new_properties = self.client.pull_request(pr_id).add_property("Hello", "World")
+        self.assertEqual(base_count + 1, len(new_properties))
+        after_deletion = self.client.pull_request(pr_id).delete_property("Hello")
+        self.assertEqual(len(after_deletion), base_count)
+        print("Done")
+
     def test_list_repos(self):
         """Test list repos."""
         repos = self.client.git.all_repositories()
@@ -51,7 +65,7 @@ class LibraryTests(unittest.TestCase):
         self.assertIsNotNone(commit)
 
     # TODO: We can't test this until we can also create branches
-    #def test_delete_branch(self):
+    # def test_delete_branch(self):
     #    """Test delete branch."""
     #    response = self.client.git.delete_branch("refs/heads/?", "?")
     #    for value in response:
@@ -69,12 +83,12 @@ class LibraryTests(unittest.TestCase):
 
     def test_capabilities(self):
         """Test setting capabilities."""
-        pool = self.client.pools.get_pools(action_filter=simple_ado.pools.TaskAgentPoolActionFilter.manage)[0]
+        pool = self.client.pools.get_pools(
+            action_filter=simple_ado.pools.TaskAgentPoolActionFilter.manage
+        )[0]
         agent = self.client.pools.get_agents(pool_id=pool["id"])[0]
         capabilities = agent["userCapabilities"]
         capabilities["hello"] = "world"
         self.client.pools.update_agent_capabilities(
-            pool_id=pool["id"],
-            agent_id=agent["id"],
-            capabilities=capabilities
+            pool_id=pool["id"], agent_id=agent["id"], capabilities=capabilities
         )
