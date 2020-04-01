@@ -8,11 +8,12 @@
 import logging
 import os
 import time
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import requests
 
 from simple_ado.exceptions import ADOException, ADOHTTPException
+from simple_ado.models import PatchOperation
 
 
 # pylint: disable=invalid-name
@@ -248,18 +249,31 @@ class ADOHTTPClient:
     def patch(
         self,
         request_url: str,
-        json_data: Optional[Any] = None,
         *,
+        operations: Optional[List[PatchOperation]] = None,
+        json_data: Optional[Any] = None,
         additional_headers: Optional[Dict[str, Any]] = None,
     ) -> requests.Response:
         """Issue a PATCH request with the correct credentials and headers.
 
+        Note: If `json_data` and `operations` are not None, the latter will take
+        precedence.
+
         :param str request_url: The URL to issue the request to
         :param Optional[Dict[str,str]] additional_headers: Any additional headers to add to the request
         :param Optional[Dict[str,Any]] json_data: The JSON data to send with the request
+        :param Optional[List[PatchOperation]] operations: The patch operations to send with the request
 
         :returns: The raw response object from the API
         """
+
+        if operations is not None:
+            json_data = [operation.serialize() for operation in operations]
+            if additional_headers is None:
+                additional_headers = {}
+            if "Content-Type" not in additional_headers:
+                additional_headers["Content-Type"] = "application/json-patch+json"
+
         headers = self.construct_headers(additional_headers=additional_headers)
         return requests.patch(request_url, auth=self.credentials, headers=headers, json=json_data)
 

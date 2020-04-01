@@ -5,17 +5,18 @@
 
 """ADO work items API wrapper."""
 
-import datetime
 import enum
 import logging
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from simple_ado.base_client import ADOBaseClient
 from simple_ado.context import ADOContext
 from simple_ado.exceptions import ADOException, ADOHTTPException
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 from simple_ado.utilities import boolstr
+
+from simple_ado.models import PatchOperation, AddOperation
 
 
 class BatchRequest:
@@ -97,118 +98,6 @@ class WorkItemRelationType(enum.Enum):
     artifact_link = "ArtifactLink"
 
 
-class WorkItemField(enum.Enum):
-    """Defines the various fields available on a work item.
-
-    This does not include custom fields.
-    """
-
-    area_path = "/fields/System.AreaPath"
-    assigned_to = "/fields/System.AssignedTo"
-    changed_date = "/fields/System.ChangedDate"
-    closed_date = "/fields/Microsoft.VSTS.Common.ClosedDate"
-    created_by = "/fields/System.CreatedBy"
-    created_date = "/fields/System.CreatedDate"
-    description = "/fields/System.Description"
-    duplicate_id = "/fields/Office.Common.DuplicateID"
-    history = "/fields/System.History"
-    priority = "/fields/Microsoft.VSTS.Common.Priority"
-    resolved_date = "/fields/Microsoft.VSTS.Common.ResolvedDate"
-    resolved_reason = "/fields/Microsoft.VSTS.Common.ResolvedReason"
-    state = "/fields/System.State"
-    substatus = "/fields/Office.Common.SubStatus"
-    tags = "/fields/System.Tags"
-    title = "/fields/System.Title"
-
-    relation = "/relations/-"
-
-
-class WorkItemFieldOperationType(enum.Enum):
-    """Define the field operation types."""
-
-    add = "add"
-    copy = "copy"
-    move = "move"
-    remove = "remove"
-    replace = "replace"
-    test = "test"
-
-
-class WorkItemFieldOperation:
-    """Defines a base patch operation for sending via the ADO API.
-
-    :param operation: The operation type
-    :param path: The path to apply the operation to
-    :param value: The value (if any) to use
-    :param from_path: The original path (if required)
-    """
-
-    def __init__(
-        self,
-        operation: WorkItemFieldOperationType,
-        path: Union[WorkItemField, str],
-        value: Optional[str],
-        from_path: Optional[str] = None,
-    ) -> None:
-        self.operation = operation
-        self.path = path
-        self.value = value
-        self.from_path = from_path
-
-    def raw(self) -> Dict[str, Any]:
-        """Generate the raw representation that is sent to the API.
-
-        :returns: A dictionary with the raw API data for the request
-        """
-
-        if isinstance(self.value, datetime.datetime):
-            self.value = (
-                self.value.strftime("%Y-%m-%dT%H:%M:%S.")
-                + str(int(self.value.microsecond / 10000))
-                + "Z"
-            )
-
-        if isinstance(self.value, enum.Enum):
-            self.value = self.value.value
-
-        raw_dict = {"op": self.operation.value, "value": self.value, "from": self.from_path}
-
-        if isinstance(self.path, str):
-            raw_dict["path"] = self.path
-        else:
-            raw_dict["path"] = self.path.value
-
-        return raw_dict
-
-    def __str__(self) -> str:
-        """Generate and return the string representation of the object.
-
-        :return: A string representation of the object
-        """
-        return str(self.raw())
-
-
-class WorkItemFieldOperationAdd(WorkItemFieldOperation):
-    """Defines an add operation for sending via the ADO API.
-
-    :param field: The field to add
-    :param value: The value to set for the new field
-    """
-
-    def __init__(self, field: WorkItemField, value: Any) -> None:
-        super().__init__(WorkItemFieldOperationType.add, field, value)
-
-
-class WorkItemFieldOperationDelete(WorkItemFieldOperation):
-    """Defines a delete operation for sending via the ADO API.
-
-    :param field: The field to delete
-    """
-
-    def __init__(self, field: WorkItemField) -> None:
-        super().__init__(WorkItemFieldOperationType.remove, field, None)
-
-
 class ADOWorkItemsClient(ADOBaseClient):
     """Wrapper class around the ADO work items APIs.
 
@@ -250,8 +139,8 @@ class ADOWorkItemsClient(ADOBaseClient):
     def add_property(
         self,
         identifier: str,
-        field: WorkItemField,
-        value: Any,
+        field: str,
+        value: str,
         *,
         bypass_rules: bool = False,
         supress_notifications: bool = False,
@@ -270,9 +159,9 @@ class ADOWorkItemsClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        self.log.debug(f"Add field '{field.value}' to ticket {identifier}")
+        self.log.debug(f"Add field '{field}' to ticket {identifier}")
 
-        operation = WorkItemFieldOperationAdd(field, value)
+        operation = AddOperation(field, value)
 
         request_url = f"{self.http_client.base_url()}/wit/workitems/{identifier}"
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
@@ -281,7 +170,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         response = self.http_client.patch(
             request_url,
-            [operation.raw()],
+            operations=[operation],
             additional_headers={"Content-Type": "application/json-patch+json"},
         )
 
@@ -334,8 +223,8 @@ class ADOWorkItemsClient(ADOBaseClient):
             raise ADOException(f"Failed to get url from response: {response_data}")
 
         # Attach it to the ticket
-        operation = WorkItemFieldOperationAdd(
-            WorkItemField.relation,
+        operation = AddOperation(
+            "/relations/-",
             {"rel": "AttachedFile", "url": url, "attributes": {"comment": ""}},
         )
 
@@ -346,7 +235,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         response = self.http_client.patch(
             request_url,
-            [operation.raw()],
+            operations=[operation],
             additional_headers={"Content-Type": "application/json-patch+json"},
         )
 
@@ -378,8 +267,8 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug(f"Adding link {parent_identifier} -> {child_url} ({relation_type})")
 
-        operation = WorkItemFieldOperationAdd(
-            WorkItemField.relation,
+        operation = AddOperation(
+            "/relations/-",
             {"rel": relation_type.value, "url": child_url, "attributes": {"comment": ""}},
         )
 
@@ -390,7 +279,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         response = self.http_client.patch(
             request_url,
-            [operation.raw()],
+            operations=[operation],
             additional_headers={"Content-Type": "application/json-patch+json"},
         )
 
@@ -461,7 +350,7 @@ class ADOWorkItemsClient(ADOBaseClient):
     def create(
         self,
         item_type: str,
-        operations: List[WorkItemFieldOperationAdd],
+        operations: List[AddOperation],
         *,
         bypass_rules: bool = False,
         supress_notifications: bool = False,
@@ -489,7 +378,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         response = self.http_client.post(
             request_url,
-            json_data=[operation.raw() for operation in operations],
+            operations=operations,
             additional_headers={"Content-Type": "application/json-patch+json"},
         )
 
@@ -498,7 +387,7 @@ class ADOWorkItemsClient(ADOBaseClient):
     def update(
         self,
         identifier: str,
-        operations: List[WorkItemFieldOperation],
+        operations: List[PatchOperation],
         *,
         bypass_rules: bool = False,
         supress_notifications: bool = False,
@@ -525,7 +414,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         response = self.http_client.patch(
             request_url,
-            [operation.raw() for operation in operations],
+            operations=operations,
             additional_headers={"Content-Type": "application/json-patch+json"},
         )
 
