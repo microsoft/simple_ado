@@ -12,3 +12,4 @@ coverage.xml
 htmlcov
 .coverage
 test-results.xml
+.env
