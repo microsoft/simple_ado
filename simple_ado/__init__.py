@@ -116,7 +116,7 @@ class ADOClient:
         title: Optional[str] = None,
         description: Optional[str] = None,
         reviewer_ids: Optional[List[str]] = None,
-    ) -> ADOPullRequestClient:
+    ) -> ADOResponse:
         """Creates a pull request with the given information
 
         :param source_branch: The source branch of the pull request
