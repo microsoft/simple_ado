@@ -36,7 +36,7 @@ class ADOBuildClient(ADOBaseClient):
         definition_id: int,
         source_branch: str,
         variables: Dict[str, str],
-        requesting_identity: Optional[TeamFoundationId] = None
+        requesting_identity: Optional[TeamFoundationId] = None,
     ) -> ADOResponse:
         """Queue a new build.
 
@@ -60,9 +60,7 @@ class ADOBuildClient(ADOBaseClient):
         }
 
         if requesting_identity:
-            body["requestedFor"] = {
-                "id": requesting_identity
-            }
+            body["requestedFor"] = {"id": requesting_identity}
 
         response = self.http_client.post(request_url, json_data=body)
         return self.http_client.decode_response(response)
@@ -79,11 +77,7 @@ class ADOBuildClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
-    def get_artifact_info(
-        self,
-        build_id: int,
-        artifact_name: str
-    ) -> ADOResponse:
+    def get_artifact_info(self, build_id: int, artifact_name: str) -> ADOResponse:
         """Fetch an artifacts details from a build.
 
         :param build_id: The ID of the build
@@ -105,12 +99,7 @@ class ADOBuildClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
-    def download_artifact(
-        self,
-        build_id: int,
-        artifact_name: str,
-        output_path: str
-    ) -> None:
+    def download_artifact(self, build_id: int, artifact_name: str, output_path: str) -> None:
         """Download an artifact from a build.
 
         :param build_id: The ID of the build
@@ -132,8 +121,4 @@ class ADOBuildClient(ADOBaseClient):
         self.log.debug(f"Fetching artifact {artifact_name} from build {build_id}...")
 
         with self.http_client.get(request_url, stream=True) as response:
-            download_from_response_stream(
-                response=response,
-                output_path=output_path,
-                log=self.log
-            )
+            download_from_response_stream(response=response, output_path=output_path, log=self.log)

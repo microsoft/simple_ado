@@ -18,6 +18,7 @@ from simple_ado.http_client import ADOHTTPClient, ADOResponse
 
 class TaskAgentPoolActionFilter(enum.Enum):
     """Represents an agent pool action filter."""
+
     manage = "manage"
     none = "none"
     use = "use"
@@ -40,7 +41,7 @@ class ADOPoolsClient(ADOBaseClient):
         self,
         *,
         pool_name: Optional[str] = None,
-        action_filter: Optional[TaskAgentPoolActionFilter] = None
+        action_filter: Optional[TaskAgentPoolActionFilter] = None,
     ) -> ADOResponse:
         """Gets the agent details.
 
@@ -94,7 +95,7 @@ class ADOPoolsClient(ADOBaseClient):
             "includeCapabilities": include_capabilities,
             "includeAssignedRequest": include_assigned_request,
             "includeLastCompletedRequest": include_last_completed_request,
-            "api-version": "5.1"
+            "api-version": "5.1",
         }
 
         if agent_name:
@@ -106,9 +107,7 @@ class ADOPoolsClient(ADOBaseClient):
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
 
-    def get_agent(
-        self, *, pool_id: int, agent_id: int
-    ) -> ADOResponse:
+    def get_agent(self, *, pool_id: int, agent_id: int) -> ADOResponse:
         """Gets the agent details.
 
         :param int pool_id: The ID of the pool the agent is in
@@ -122,7 +121,6 @@ class ADOPoolsClient(ADOBaseClient):
 
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
-
 
     def update_agent(
         self, *, pool_id: int, agent_id: int, agent_data: Dict[str, Any]
@@ -142,10 +140,7 @@ class ADOPoolsClient(ADOBaseClient):
         response = self.http_client.patch(request_url, json_data=agent_data)
         return self.http_client.decode_response(response)
 
-
-    def set_agent_state(
-        self, *, pool_id: int, agent_id: int, enabled: bool
-    ) -> ADOResponse:
+    def set_agent_state(self, *, pool_id: int, agent_id: int, enabled: bool) -> ADOResponse:
         """Set the enabled/disabled state of an agent.
 
         :param int pool_id: The ID of the pool the agent is in
@@ -158,7 +153,6 @@ class ADOPoolsClient(ADOBaseClient):
         agent_details = self.get_agent(pool_id=pool_id, agent_id=agent_id)
         agent_details["enabled"] = enabled
         return self.update_agent(pool_id=pool_id, agent_id=agent_id, agent_data=agent_details)
-
 
     def update_agent_capabilities(
         self, *, pool_id: int, agent_id: int, capabilities: Dict[str, str]
@@ -173,7 +167,9 @@ class ADOPoolsClient(ADOBaseClient):
         """
 
         request_url = self.http_client.base_url(is_project=False, is_default_collection=False)
-        request_url += f"/distributedtask/pools/{pool_id}/agents/{agent_id}/usercapabilities?api-version=5.1"
+        request_url += (
+            f"/distributedtask/pools/{pool_id}/agents/{agent_id}/usercapabilities?api-version=5.1"
+        )
 
         response = self.http_client.put(request_url, json_data=capabilities)
         return self.http_client.decode_response(response)

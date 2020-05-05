@@ -210,7 +210,11 @@ class ADOHTTPClient:
         and exception.response.status_code not in range(400, 500)
     )
     def get(
-        self, request_url: str, *, additional_headers: Optional[Dict[str, str]] = None, stream: bool = False
+        self,
+        request_url: str,
+        *,
+        additional_headers: Optional[Dict[str, str]] = None,
+        stream: bool = False,
     ) -> requests.Response:
         """Issue a GET request with the correct credentials and headers.
 
@@ -295,7 +299,6 @@ class ADOHTTPClient:
         headers = self.construct_headers(additional_headers=additional_headers)
         return requests.put(request_url, auth=self.credentials, headers=headers, json=json_data)
 
-
     def delete(
         self, request_url: str, *, additional_headers: Optional[Dict[str, Any]] = None
     ) -> requests.Response:
@@ -356,8 +359,7 @@ class ADOHTTPClient:
 
         if response.status_code < 200 or response.status_code >= 300:
             raise ADOHTTPException(
-                f"ADO returned a non-200 status code, configuration={self}",
-                response,
+                f"ADO returned a non-200 status code, configuration={self}", response,
             )
 
         try:

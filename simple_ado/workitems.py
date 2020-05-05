@@ -224,8 +224,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         # Attach it to the ticket
         operation = AddOperation(
-            "/relations/-",
-            {"rel": "AttachedFile", "url": url, "attributes": {"comment": ""}},
+            "/relations/-", {"rel": "AttachedFile", "url": url, "attributes": {"comment": ""}},
         )
 
         request_url = f"{self.http_client.base_url()}/wit/workitems/{identifier}"

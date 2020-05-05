@@ -3,8 +3,10 @@
 import enum
 from typing import Any, Dict, Optional
 
+
 class OperationType(enum.Enum):
     """An ADO operation."""
+
     add = "add"
     copy = "copy"
     move = "move"
@@ -12,10 +14,17 @@ class OperationType(enum.Enum):
     replace = "replace"
     test = "test"
 
+
 class PatchOperation:
     """Represents a PATCH operation."""
 
-    def __init__(self, operation: OperationType, path: str, value: Optional[Any], from_path: Optional[str] = None):
+    def __init__(
+        self,
+        operation: OperationType,
+        path: str,
+        value: Optional[Any],
+        from_path: Optional[str] = None,
+    ):
         """Create a new PatchOperation.
 
         :param operation: The raw operation to do

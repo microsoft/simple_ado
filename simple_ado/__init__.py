@@ -131,7 +131,9 @@ class ADOClient:
         """
         self.log.debug("Creating pull request")
 
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = (
+            f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        )
         request_url += "/pullRequests?api-version=5.1"
 
         body: Dict[str, Any] = {
@@ -206,7 +208,7 @@ class ADOClient:
         parameters: Dict[str, Any],
         is_default_collection: bool = True,
         is_project: bool = True,
-        is_internal: bool = False
+        is_internal: bool = False,
     ) -> ADOResponse:
         """Perform a custom GET REST request.
 
@@ -232,11 +234,12 @@ class ADOClient:
         request_url = self.http_client.base_url(
             is_default_collection=is_default_collection,
             is_project=is_project,
-            is_internal=is_internal
+            is_internal=is_internal,
         )
         request_url += f"/{url_fragment}?{encoded_parameters}"
 
         return self.http_client.get(request_url)
+
 
 def _canonicalize_branch_name(branch_name: str) -> str:
     """Cleanup the branch name before sending it via ADO request

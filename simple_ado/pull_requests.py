@@ -54,7 +54,9 @@ class ADOPullRequestClient(ADOBaseClient):
         """
 
         self.log.debug(f"Getting PR: {self.pull_request_id}")
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = (
+            f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        )
         request_url += f"/pullRequests/{self.pull_request_id}?api-version=3.0-preview"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
@@ -66,7 +68,9 @@ class ADOPullRequestClient(ADOBaseClient):
         """
 
         self.log.debug(f"Getting workitems: {self.pull_request_id}")
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = (
+            f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        )
         request_url += f"/pullRequests/{self.pull_request_id}/workitems?api-version=5.0"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
@@ -80,7 +84,9 @@ class ADOPullRequestClient(ADOBaseClient):
         """
 
         self.log.debug(f"Getting threads: {self.pull_request_id}")
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = (
+            f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        )
         request_url += f"/pullRequests/{self.pull_request_id}/threads?api-version=3.0-preview"
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
@@ -119,7 +125,7 @@ class ADOPullRequestClient(ADOBaseClient):
         comment: ADOComment,
         *,
         status: Optional[ADOCommentStatus] = None,
-        comment_identifier: Optional[str] = None
+        comment_identifier: Optional[str] = None,
     ) -> ADOResponse:
         """Create a thread using a single root comment.
 
@@ -136,7 +142,7 @@ class ADOPullRequestClient(ADOBaseClient):
             [comment.generate_representation()],
             thread_location=comment.location,
             status=status,
-            comment_identifier=comment_identifier
+            comment_identifier=comment_identifier,
         )
 
     def create_thread(
@@ -160,7 +166,9 @@ class ADOPullRequestClient(ADOBaseClient):
 
         self.log.debug(f"Creating thread ({self.pull_request_id})")
 
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = (
+            f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        )
         request_url += f"/pullRequests/{self.pull_request_id}/threads?api-version=3.0-preview"
 
         properties = {
@@ -168,7 +176,9 @@ class ADOPullRequestClient(ADOBaseClient):
         }
 
         if comment_identifier:
-            properties[ADOCommentProperty.COMMENT_IDENTIFIER] = ADOCommentProperty.create_string(comment_identifier)
+            properties[ADOCommentProperty.COMMENT_IDENTIFIER] = ADOCommentProperty.create_string(
+                comment_identifier
+            )
 
         body = {
             "comments": comments,
@@ -206,7 +216,9 @@ class ADOPullRequestClient(ADOBaseClient):
                 headers=self.http_client.construct_headers(),
             )
 
-    def create_thread_list(self, threads: List[ADOComment], comment_identifier: Optional[str] = None) -> None:
+    def create_thread_list(
+        self, threads: List[ADOComment], comment_identifier: Optional[str] = None
+    ) -> None:
         """Create a list of threads
 
         :param List[ADOComment] threads: The threads to create
@@ -251,7 +263,9 @@ class ADOPullRequestClient(ADOBaseClient):
             f"Setting PR status ({state}) on PR ({self.pull_request_id}): {identifier} -> {description}"
         )
 
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = (
+            f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        )
         request_url += f"/pullRequests/{self.pull_request_id}/statuses?api-version=4.0-preview"
 
         body = {
@@ -363,7 +377,9 @@ class ADOPullRequestClient(ADOBaseClient):
         """
 
         self.log.debug(f"Getting properties: {self.pull_request_id}")
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = (
+            f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        )
         request_url += f"/pullRequests/{self.pull_request_id}/properties?api-version=5.1-preview.1"
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
@@ -385,7 +401,9 @@ class ADOPullRequestClient(ADOBaseClient):
         """
 
         self.log.debug(f"Patching properties: {self.pull_request_id}")
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        request_url = (
+            f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
+        )
         request_url += f"/pullRequests/{self.pull_request_id}/properties?api-version=5.1-preview.1"
 
         response = self.http_client.patch(request_url, operations=operations)

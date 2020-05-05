@@ -17,7 +17,9 @@ def boolstr(value: bool) -> str:
     return str(value).lower()
 
 
-def download_from_response_stream(*, response: requests.Response, output_path: str, log: logging.Logger) -> None:
+def download_from_response_stream(
+    *, response: requests.Response, output_path: str, log: logging.Logger
+) -> None:
     """Downloads a file from an already open response stream.
 
     :param requests.Response response: The response to download from

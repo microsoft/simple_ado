@@ -7,4 +7,4 @@ from typing import NewType
 
 # pylint: disable=invalid-name
 
-TeamFoundationId = NewType('TeamFoundationId', str)
+TeamFoundationId = NewType("TeamFoundationId", str)

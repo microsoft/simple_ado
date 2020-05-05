@@ -84,7 +84,9 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
+        request_url = (
+            f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
+        )
 
         body = {
             "type": {"id": ADOBranchPolicy.BUILD.value},
@@ -123,7 +125,9 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
+        request_url = (
+            f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
+        )
 
         body = {
             "type": {"id": ADOBranchPolicy.REQUIRED_REVIEWERS.value},
@@ -168,7 +172,9 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
+        request_url = (
+            f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
+        )
 
         body = {
             "type": {"id": ADOBranchPolicy.APPROVAL_COUNT.value},
@@ -202,7 +208,9 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
+        request_url = (
+            f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
+        )
 
         body = {
             "type": {"id": ADOBranchPolicy.WORK_ITEM.value},
@@ -273,7 +281,9 @@ class ADOSecurityClient(ADOBaseClient):
         response = self.http_client.post(request_url, json_data=body)
         return self.http_client.decode_response(response)
 
-    def _get_descriptor_info(self, branch: str, team_foundation_id: TeamFoundationId) -> Dict[str, str]:
+    def _get_descriptor_info(
+        self, branch: str, team_foundation_id: TeamFoundationId
+    ) -> Dict[str, str]:
         """Fetch the descriptor identity information for a given identity.
 
         :param str branch: The git branch of interest
@@ -305,7 +315,8 @@ class ADOSecurityClient(ADOBaseClient):
             }
         except:
             raise ADOException(
-                "Could not determine descriptor info for team_foundation_id: " + str(team_foundation_id)
+                "Could not determine descriptor info for team_foundation_id: "
+                + str(team_foundation_id)
             )
 
         return descriptor_info

@@ -5,6 +5,7 @@ from typing import Any, Dict
 
 import deserialize
 
+
 @deserialize.key("property_type", "$type")
 @deserialize.downcast_field("$type")
 class PropertyValue:
@@ -28,10 +29,7 @@ class PropertyValue:
         try:
             return str(self.serialize())
         except NotImplementedError:
-            return str({
-                "$type": self.property_type,
-                "$value": None
-            })
+            return str({"$type": self.property_type, "$value": None})
 
 
 @deserialize.key("value", "$value")
@@ -54,10 +52,7 @@ class StringPropertyValue(PropertyValue):
 
         :returns: A dictionary to be sent to ADO
         """
-        return {
-            "$type": self.property_type,
-            "$value": self.value
-        }
+        return {"$type": self.property_type, "$value": self.value}
 
 
 @deserialize.key("value", "$value")
@@ -80,10 +75,7 @@ class IntPropertyValue(PropertyValue):
 
         :returns: A dictionary to be sent to ADO
         """
-        return {
-            "$type": self.property_type,
-            "$value": self.value
-        }
+        return {"$type": self.property_type, "$value": self.value}
 
 
 @deserialize.key("value", "$value")
@@ -112,5 +104,5 @@ class DateTimePropertyValue(PropertyValue):
                 self.value.strftime("%Y-%m-%dT%H:%M:%S.")
                 + str(int(self.value.microsecond / 10000))
                 + "Z"
-            )
+            ),
         }
