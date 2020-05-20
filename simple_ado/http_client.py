@@ -7,10 +7,10 @@
 
 import logging
 import os
-import time
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, cast, Dict, List, Optional, Tuple
 
 import requests
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_random_exponential
 
 from simple_ado.exceptions import ADOException, ADOHTTPException
 from simple_ado.models import PatchOperation
@@ -22,113 +22,26 @@ ADOResponse = Any
 # pylint: enable=invalid-name
 
 
-def exception_retry(
-    max_attempts: int = 3,
-    initial_delay: float = 5,
-    backoff_factor: int = 2,
-    should_retry: Optional[Callable[[Exception], bool]] = None,
-) -> Callable:
-    """Retry an API call at many times as required with a backoff factor.
+def _is_retryable_get_failure(exception: Exception) -> bool:
+    if not isinstance(exception, ADOHTTPException):
+        return False
 
-    :param max_attempts: The maximum number of times we should attempt to retry
-    :param initial_delay: How long we should wait after the first failure
-    :param backoff_factor: What factor should we increase the delay by for each failure
-    :param should_retry: A function which will be called with the exception to determine if we should retry or not
+    return cast(ADOHTTPException, exception).response.status_code in range(400, 500)
 
-    :returns: A wrapped function
 
-    :raises ValueError: If any of the inputs are invalid
-    """
+def _is_connection_failure(exception: Exception) -> bool:
+    exception_checks = [
+        "Operation timed out",
+        "Connection aborted.",
+        "bad handshake: ",
+        "Failed to establish a new connection",
+    ]
 
-    if max_attempts < 1:
-        raise ValueError("max_attempts must be 1 or more")
+    for check in exception_checks:
+        if check in str(exception):
+            return True
 
-    if initial_delay < 0:
-        raise ValueError("initial_delay must be a positive (or 0) float")
-
-    if backoff_factor < 1:
-        raise ValueError("backoff_factor must be a postive integer greater than or equal to 1")
-
-    def decorator(function: Callable) -> Callable:
-        """Decorator function
-
-        :param function: The function to wrap
-
-        :returns: The wrapped function
-        """
-
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
-            """The wrapper around the function.
-
-            :param args: The unnamed arguments to the function
-            :param kwargs: The named arguments to the function
-
-            :returns: Whatever value the original function returns on success
-
-            :raises ADOHTTPException: Any exception that the wrapped function raises
-            :raises Exception: Any exception that the wrapped function raises
-            """
-
-            # Check for a log argument to the function first
-            log = kwargs.get("log")
-
-            if log is not None:
-                log = log.getChild("retry")
-
-            # If we still don't have one, check if the function is on an object
-            # and use the log variable from that if possible
-            if log is None:
-                try:
-                    # This works around a mypy issue
-                    any_self: Any = args[0]
-                    log = any_self.log
-                except AttributeError:
-                    pass
-
-            # If we still have nothing, create a new logger
-            if log is None:
-                log = logging.getLogger("ado.retry")
-
-            remaining_attempts = max_attempts
-            current_delay = initial_delay
-
-            while remaining_attempts > 1:
-                exception_reference: Optional[Exception] = None
-
-                try:
-                    return function(*args, **kwargs)
-
-                except ADOHTTPException as ex:
-                    # We can't retry non-server errors
-                    if ex.response.status_code < 500:
-                        raise
-
-                    if should_retry is not None and not should_retry(ex):
-                        log.error("ADO API call failed. Not retrying.")
-                        raise
-
-                    exception_reference = ex
-
-                except Exception as ex:
-                    if should_retry is not None and not should_retry(ex):
-                        log.error(f"ADO API call failed. Not retrying.")
-                        raise
-
-                    exception_reference = ex
-
-                    time.sleep(current_delay)
-                    remaining_attempts -= 1
-                    current_delay *= backoff_factor
-
-                log.warning(
-                    f"ADO API call failed. Retrying in {current_delay} seconds: {exception_reference}"
-                )
-
-            return function(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
+    return False
 
 
 class ADOHTTPClient:
@@ -212,9 +125,13 @@ class ADOHTTPClient:
 
         return url
 
-    @exception_retry(
-        should_retry=lambda exception: isinstance(exception, ADOHTTPException)
-        and exception.response.status_code not in range(400, 500)
+    @retry(
+        retry=(
+            retry_if_exception(_is_connection_failure)
+            | retry_if_exception(_is_retryable_get_failure)
+        ),
+        wait=wait_random_exponential(max=10),
+        stop=stop_after_attempt(5),
     )
     def get(
         self,
@@ -234,10 +151,10 @@ class ADOHTTPClient:
         headers = self.construct_headers(additional_headers=additional_headers)
         return requests.get(request_url, auth=self.credentials, headers=headers, stream=stream)
 
-    @exception_retry(
-        should_retry=lambda exception: "Operation timed out" in str(exception)
-        or "Connection aborted." in str(exception)
-        or "bad handshake: " in str(exception)
+    @retry(
+        retry=retry_if_exception(_is_connection_failure),
+        wait=wait_random_exponential(max=10),
+        stop=stop_after_attempt(5),
     )
     def post(
         self,
@@ -257,6 +174,11 @@ class ADOHTTPClient:
         headers = self.construct_headers(additional_headers=additional_headers)
         return requests.post(request_url, auth=self.credentials, headers=headers, json=json_data)
 
+    @retry(
+        retry=retry_if_exception(_is_connection_failure),
+        wait=wait_random_exponential(max=10),
+        stop=stop_after_attempt(5),
+    )
     def patch(
         self,
         request_url: str,
@@ -288,6 +210,11 @@ class ADOHTTPClient:
         headers = self.construct_headers(additional_headers=additional_headers)
         return requests.patch(request_url, auth=self.credentials, headers=headers, json=json_data)
 
+    @retry(
+        retry=retry_if_exception(_is_connection_failure),
+        wait=wait_random_exponential(max=10),
+        stop=stop_after_attempt(5),
+    )
     def put(
         self,
         request_url: str,
@@ -306,6 +233,11 @@ class ADOHTTPClient:
         headers = self.construct_headers(additional_headers=additional_headers)
         return requests.put(request_url, auth=self.credentials, headers=headers, json=json_data)
 
+    @retry(
+        retry=retry_if_exception(_is_connection_failure),
+        wait=wait_random_exponential(max=10),
+        stop=stop_after_attempt(5),
+    )
     def delete(
         self, request_url: str, *, additional_headers: Optional[Dict[str, Any]] = None
     ) -> requests.Response:
@@ -319,6 +251,11 @@ class ADOHTTPClient:
         headers = self.construct_headers(additional_headers=additional_headers)
         return requests.delete(request_url, auth=self.credentials, headers=headers)
 
+    @retry(
+        retry=retry_if_exception(_is_connection_failure),
+        wait=wait_random_exponential(max=10),
+        stop=stop_after_attempt(5),
+    )
     def post_file(
         self,
         request_url: str,
