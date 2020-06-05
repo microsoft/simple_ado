@@ -160,17 +160,30 @@ class ADOHTTPClient:
         self,
         request_url: str,
         *,
+        operations: Optional[List[PatchOperation]] = None,
         additional_headers: Optional[Dict[str, str]] = None,
-        json_data: Optional[Dict[str, Any]] = None,
+        json_data: Optional[Any] = None,
     ) -> requests.Response:
         """Issue a POST request with the correct credentials and headers.
 
+        Note: If `json_data` and `operations` are not None, the latter will take
+        precedence.
+
         :param str request_url: The URL to issue the request to
+        :param Optional[List[PatchOperation]] operations: The patch operations to send with the request
         :param Optional[Dict[str,str]] additional_headers: Any additional headers to add to the request
-        :param Optional[Dict[str,Any]] json_data: The JSON data to send with the request
+        :param Optional[Any] json_data: The JSON data to send with the request
 
         :returns: The raw response object from the API
         """
+
+        if operations is not None:
+            json_data = [operation.serialize() for operation in operations]
+            if additional_headers is None:
+                additional_headers = {}
+            if "Content-Type" not in additional_headers:
+                additional_headers["Content-Type"] = "application/json-patch+json"
+
         headers = self.construct_headers(additional_headers=additional_headers)
         return requests.post(request_url, auth=self.credentials, headers=headers, json=json_data)
 
@@ -194,7 +207,7 @@ class ADOHTTPClient:
 
         :param str request_url: The URL to issue the request to
         :param Optional[Dict[str,str]] additional_headers: Any additional headers to add to the request
-        :param Optional[Dict[str,Any]] json_data: The JSON data to send with the request
+        :param Optional[Any] json_data: The JSON data to send with the request
         :param Optional[List[PatchOperation]] operations: The patch operations to send with the request
 
         :returns: The raw response object from the API

@@ -8,7 +8,7 @@
 import enum
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, cast, Dict, List, Optional
 
 from simple_ado.base_client import ADOBaseClient
 from simple_ado.context import ADOContext
@@ -377,7 +377,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         response = self.http_client.post(
             request_url,
-            operations=operations,
+            operations=cast(List[PatchOperation], operations),
             additional_headers={"Content-Type": "application/json-patch+json"},
         )
 
@@ -431,7 +431,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         request_url = f"{self.http_client.base_url()}/wit/wiql?api-version=4.1"
 
-        response = self.http_client.post(request_url, {"query": query_string})
+        response = self.http_client.post(request_url, json_data={"query": query_string})
 
         return self.http_client.decode_response(response)
 
@@ -489,6 +489,6 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         request_url = f"{self.http_client.base_url(is_project=False)}/wit/$batch"
 
-        response = self.http_client.post(request_url, full_body)
+        response = self.http_client.post(request_url, json_data=full_body)
 
         return self.http_client.decode_response(response)
