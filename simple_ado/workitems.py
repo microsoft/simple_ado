@@ -120,9 +120,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         """
 
         self.log.debug(f"Getting work item: {identifier}")
-        request_url = (
-            f"{self.http_client.base_url()}/wit/workitems/{identifier}?api-version=4.1&$expand=all"
-        )
+        request_url = f"{self.http_client.api_endpoint()}/wit/workitems/{identifier}?api-version=4.1&$expand=all"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
@@ -132,7 +130,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
         self.log.debug("Getting work item types")
-        request_url = f"{self.http_client.base_url()}/wit/workitemtypes?api-version=4.1"
+        request_url = f"{self.http_client.api_endpoint()}/wit/workitemtypes?api-version=4.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
@@ -163,7 +161,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         operation = AddOperation(field, value)
 
-        request_url = f"{self.http_client.base_url()}/wit/workitems/{identifier}"
+        request_url = f"{self.http_client.api_endpoint()}/wit/workitems/{identifier}"
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
@@ -210,7 +208,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         # Upload the file
         request_url = (
-            f"{self.http_client.base_url()}/wit/attachments?fileName={filename}&api-version=1.0"
+            f"{self.http_client.api_endpoint()}/wit/attachments?fileName={filename}&api-version=1.0"
         )
 
         response = self.http_client.post_file(request_url, path_to_attachment)
@@ -227,7 +225,7 @@ class ADOWorkItemsClient(ADOBaseClient):
             "/relations/-", {"rel": "AttachedFile", "url": url, "attributes": {"comment": ""}},
         )
 
-        request_url = f"{self.http_client.base_url()}/wit/workitems/{identifier}"
+        request_url = f"{self.http_client.api_endpoint()}/wit/workitems/{identifier}"
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
@@ -271,7 +269,7 @@ class ADOWorkItemsClient(ADOBaseClient):
             {"rel": relation_type.value, "url": child_url, "attributes": {"comment": ""}},
         )
 
-        request_url = f"{self.http_client.base_url()}/wit/workitems/{parent_identifier}"
+        request_url = f"{self.http_client.api_endpoint()}/wit/workitems/{parent_identifier}"
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
@@ -308,7 +306,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
         child_url = (
-            f"{self.http_client.base_url(is_project=False)}/wit/workitems/{child_identifier}"
+            f"{self.http_client.api_endpoint(is_project=False)}/wit/workitems/{child_identifier}"
         )
         return self._add_link(
             parent_identifier=parent_identifier,
@@ -370,7 +368,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug(f"Creating a new {item_type}")
 
-        request_url = f"{self.http_client.base_url()}/wit/workitems/${item_type}"
+        request_url = f"{self.http_client.api_endpoint()}/wit/workitems/${item_type}"
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
@@ -406,7 +404,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug(f"Updating {identifier}")
 
-        request_url = f"{self.http_client.base_url()}/wit/workitems/{identifier}"
+        request_url = f"{self.http_client.api_endpoint()}/wit/workitems/{identifier}"
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
@@ -429,7 +427,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug(f"Executing query: {query_string}")
 
-        request_url = f"{self.http_client.base_url()}/wit/wiql?api-version=4.1"
+        request_url = f"{self.http_client.api_endpoint()}/wit/wiql?api-version=4.1"
 
         response = self.http_client.post(request_url, json_data={"query": query_string})
 
@@ -454,7 +452,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug(f"Deleting {identifier}")
 
-        request_url = f"{self.http_client.base_url()}/wit/workitems/{identifier}"
+        request_url = f"{self.http_client.api_endpoint()}/wit/workitems/{identifier}"
         request_url += f"?suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&destroy={boolstr(permanent)}"
         request_url += f"&api-version=4.1"
@@ -487,7 +485,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         for operation in operations:
             full_body.append(operation.body())
 
-        request_url = f"{self.http_client.base_url(is_project=False)}/wit/$batch"
+        request_url = f"{self.http_client.api_endpoint(is_project=False)}/wit/$batch"
 
         response = self.http_client.post(request_url, json_data=full_body)
 

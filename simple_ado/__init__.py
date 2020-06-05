@@ -100,7 +100,7 @@ class ADOClient:
         :returns: True if we have access, False otherwise
         """
 
-        request_url = f"{self.http_client.base_url()}/git/repositories?api-version=1.0"
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories?api-version=1.0"
 
         try:
             response = self.http_client.get(request_url)
@@ -134,7 +134,9 @@ class ADOClient:
         """
         self.log.debug("Creating pull request")
 
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self.context.repository_id}"
+        request_url = (
+            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}"
+        )
         request_url += "/pullRequests?api-version=5.1"
 
         body: Dict[str, Any] = {
@@ -179,7 +181,8 @@ class ADOClient:
 
         while True:
 
-            request_url = f"{self.http_client.base_url()}/git/repositories/{self.context.repository_id}/pullRequests?"
+            request_url = f"{self.http_client.api_endpoint()}/git/repositories"
+            request_url += f"/{self.context.repository_id}/pullRequests?"
 
             request_url += f"$top=100&$skip={offset}"
 
@@ -232,7 +235,7 @@ class ADOClient:
         """
 
         encoded_parameters = urllib.parse.urlencode(parameters)
-        request_url = self.http_client.base_url(
+        request_url = self.http_client.api_endpoint(
             is_default_collection=is_default_collection,
             is_project=is_project,
             is_internal=is_internal,

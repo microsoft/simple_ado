@@ -88,7 +88,7 @@ class ADOGitClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
         self.log.debug("Getting repositories")
-        request_url = f"{self.http_client.base_url()}/git/repositories/?api-version=1.0"
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/?api-version=1.0"
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
@@ -108,7 +108,7 @@ class ADOGitClient(ADOBaseClient):
         if len(sha) != 40:
             raise ADOException("The SHA for a commit must be the full 40 character version")
 
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self.context.repository_id}/commits/{sha}/"
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}/commits/{sha}/"
         request_url += "statuses?api-version=2.1"
 
         response = self.http_client.get(request_url)
@@ -146,7 +146,7 @@ class ADOGitClient(ADOBaseClient):
         if state == ADOGitStatusState.NOT_SET:
             raise ADOException("The NOT_SET state cannot be used for statuses on commits")
 
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self.context.repository_id}/commits/{sha}/"
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}/commits/{sha}/"
         request_url += "statuses?api-version=2.1"
 
         body = {
@@ -174,7 +174,7 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Fetching commit diff: {base_commit}..{target_commit}")
 
-        base_url = f"{self.http_client.base_url()}/git/repositories/{self.context.repository_id}/diffs/commits?"
+        base_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}/diffs/commits?"
 
         changes = []
         skip = 0
@@ -215,9 +215,7 @@ class ADOGitClient(ADOBaseClient):
         """
 
         self.log.debug(f"Downloading branch: {branch}")
-        request_url = (
-            f"{self.http_client.base_url()}/git/repositories/{self.context.repository_id}/Items?"
-        )
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}/Items?"
 
         parameters = {
             "path": "/",
@@ -288,7 +286,7 @@ class ADOGitClient(ADOBaseClient):
         self.log.debug(f"Getting refs")
 
         request_url = (
-            f"{self.http_client.base_url()}/git/repositories/{self.context.repository_id}/refs?"
+            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}/refs?"
         )
 
         parameters: Dict[str, Any] = {}
@@ -345,7 +343,9 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Getting commit: {commit_id}")
 
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self.context.repository_id}"
+        request_url = (
+            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}"
+        )
         request_url += f"/commits/{commit_id}?api-version=5.0"
 
         if change_count:
@@ -364,7 +364,9 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug("Updating references")
 
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self.context.repository_id}"
+        request_url = (
+            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}"
+        )
         request_url += "/refs?api-version=5.0"
 
         data = [update.json_data() for update in updates]
@@ -439,9 +441,7 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Getting item")
 
-        request_url = (
-            f"{self.http_client.base_url()}/git/repositories/{self.context.repository_id}/items?"
-        )
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}/items?"
 
         parameters: Dict[str, Any] = {"path": path, "api-version": "5.1"}
 

@@ -38,7 +38,7 @@ class ADOUserClient(ADOBaseClient):
         :raises ADOException: If we can't get the identity from the response
         """
 
-        request_url = self.http_client.base_url(is_default_collection=False, is_project=False)
+        request_url = self.http_client.api_endpoint(is_default_collection=False, is_project=False)
         request_url += "/IdentityPicker/Identities?api-version=5.1-preview.1"
 
         body = {

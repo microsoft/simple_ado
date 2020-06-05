@@ -48,7 +48,7 @@ class ADOBuildClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.base_url()}/build/builds?api-version=4.1"
+        request_url = f"{self.http_client.api_endpoint()}/build/builds?api-version=4.1"
         variable_json = json.dumps(variables)
 
         self.log.debug(f"Queueing build ({definition_id}): {variable_json}")
@@ -73,7 +73,7 @@ class ADOBuildClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.base_url()}/build/builds/{build_id}?api-version=4.1"
+        request_url = f"{self.http_client.api_endpoint()}/build/builds/{build_id}?api-version=4.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
@@ -91,7 +91,7 @@ class ADOBuildClient(ADOBaseClient):
             "api-version": "4.1",
         }
 
-        request_url = f"{self.http_client.base_url()}/build/builds/{build_id}/artifacts?"
+        request_url = f"{self.http_client.api_endpoint()}/build/builds/{build_id}/artifacts?"
         request_url += urllib.parse.urlencode(parameters)
 
         self.log.debug(f"Fetching artifact {artifact_name} from build {build_id}...")
@@ -115,7 +115,7 @@ class ADOBuildClient(ADOBaseClient):
             "api-version": "4.1",
         }
 
-        request_url = f"{self.http_client.base_url()}/build/builds/{build_id}/artifacts?"
+        request_url = f"{self.http_client.api_endpoint()}/build/builds/{build_id}/artifacts?"
         request_url += urllib.parse.urlencode(parameters)
 
         self.log.debug(f"Fetching artifact {artifact_name} from build {build_id}...")

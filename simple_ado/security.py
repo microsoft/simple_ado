@@ -84,9 +84,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = (
-            f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
-        )
+        request_url = f"{self.http_client.api_endpoint(is_project=True)}/policy/Configurations?api-version=5.0"
 
         body = {
             "type": {"id": ADOBranchPolicy.BUILD.value},
@@ -125,9 +123,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = (
-            f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
-        )
+        request_url = f"{self.http_client.api_endpoint(is_project=True)}/policy/Configurations?api-version=5.0"
 
         body = {
             "type": {"id": ADOBranchPolicy.REQUIRED_REVIEWERS.value},
@@ -172,9 +168,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = (
-            f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
-        )
+        request_url = f"{self.http_client.api_endpoint(is_project=True)}/policy/Configurations?api-version=5.0"
 
         body = {
             "type": {"id": ADOBranchPolicy.APPROVAL_COUNT.value},
@@ -208,9 +202,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = (
-            f"{self.http_client.base_url(is_project=True)}/policy/Configurations?api-version=5.0"
-        )
+        request_url = f"{self.http_client.api_endpoint(is_project=True)}/policy/Configurations?api-version=5.0"
 
         body = {
             "type": {"id": ADOBranchPolicy.WORK_ITEM.value},
@@ -250,7 +242,7 @@ class ADOSecurityClient(ADOBaseClient):
 
         descriptor_info = self._get_descriptor_info(branch, identity)
 
-        request_url = self.http_client.base_url(is_project=True, is_internal=True)
+        request_url = self.http_client.api_endpoint(is_project=True, is_internal=True)
         request_url += "/_security/ManagePermissions?__v=5"
 
         updates = []
@@ -294,7 +286,8 @@ class ADOSecurityClient(ADOBaseClient):
         :raises ADOException: If we can't determine the descriptor info from the response
         """
 
-        request_url = f"{self.http_client.base_url(is_project=True, is_internal=True)}/_security/DisplayPermissions?"
+        request_url = self.http_client.api_endpoint(is_project=True, is_internal=True)
+        request_url += "/_security/DisplayPermissions?"
 
         parameters = {
             "tfid": team_foundation_id,

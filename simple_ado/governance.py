@@ -38,7 +38,9 @@ class ADOGovernanceClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = self.http_client.base_url(is_default_collection=False, subdomain="governance")
+        request_url = self.http_client.api_endpoint(
+            is_default_collection=False, subdomain="governance"
+        )
         request_url += "/ComponentGovernance/GovernedRepositories"
         request_url += f"/{governed_repository_id}/policyreferences"
         request_url += f"/{policy_id}?api-version=5.1-preview.1"
