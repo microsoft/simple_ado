@@ -32,6 +32,16 @@ class LibraryTests(unittest.TestCase):
             status_context="simple_ado",
         )
 
+    def test_git_diff(self):
+        """Test git diff."""
+        all_prs = self.client.list_all_pull_requests()
+        details = all_prs[0]
+        diff = self.client.git.diff_between_commits(
+            details["lastMergeTargetCommit"]["commitId"],
+            details["lastMergeSourceCommit"]["commitId"],
+        )
+        assert len(diff["changes"]) > 0
+
     def test_properties(self):
         """Test get properties."""
         all_prs = self.client.list_all_pull_requests()

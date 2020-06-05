@@ -174,15 +174,35 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Fetching commit diff: {base_commit}..{target_commit}")
 
-        request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}/diffs/commits?"
-        request_url += f"api-version=1.0"
-        request_url += f"&baseVersionType=commit"
-        request_url += f"&baseVersion={base_commit}"
-        request_url += f"&targetVersionType=commit"
-        request_url += f"&targetVersion={target_commit}"
+        base_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}/diffs/commits?"
 
-        response = self.http_client.get(request_url)
-        return self.http_client.decode_response(response)
+        changes = []
+        skip = 0
+
+        while True:
+
+            parameters = {
+                "api-version": "5.1",
+                "baseVersionType": "commit",
+                "baseVersion": base_commit,
+                "targetVersionType": "commit",
+                "targetVersion": target_commit,
+                "$skip": skip,
+                "$top": 100,
+            }
+
+            request_url = base_url + urllib.parse.urlencode(parameters)
+
+            response = self.http_client.get(request_url)
+            data = self.http_client.decode_response(response)
+
+            changes.extend(data["changes"])
+
+            if data.get("allChangesIncluded", False):
+                data["changes"] = changes
+                return data
+
+            skip += 100
 
     def download_zip(self, branch: str, output_path: str) -> None:
         """Download the zip of the branch specified.
