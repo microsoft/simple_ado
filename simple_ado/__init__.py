@@ -42,7 +42,7 @@ class ADOClient:
 
     log: logging.Logger
 
-    _context: ADOContext
+    context: ADOContext
     http_client: ADOHTTPClient
 
     builds: ADOBuildClient
@@ -73,7 +73,7 @@ class ADOClient:
         else:
             self.log = log.getChild("ado")
 
-        self._context = ADOContext(
+        self.context = ADOContext(
             username=username, repository_id=repository_id, status_context=status_context
         )
 
@@ -85,14 +85,14 @@ class ADOClient:
             extra_headers=extra_headers,
         )
 
-        self.builds = ADOBuildClient(self._context, self.http_client, self.log)
-        self.git = ADOGitClient(self._context, self.http_client, self.log)
-        self.governance = ADOGovernanceClient(self._context, self.http_client, self.log)
-        self.graph = ADOGraphClient(self._context, self.http_client, self.log)
-        self.pools = ADOPoolsClient(self._context, self.http_client, self.log)
-        self.security = ADOSecurityClient(self._context, self.http_client, self.log)
-        self.user = ADOUserClient(self._context, self.http_client, self.log)
-        self.workitems = ADOWorkItemsClient(self._context, self.http_client, self.log)
+        self.builds = ADOBuildClient(self.context, self.http_client, self.log)
+        self.git = ADOGitClient(self.context, self.http_client, self.log)
+        self.governance = ADOGovernanceClient(self.context, self.http_client, self.log)
+        self.graph = ADOGraphClient(self.context, self.http_client, self.log)
+        self.pools = ADOPoolsClient(self.context, self.http_client, self.log)
+        self.security = ADOSecurityClient(self.context, self.http_client, self.log)
+        self.user = ADOUserClient(self.context, self.http_client, self.log)
+        self.workitems = ADOWorkItemsClient(self.context, self.http_client, self.log)
 
     def verify_access(self) -> bool:
         """Verify that we have access to ADO.
@@ -134,9 +134,7 @@ class ADOClient:
         """
         self.log.debug("Creating pull request")
 
-        request_url = (
-            f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}"
-        )
+        request_url = f"{self.http_client.base_url()}/git/repositories/{self.context.repository_id}"
         request_url += "/pullRequests?api-version=5.1"
 
         body: Dict[str, Any] = {
@@ -163,7 +161,7 @@ class ADOClient:
 
         :returns: A new ADOPullRequest client for the pull request specified
         """
-        return ADOPullRequestClient(self._context, self.http_client, self.log, pull_request_id)
+        return ADOPullRequestClient(self.context, self.http_client, self.log, pull_request_id)
 
     def list_all_pull_requests(self, *, branch_name: Optional[str] = None) -> ADOResponse:
         """Get the pull requests for a branch from ADO.
@@ -181,7 +179,7 @@ class ADOClient:
 
         while True:
 
-            request_url = f"{self.http_client.base_url()}/git/repositories/{self._context.repository_id}/pullRequests?"
+            request_url = f"{self.http_client.base_url()}/git/repositories/{self.context.repository_id}/pullRequests?"
 
             request_url += f"$top=100&$skip={offset}"
 

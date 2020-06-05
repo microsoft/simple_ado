@@ -104,7 +104,7 @@ class ADOSecurityClient(ADOBaseClient):
                     {
                         "refName": f"refs/heads/{branch}",
                         "matchKind": "Exact",
-                        "repositoryId": self._context.repository_id,
+                        "repositoryId": self.context.repository_id,
                     }
                 ],
             },
@@ -145,7 +145,7 @@ class ADOSecurityClient(ADOBaseClient):
                     {
                         "refName": f"refs/heads/{branch}",
                         "matchKind": "Exact",
-                        "repositoryId": self._context.repository_id,
+                        "repositoryId": self.context.repository_id,
                     }
                 ],
             },
@@ -190,7 +190,7 @@ class ADOSecurityClient(ADOBaseClient):
                     {
                         "refName": f"refs/heads/{branch}",
                         "matchKind": "exact",
-                        "repositoryId": self._context.repository_id,
+                        "repositoryId": self.context.repository_id,
                     }
                 ],
             },
@@ -223,7 +223,7 @@ class ADOSecurityClient(ADOBaseClient):
                     {
                         "refName": f"refs/heads/{branch}",
                         "matchKind": "Exact",
-                        "repositoryId": self._context.repository_id,
+                        "repositoryId": self.context.repository_id,
                     }
                 ]
             },
@@ -329,7 +329,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The permission token
         """
         encoded_branch = branch.replace("/", "^")
-        return f"repoV2/{self.http_client.project_id}/{self._context.repository_id}/refs^heads^{encoded_branch}/"
+        return f"repoV2/{self.http_client.project_id}/{self.context.repository_id}/refs^heads^{encoded_branch}/"
 
     def _generate_updates_token(self, branch: str) -> str:
         """Generate the token required for updating permissions.
@@ -344,4 +344,4 @@ class ADOSecurityClient(ADOBaseClient):
 
         encoded_branch = "/".join(encoded_branch_nodes)
 
-        return f"repoV2/{self.http_client.project_id}/{self._context.repository_id}/refs/heads/{encoded_branch}/"
+        return f"repoV2/{self.http_client.project_id}/{self.context.repository_id}/refs/heads/{encoded_branch}/"
