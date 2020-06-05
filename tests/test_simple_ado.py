@@ -32,6 +32,14 @@ class LibraryTests(unittest.TestCase):
             status_context="simple_ado",
         )
 
+    def test_get_blob(self):
+        """Test get blob."""
+        diff = self.client.git.get_blob(
+            blob_id="7351cd0c84377c067602e97645e9c91100c38a6e",
+            blob_format=simple_ado.git.ADOGitClient.BlobFormat.text,
+        )
+        print(diff)
+
     def test_git_diff(self):
         """Test git diff."""
         all_prs = self.client.list_all_pull_requests()

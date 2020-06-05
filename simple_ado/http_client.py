@@ -328,6 +328,22 @@ class ADOHTTPClient:
         response: requests.Response = session.send(prepped)
         return response
 
+    def validate_response(self, response: requests.models.Response) -> None:
+        """Checking a response for errors.
+
+        :param response: The response to check
+
+        :raises ADOHTTPException: Raised if the request returned a non-200 status code
+        :raises ADOException: Raise if the response was not JSON
+        """
+
+        self.log.debug("Validating response from ADO")
+
+        if response.status_code < 200 or response.status_code >= 300:
+            raise ADOHTTPException(
+                f"ADO returned a non-200 status code, configuration={self}", response,
+            )
+
     def decode_response(self, response: requests.models.Response) -> ADOResponse:
         """Decode the response from ADO, checking for errors.
 
@@ -339,12 +355,9 @@ class ADOHTTPClient:
         :raises ADOException: Raise if the response was not JSON
         """
 
-        self.log.debug("Fetching response from ADO")
+        self.validate_response(response)
 
-        if response.status_code < 200 or response.status_code >= 300:
-            raise ADOHTTPException(
-                f"ADO returned a non-200 status code, configuration={self}", response,
-            )
+        self.log.debug("Decoding response from ADO")
 
         try:
             content: ADOResponse = response.json()

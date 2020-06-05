@@ -476,3 +476,64 @@ class ADOGitClient(ADOBaseClient):
 
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
+
+    class BlobFormat(enum.Enum):
+        """The type of format to get a blob in."""
+
+        json = "json"
+        zip = "zip"
+        text = "text"
+        octetstream = "octetstream"
+
+    def get_blob(
+        self,
+        *,
+        blob_id: str,
+        blob_format: Optional[BlobFormat] = None,
+        download: Optional[bool] = None,
+        file_name: Optional[str] = None,
+        resolve_lfs: Optional[bool] = None,
+    ) -> ADOResponse:
+        """Get a git item.
+
+        All non-specified options use the ADO default.
+
+        :param str blob_id: The SHA1 of the blob
+        :param Optional[BlobFormat] blob_format: The format to get the blob in
+        :param Optional[bool] download: Set to True to download rather than get a response
+        :param Optional[str] file_name: The file name to use for the download if download is set to True
+        :param Optional[bool] resolve_lfs: Set to true to resolve LFS pointer files to resolve actual content
+
+        :returns: The ADO response with the data in it
+        """
+
+        self.log.debug(f"Getting blob")
+
+        request_url = self.http_client.api_endpoint(is_default_collection=False)
+        request_url += f"/git/repositories/{self.context.repository_id}/blobs/{blob_id}?"
+
+        parameters: Dict[str, Any] = {
+            "api-version": "5.1",
+        }
+
+        if blob_format is not None:
+            parameters["$format"] = blob_format.value
+
+        if download is not None:
+            parameters["download"] = "true" if download else "false"
+
+        if file_name is not None:
+            parameters["fileName"] = file_name
+
+        if resolve_lfs is not None:
+            parameters["resolveLfs"] = "true" if resolve_lfs else "false"
+
+        request_url += urllib.parse.urlencode(parameters)
+
+        response = self.http_client.get(request_url)
+
+        if blob_format == ADOGitClient.BlobFormat.text:
+            self.http_client.validate_response(response)
+            return response.text
+
+        return self.http_client.decode_response(response)
