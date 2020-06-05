@@ -537,3 +537,28 @@ class ADOGitClient(ADOBaseClient):
             return response.text
 
         return self.http_client.decode_response(response)
+
+    def get_blobs(self, *, blob_ids: List[str], output_path: str) -> ADOResponse:
+        """Get a git item.
+
+        All non-specified options use the ADO default.
+
+        :param List[str] blob_ids: The SHA1s of the blobs
+        :param str output_path: The location to write out the zip to
+        """
+
+        self.log.debug(f"Getting blobs")
+
+        request_url = self.http_client.api_endpoint(is_default_collection=False)
+        request_url += f"/git/repositories/{self.context.repository_id}/blobs?api-version=5.1"
+
+        if os.path.exists(output_path):
+            raise ADOException("The output path already exists")
+
+        with self.http_client.post(
+            request_url,
+            additional_headers={"Accept": "application/zip"},
+            stream=True,
+            json_data=blob_ids,
+        ) as response:
+            download_from_response_stream(response=response, output_path=output_path, log=self.log)

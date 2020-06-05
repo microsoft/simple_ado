@@ -190,6 +190,7 @@ class ADOHTTPClient:
         operations: Optional[List[PatchOperation]] = None,
         additional_headers: Optional[Dict[str, str]] = None,
         json_data: Optional[Any] = None,
+        stream: bool = False,
     ) -> requests.Response:
         """Issue a POST request with the correct credentials and headers.
 
@@ -200,6 +201,7 @@ class ADOHTTPClient:
         :param Optional[List[PatchOperation]] operations: The patch operations to send with the request
         :param Optional[Dict[str,str]] additional_headers: Any additional headers to add to the request
         :param Optional[Any] json_data: The JSON data to send with the request
+        :param bool stream: Set to True to stream the response back
 
         :returns: The raw response object from the API
         """
@@ -212,7 +214,9 @@ class ADOHTTPClient:
                 additional_headers["Content-Type"] = "application/json-patch+json"
 
         headers = self.construct_headers(additional_headers=additional_headers)
-        return requests.post(request_url, auth=self.credentials, headers=headers, json=json_data)
+        return requests.post(
+            request_url, auth=self.credentials, headers=headers, json=json_data, stream=stream
+        )
 
     @retry(
         retry=retry_if_exception(_is_connection_failure),

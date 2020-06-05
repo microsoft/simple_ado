@@ -32,6 +32,16 @@ class LibraryTests(unittest.TestCase):
             status_context="simple_ado",
         )
 
+    def test_get_blobs(self):
+        """Test get blobs."""
+        self.client.git.get_blobs(
+            blob_ids=[
+                "7351cd0c84377c067602e97645e9c91100c38a6e",
+                "bcb7f5028bf4f26a005d315a4863670e3125c262",
+            ],
+            output_path=os.path.expanduser("~/Downloads/blobs.zip"),
+        )
+
     def test_get_blob(self):
         """Test get blob."""
         diff = self.client.git.get_blob(
