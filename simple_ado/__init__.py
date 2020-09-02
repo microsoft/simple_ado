@@ -213,6 +213,7 @@ class ADOClient:
         is_default_collection: bool = True,
         is_project: bool = True,
         is_internal: bool = False,
+        subdomain: Optional[str] = None,
     ) -> ADOResponse:
         """Perform a custom GET REST request.
 
@@ -230,6 +231,7 @@ class ADOClient:
         :param bool is_default_collection: Whether this URL should start with the path "/DefaultCollection"
         :param bool is_project: Whether this URL should scope down to include `project_id`
         :param bool is_internal: Whether this URL should use internal API endpoint "/_api"
+        :param Optional[str] subdomain: A subdomain that should be used (if any)
 
         :returns: The raw response
         """
@@ -239,6 +241,7 @@ class ADOClient:
             is_default_collection=is_default_collection,
             is_project=is_project,
             is_internal=is_internal,
+            subdomain=subdomain,
         )
         request_url += f"/{url_fragment}?{encoded_parameters}"
 
