@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pushd "${VIRTUAL_ENV}" > /dev/null
+pushd "${VIRTUAL_ENV}/.." > /dev/null
 
 python -m black --line-length 100 simple_ado tests
 python -m pylint --rcfile=pylintrc simple_ado tests
