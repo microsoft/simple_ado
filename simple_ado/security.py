@@ -83,7 +83,8 @@ class ADOSecurityClient(ADOBaseClient):
 
         request_url = f"{self.http_client.api_endpoint(is_project=True)}/policy/Configurations?api-version=5.0"
         response = self.http_client.get(request_url)
-        return self.http_client.decode_response(response)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
 
     def add_branch_build_policy(self, branch: str, *, build_definition_id: int) -> ADOResponse:
         """Adds a new build policy for a given branch.
