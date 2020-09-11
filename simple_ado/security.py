@@ -75,6 +75,16 @@ class ADOSecurityClient(ADOBaseClient):
     ) -> None:
         super().__init__(context, http_client, log.getChild("security"))
 
+    def get_policies(self) -> ADOResponse:
+        """Gets the existing policies.
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = f"{self.http_client.api_endpoint(is_project=True)}/policy/Configurations?api-version=5.0"
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
+
     def add_branch_build_policy(self, branch: str, *, build_definition_id: int) -> ADOResponse:
         """Adds a new build policy for a given branch.
 
