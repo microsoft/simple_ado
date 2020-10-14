@@ -138,14 +138,15 @@ class ADOClient:
         response = self.http_client.post(request_url, json_data=body)
         return self.http_client.decode_response(response)
 
-    def pull_request(self, pull_request_id: int) -> ADOPullRequestClient:
+    def pull_request(self, pull_request_id: int, repository_id: str) -> ADOPullRequestClient:
         """Get an ADOPullRequestClient for the PR identifier.
 
         :param pull_request_id: The ID of the pull request to create the client for
+        :param repository_id: The ID of repository the pull request is on
 
         :returns: A new ADOPullRequest client for the pull request specified
         """
-        return ADOPullRequestClient(self.http_client, self.log, pull_request_id)
+        return ADOPullRequestClient(self.http_client, self.log, pull_request_id, repository_id)
 
     def list_all_pull_requests(
         self, *, branch_name: Optional[str] = None, repository_id: str,

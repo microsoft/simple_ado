@@ -65,17 +65,17 @@ class LibraryTests(unittest.TestCase):
         latest_pr = all_prs[0]
         pr_id = latest_pr["pullRequestId"]
         pr_id = 441259
-        base_properties = self.client.pull_request(pr_id).get_properties(
-            repository_id=self.test_config.repository_id
-        )
+        base_properties = self.client.pull_request(
+            pr_id, self.test_config.repository_id
+        ).get_properties()
         base_count = len(base_properties)
-        new_properties = self.client.pull_request(pr_id).add_property(
-            "Hello", "World", repository_id=self.test_config.repository_id
-        )
+        new_properties = self.client.pull_request(
+            pr_id, self.test_config.repository_id
+        ).add_property("Hello", "World")
         self.assertEqual(base_count + 1, len(new_properties))
-        after_deletion = self.client.pull_request(pr_id).delete_property(
-            "Hello", repository_id=self.test_config.repository_id
-        )
+        after_deletion = self.client.pull_request(
+            pr_id, self.test_config.repository_id
+        ).delete_property("Hello")
         self.assertEqual(len(after_deletion), base_count)
         print("Done")
 
