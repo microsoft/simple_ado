@@ -82,7 +82,10 @@ class ADOClient:
         :returns: True if we have access, False otherwise
         """
 
-        request_url = f"{self.http_client.api_endpoint()}/git/repositories?api-version=1.0"
+        request_url = (
+            self.http_client.api_endpoint(is_default_collection=False, is_project=False)
+            + "/projects?api-version=6.0"
+        )
 
         try:
             response = self.http_client.get(request_url)
@@ -98,6 +101,7 @@ class ADOClient:
         *,
         source_branch: str,
         target_branch: str,
+        project_id: str,
         repository_id: str,
         title: Optional[str] = None,
         description: Optional[str] = None,
@@ -107,6 +111,7 @@ class ADOClient:
 
         :param str source_branch: The source branch of the pull request
         :param str target_branch: The target branch of the pull request
+        :param project_id: The ID of the project
         :param str repository_id: The ID for the repository
         :param Optional[str] title: The title of the pull request
         :param Optional[str] description: The description of the pull request
@@ -118,7 +123,7 @@ class ADOClient:
         """
         self.log.debug("Creating pull request")
 
-        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}"
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}"
         request_url += "/pullRequests?api-version=5.1"
 
         body: Dict[str, Any] = {
@@ -138,22 +143,28 @@ class ADOClient:
         response = self.http_client.post(request_url, json_data=body)
         return self.http_client.decode_response(response)
 
-    def pull_request(self, pull_request_id: int, repository_id: str) -> ADOPullRequestClient:
+    def pull_request(
+        self, pull_request_id: int, project_id: str, repository_id: str
+    ) -> ADOPullRequestClient:
         """Get an ADOPullRequestClient for the PR identifier.
 
         :param pull_request_id: The ID of the pull request to create the client for
+        :param project_id: The ID of the project the PR is in
         :param repository_id: The ID of repository the pull request is on
 
         :returns: A new ADOPullRequest client for the pull request specified
         """
-        return ADOPullRequestClient(self.http_client, self.log, pull_request_id, repository_id)
+        return ADOPullRequestClient(
+            self.http_client, self.log, pull_request_id, project_id, repository_id
+        )
 
     def list_all_pull_requests(
-        self, *, branch_name: Optional[str] = None, repository_id: str,
+        self, *, branch_name: Optional[str] = None, project_id: str, repository_id: str,
     ) -> ADOResponse:
         """Get the pull requests for a branch from ADO.
 
         :param Optional[str] branch_name: The name of the branch to fetch the pull requests for.
+        :param project_id: The ID of the project
         :param str repository_id: The ID for the repository
 
         :returns: The ADO Response with the pull request data
@@ -166,8 +177,10 @@ class ADOClient:
 
         while True:
 
-            request_url = f"{self.http_client.api_endpoint()}/git/repositories"
-            request_url += f"/{repository_id}/pullRequests?"
+            request_url = (
+                self.http_client.api_endpoint(project_id=project_id)
+                + f"/git/repositories/{repository_id}/pullRequests?"
+            )
 
             request_url += f"$top=100&$skip={offset}"
 

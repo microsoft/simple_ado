@@ -28,6 +28,10 @@ class LibraryTests(unittest.TestCase):
             credentials=(self.test_config.username, self.test_config.token),
         )
 
+    def test_access(self):
+        """Test access."""
+        self.client.verify_access()
+
     def test_get_blobs(self):
         """Test get blobs."""
         self.client.git.get_blobs(
@@ -50,52 +54,69 @@ class LibraryTests(unittest.TestCase):
 
     def test_git_diff(self):
         """Test git diff."""
-        all_prs = self.client.list_all_pull_requests(repository_id=self.test_config.repository_id)
+        all_prs = self.client.list_all_pull_requests(
+            project_id=self.test_config.project_id, repository_id=self.test_config.repository_id
+        )
         details = all_prs[0]
         diff = self.client.git.diff_between_commits(
             base_commit=details["lastMergeTargetCommit"]["commitId"],
             target_commit=details["lastMergeSourceCommit"]["commitId"],
+            project_id=self.test_config.project_id,
             repository_id=self.test_config.repository_id,
         )
         assert len(diff["changes"]) > 0
 
     def test_properties(self):
         """Test get properties."""
-        all_prs = self.client.list_all_pull_requests(repository_id=self.test_config.repository_id)
+        all_prs = self.client.list_all_pull_requests(
+            project_id=self.test_config.project_id, repository_id=self.test_config.repository_id
+        )
         latest_pr = all_prs[0]
         pr_id = latest_pr["pullRequestId"]
         pr_id = 441259
         base_properties = self.client.pull_request(
-            pr_id, self.test_config.repository_id
+            pr_id,
+            project_id=self.test_config.project_id,
+            repository_id=self.test_config.repository_id,
         ).get_properties()
         base_count = len(base_properties)
         new_properties = self.client.pull_request(
-            pr_id, self.test_config.repository_id
+            pr_id,
+            project_id=self.test_config.project_id,
+            repository_id=self.test_config.repository_id,
         ).add_property("Hello", "World")
         self.assertEqual(base_count + 1, len(new_properties))
         after_deletion = self.client.pull_request(
-            pr_id, self.test_config.repository_id
+            pr_id,
+            project_id=self.test_config.project_id,
+            repository_id=self.test_config.repository_id,
         ).delete_property("Hello")
         self.assertEqual(len(after_deletion), base_count)
         print("Done")
 
     def test_list_repos(self):
         """Test list repos."""
-        repos = self.client.git.all_repositories()
+        repos = self.client.git.all_repositories(project_id=self.test_config.project_id)
         self.assertTrue(len(repos) > 0, "Failed to find any repos")
 
     def test_list_refs(self):
         """Test list refs."""
-        refs = self.client.git.get_refs(repository_id=self.test_config.repository_id)
+        refs = self.client.git.get_refs(
+            project_id=self.test_config.project_id, repository_id=self.test_config.repository_id
+        )
         self.assertTrue(len(refs) > 0, "Failed to find any refs")
 
     def test_get_commit(self):
         """Test get commit."""
-        refs = self.client.git.get_refs(repository_id=self.test_config.repository_id)
+        refs = self.client.git.get_refs(
+            project_id=self.test_config.project_id, repository_id=self.test_config.repository_id
+        )
         ref = refs[0]
         commit_id = ref["objectId"]
         commit = self.client.git.get_commit(
-            commit_id=commit_id, repository_id=self.test_config.repository_id
+            commit_id=commit_id,
+            project_id=self.test_config.project_id,
+            repository_id=self.test_config.repository_id,
         )
         self.assertIsNotNone(commit)
 
@@ -108,7 +129,9 @@ class LibraryTests(unittest.TestCase):
 
     def test_get_pull_requests(self):
         """Test get pull requests."""
-        refs = self.client.list_all_pull_requests(repository_id=self.test_config.repository_id)
+        refs = self.client.list_all_pull_requests(
+            project_id=self.test_config.project_id, repository_id=self.test_config.repository_id
+        )
         self.assertTrue(len(refs) > 0)
 
     def test_get_pools(self):

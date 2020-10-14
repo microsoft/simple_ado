@@ -107,35 +107,40 @@ class ADOWorkItemsClient(ADOBaseClient):
     def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
         super().__init__(http_client, log.getChild("workitems"))
 
-    def get(self, identifier: str) -> ADOResponse:
+    def get(self, identifier: str, project_id: str) -> ADOResponse:
         """Get the data about a work item.
 
         :param identifier: The identifier of the work item
+        :param str project_id: The ID of the project
 
         :returns: The ADO response with the data in it
         """
 
         self.log.debug(f"Getting work item: {identifier}")
-        request_url = f"{self.http_client.api_endpoint()}/wit/workitems/{identifier}?api-version=4.1&$expand=all"
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/wit/workitems/{identifier}?api-version=4.1&$expand=all"
+        )
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
-    def get_work_item_types(self) -> ADOResponse:
+    def get_work_item_types(self, project_id: str) -> ADOResponse:
         """Get the types of work items supported by the project.
 
         :returns: The ADO response with the data in it
         """
         self.log.debug("Getting work item types")
-        request_url = f"{self.http_client.api_endpoint()}/wit/workitemtypes?api-version=4.1"
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/wit/workitemtypes?api-version=4.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
     def add_property(
         self,
+        *,
         identifier: str,
         field: str,
         value: str,
-        *,
+        project_id: str,
         bypass_rules: bool = False,
         supress_notifications: bool = False,
     ) -> ADOResponse:
@@ -144,6 +149,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         :param identifier: The identifier of the work item
         :param field: The field to add
         :param value: The value to set the field to
+        :param str project_id: The ID of the project
         :param bool bypass_rules: Set to True if we should bypass validation
                                   rules, False otherwise
         :param bool supress_notifications: Set to True if notifications for this
@@ -157,7 +163,9 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         operation = AddOperation(field, value)
 
-        request_url = f"{self.http_client.api_endpoint()}/wit/workitems/{identifier}"
+        request_url = (
+            f"{self.http_client.api_endpoint(project_id=project_id)}/wit/workitems/{identifier}"
+        )
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
@@ -172,9 +180,10 @@ class ADOWorkItemsClient(ADOBaseClient):
 
     def add_attachment(
         self,
+        *,
         identifier: str,
         path_to_attachment: str,
-        *,
+        project_id: str,
         filename: Optional[str] = None,
         bypass_rules: bool = False,
         supress_notifications: bool = False,
@@ -183,6 +192,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         :param identifier: The identifier of the work item
         :param path_to_attachment: The path to the attachment on disk
+        :param str project_id: The ID of the project
         :param Optional[str] filename: The new file name of the attachment
         :param bool bypass_rules: Set to True if we should bypass validation
                                   rules, False otherwise
@@ -204,7 +214,8 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         # Upload the file
         request_url = (
-            f"{self.http_client.api_endpoint()}/wit/attachments?fileName={filename}&api-version=1.0"
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/wit/attachments?fileName={filename}&api-version=1.0"
         )
 
         response = self.http_client.post_file(request_url, path_to_attachment)
@@ -221,7 +232,9 @@ class ADOWorkItemsClient(ADOBaseClient):
             "/relations/-", {"rel": "AttachedFile", "url": url, "attributes": {"comment": ""}},
         )
 
-        request_url = f"{self.http_client.api_endpoint()}/wit/workitems/{identifier}"
+        request_url = (
+            f"{self.http_client.api_endpoint(project_id=project_id)}/wit/workitems/{identifier}"
+        )
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
@@ -240,6 +253,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         parent_identifier: str,
         child_url: str,
         relation_type: WorkItemRelationType,
+        project_id: str,
         bypass_rules: bool = False,
         supress_notifications: bool = False,
     ) -> ADOResponse:
@@ -249,6 +263,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         :param str child_url: The URL of the child item to link to
         :param WorkItemRelationType relation_type: The relationship type between
                                                    the parent and the child
+        :param str project_id: The ID of the project
         :param bool bypass_rules: Set to True if we should bypass validation
                                   rules, False otherwise
         :param bool supress_notifications: Set to True if notifications for this
@@ -265,7 +280,7 @@ class ADOWorkItemsClient(ADOBaseClient):
             {"rel": relation_type.value, "url": child_url, "attributes": {"comment": ""}},
         )
 
-        request_url = f"{self.http_client.api_endpoint()}/wit/workitems/{parent_identifier}"
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/wit/workitems/{parent_identifier}"
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
@@ -280,10 +295,11 @@ class ADOWorkItemsClient(ADOBaseClient):
 
     def link_tickets(
         self,
+        *,
         parent_identifier: str,
         child_identifier: str,
         relationship: WorkItemRelationType,
-        *,
+        project_id: str,
         bypass_rules: bool = False,
         supress_notifications: bool = False,
     ) -> ADOResponse:
@@ -293,6 +309,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         :param child_identifier: The identifier of the child work item
         :param WorkItemRelationType relationship: The relationship type between
                                                   the two work items
+        :param str project_id: The ID of the project
         :param bool bypass_rules: Set to True if we should bypass validation
                                   rules, False otherwise
         :param bool supress_notifications: Set to True if notifications for this
@@ -308,22 +325,25 @@ class ADOWorkItemsClient(ADOBaseClient):
             parent_identifier=parent_identifier,
             child_url=child_url,
             relation_type=relationship,
+            project_id=project_id,
             bypass_rules=bypass_rules,
             supress_notifications=supress_notifications,
         )
 
     def add_hyperlink(
         self,
+        *,
         identifier: str,
         hyperlink: str,
-        *,
+        project_id: str,
         bypass_rules: bool = False,
         supress_notifications: bool = False,
     ) -> ADOResponse:
         """Add a hyperlink link to a work item.
 
-        :param identifier: The identifier of the work item
-        :param hyperlink: The hyperlink to add to the work item
+        :param str identifier: The identifier of the work item
+        :param str hyperlink: The hyperlink to add to the work item
+        :param str project_id: The ID of the project
         :param bool bypass_rules: Set to True if we should bypass validation
                                   rules, False otherwise
         :param bool supress_notifications: Set to True if notifications for this
@@ -336,15 +356,17 @@ class ADOWorkItemsClient(ADOBaseClient):
             parent_identifier=identifier,
             child_url=hyperlink,
             relation_type=WorkItemRelationType.hyperlink,
+            project_id=project_id,
             bypass_rules=bypass_rules,
             supress_notifications=supress_notifications,
         )
 
     def create(
         self,
+        *,
         item_type: str,
         operations: List[AddOperation],
-        *,
+        project_id: str,
         bypass_rules: bool = False,
         supress_notifications: bool = False,
     ) -> ADOResponse:
@@ -353,6 +375,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         :param item_type: The type of work item to create
         :param operations: The list of add operations to use to create the
                            ticket
+        :param str project_id: The ID of the project
         :param bool bypass_rules: Set to True if we should bypass validation
                                   rules, False otherwise
         :param bool supress_notifications: Set to True if notifications for this
@@ -364,7 +387,9 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug(f"Creating a new {item_type}")
 
-        request_url = f"{self.http_client.api_endpoint()}/wit/workitems/${item_type}"
+        request_url = (
+            f"{self.http_client.api_endpoint(project_id=project_id)}/wit/workitems/${item_type}"
+        )
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
@@ -379,9 +404,10 @@ class ADOWorkItemsClient(ADOBaseClient):
 
     def update(
         self,
+        *,
         identifier: str,
         operations: List[PatchOperation],
-        *,
+        project_id: str,
         bypass_rules: bool = False,
         supress_notifications: bool = False,
     ) -> ADOResponse:
@@ -389,6 +415,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         :param identifier: The identifier of the work item
         :param operations: The list of operations to use to update the ticket
+        :param str project_id: The ID of the project
         :param bool bypass_rules: Set to True if we should bypass validation
                                   rules, False otherwise
         :param bool supress_notifications: Set to True if notifications for this
@@ -400,7 +427,9 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug(f"Updating {identifier}")
 
-        request_url = f"{self.http_client.api_endpoint()}/wit/workitems/{identifier}"
+        request_url = (
+            f"{self.http_client.api_endpoint(project_id=project_id)}/wit/workitems/{identifier}"
+        )
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&api-version=4.1"
@@ -413,28 +442,37 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         return self.http_client.decode_response(response)
 
-    def execute_query(self, query_string: str) -> ADOResponse:
+    def execute_query(self, query_string: str, project_id: str) -> ADOResponse:
         """Execute a WIQL query.
 
         :param query_string: The WIQL query string to execute
+        :param str project_id: The ID of the project
 
         :returns: The ADO response with the data in it
         """
 
         self.log.debug(f"Executing query: {query_string}")
 
-        request_url = f"{self.http_client.api_endpoint()}/wit/wiql?api-version=4.1"
+        request_url = (
+            f"{self.http_client.api_endpoint(project_id=project_id)}/wit/wiql?api-version=4.1"
+        )
 
         response = self.http_client.post(request_url, json_data={"query": query_string})
 
         return self.http_client.decode_response(response)
 
     def delete(
-        self, identifier: str, *, permanent: bool = False, supress_notifications: bool = False
+        self,
+        *,
+        identifier: str,
+        project_id: str,
+        permanent: bool = False,
+        supress_notifications: bool = False,
     ) -> ADOResponse:
         """Delete a work item.
 
         :param identifier: The identifier of the work item
+        :param str project_id: The ID of the project
         :param bool permanent: Set to True if we should permanently delete the
                                work item, False otherwise
         :param bool supress_notifications: Set to True if notifications for this
@@ -448,7 +486,9 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug(f"Deleting {identifier}")
 
-        request_url = f"{self.http_client.api_endpoint()}/wit/workitems/{identifier}"
+        request_url = (
+            f"{self.http_client.api_endpoint(project_id=project_id)}/wit/workitems/{identifier}"
+        )
         request_url += f"?suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&destroy={boolstr(permanent)}"
         request_url += f"&api-version=4.1"

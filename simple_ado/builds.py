@@ -29,6 +29,8 @@ class ADOBuildClient(ADOBaseClient):
 
     def queue_build(
         self,
+        *,
+        project_id: str,
         definition_id: int,
         source_branch: str,
         variables: Dict[str, str],
@@ -36,6 +38,7 @@ class ADOBuildClient(ADOBaseClient):
     ) -> ADOResponse:
         """Queue a new build.
 
+        :param str project_id: The ID of the project
         :param definition_id: The identity of the build definition to queue (can be a string)
         :param source_branch: The source branch for the build
         :param variables: A dictionary of variables to pass to the definition
@@ -44,7 +47,9 @@ class ADOBuildClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.api_endpoint()}/build/builds?api-version=4.1"
+        request_url = (
+            f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds?api-version=4.1"
+        )
         variable_json = json.dumps(variables)
 
         self.log.debug(f"Queueing build ({definition_id}): {variable_json}")
@@ -61,21 +66,28 @@ class ADOBuildClient(ADOBaseClient):
         response = self.http_client.post(request_url, json_data=body)
         return self.http_client.decode_response(response)
 
-    def build_info(self, build_id: int) -> ADOResponse:
+    def build_info(self, *, project_id: str, build_id: int) -> ADOResponse:
         """Get the info for a build.
 
+        :param str project_id: The ID of the project
         :param int build_id: The identifier of the build to get the info for
 
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.api_endpoint()}/build/builds/{build_id}?api-version=4.1"
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/build/builds/{build_id}?api-version=4.1"
+        )
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
-    def get_artifact_info(self, build_id: int, artifact_name: str) -> ADOResponse:
+    def get_artifact_info(
+        self, *, project_id: str, build_id: int, artifact_name: str
+    ) -> ADOResponse:
         """Fetch an artifacts details from a build.
 
+        :param str project_id: The ID of the project
         :param build_id: The ID of the build
         :param artifact_name: The name of the artifact to fetch
 
@@ -87,7 +99,7 @@ class ADOBuildClient(ADOBaseClient):
             "api-version": "4.1",
         }
 
-        request_url = f"{self.http_client.api_endpoint()}/build/builds/{build_id}/artifacts?"
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds/{build_id}/artifacts?"
         request_url += urllib.parse.urlencode(parameters)
 
         self.log.debug(f"Fetching artifact {artifact_name} from build {build_id}...")
@@ -95,9 +107,12 @@ class ADOBuildClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
-    def download_artifact(self, build_id: int, artifact_name: str, output_path: str) -> None:
+    def download_artifact(
+        self, *, project_id: str, build_id: int, artifact_name: str, output_path: str
+    ) -> None:
         """Download an artifact from a build.
 
+        :param str project_id: The ID of the project
         :param build_id: The ID of the build
         :param artifact_name: The name of the artifact to fetch
         :param str output_path: The path to write the output to.
@@ -109,7 +124,7 @@ class ADOBuildClient(ADOBaseClient):
             "api-version": "4.1",
         }
 
-        request_url = f"{self.http_client.api_endpoint()}/build/builds/{build_id}/artifacts?"
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds/{build_id}/artifacts?"
         request_url += urllib.parse.urlencode(parameters)
 
         self.log.debug(f"Fetching artifact {artifact_name} from build {build_id}...")

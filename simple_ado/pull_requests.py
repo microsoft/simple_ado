@@ -31,10 +31,12 @@ class ADOPullRequestClient(ADOBaseClient):
     :param http_client: The HTTP client to use for the client
     :param log: The logger to use
     :param pull_request_id: The ID of the pull request
+    :param project_id: The ID of the project the PR is in
     :param repository_id: The ID of the repository the PR is for
     """
 
     pull_request_id: int
+    project_id: str
     repository_id: str
 
     def __init__(
@@ -42,10 +44,12 @@ class ADOPullRequestClient(ADOBaseClient):
         http_client: ADOHTTPClient,
         log: logging.Logger,
         pull_request_id: int,
+        project_id: str,
         repository_id: str,
     ) -> None:
         self.pull_request_id = pull_request_id
         self.repository_id = repository_id
+        self.project_id = project_id
         super().__init__(http_client, log.getChild(f"pr.{pull_request_id}"))
 
     def details(self) -> ADOResponse:
@@ -55,8 +59,11 @@ class ADOPullRequestClient(ADOBaseClient):
         """
 
         self.log.debug(f"Getting PR: {self.pull_request_id}")
-        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.repository_id}"
-        request_url += f"/pullRequests/{self.pull_request_id}?api-version=3.0-preview"
+        request_url = (
+            self.http_client.api_endpoint(project_id=self.project_id)
+            + f"/git/repositories/{self.repository_id}"
+            + f"/pullRequests/{self.pull_request_id}?api-version=3.0-preview"
+        )
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
@@ -67,8 +74,11 @@ class ADOPullRequestClient(ADOBaseClient):
         """
 
         self.log.debug(f"Getting workitems: {self.pull_request_id}")
-        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.repository_id}"
-        request_url += f"/pullRequests/{self.pull_request_id}/workitems?api-version=5.0"
+        request_url = (
+            self.http_client.api_endpoint(project_id=self.project_id)
+            + f"/git/repositories/{self.repository_id}"
+            + f"/pullRequests/{self.pull_request_id}/workitems?api-version=5.0"
+        )
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
@@ -81,8 +91,11 @@ class ADOPullRequestClient(ADOBaseClient):
         """
 
         self.log.debug(f"Getting threads: {self.pull_request_id}")
-        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.repository_id}"
-        request_url += f"/pullRequests/{self.pull_request_id}/threads?api-version=3.0-preview"
+        request_url = (
+            self.http_client.api_endpoint(project_id=self.project_id)
+            + f"/git/repositories/{self.repository_id}"
+            + f"/pullRequests/{self.pull_request_id}/threads?api-version=3.0-preview"
+        )
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
         comments: List[ADOThread] = self.http_client.extract_value(response_data)
@@ -161,8 +174,11 @@ class ADOPullRequestClient(ADOBaseClient):
 
         self.log.debug(f"Creating thread ({self.pull_request_id})")
 
-        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.repository_id}"
-        request_url += f"/pullRequests/{self.pull_request_id}/threads?api-version=3.0-preview"
+        request_url = (
+            self.http_client.api_endpoint(project_id=self.project_id)
+            + f"/git/repositories/{self.repository_id}"
+            + f"/pullRequests/{self.pull_request_id}/threads?api-version=3.0-preview"
+        )
 
         properties = {
             ADOCommentProperty.SUPPORTS_MARKDOWN: ADOCommentProperty.create_bool(True),
@@ -198,7 +214,8 @@ class ADOPullRequestClient(ADOBaseClient):
         for comment in thread["comments"]:
             comment_id = comment["id"]
             self.log.debug(f"Deleting comment: {comment_id}")
-            request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.repository_id}"
+            request_url = self.http_client.api_endpoint(project_id=self.project_id)
+            request_url += f"/git/repositories/{self.repository_id}"
             request_url += f"/pullRequests/{self.pull_request_id}/threads/{thread_id}"
             request_url += f"/comments/{comment_id}?api-version=3.0-preview"
             requests.delete(
@@ -256,8 +273,11 @@ class ADOPullRequestClient(ADOBaseClient):
             f"Setting PR status ({state}) on PR ({self.pull_request_id}): {identifier} -> {description}"
         )
 
-        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.repository_id}"
-        request_url += f"/pullRequests/{self.pull_request_id}/statuses?api-version=4.0-preview"
+        request_url = (
+            self.http_client.api_endpoint(project_id=self.project_id)
+            + f"/git/repositories/{self.repository_id}"
+            + f"/pullRequests/{self.pull_request_id}/statuses?api-version=4.0-preview"
+        )
 
         body = {
             "state": state.value,
@@ -361,8 +381,11 @@ class ADOPullRequestClient(ADOBaseClient):
         """
 
         self.log.debug(f"Getting properties: {self.pull_request_id}")
-        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.repository_id}"
-        request_url += f"/pullRequests/{self.pull_request_id}/properties?api-version=5.1-preview.1"
+        request_url = (
+            self.http_client.api_endpoint(project_id=self.project_id)
+            + f"/git/repositories/{self.repository_id}"
+            + f"/pullRequests/{self.pull_request_id}/properties?api-version=5.1-preview.1"
+        )
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
         raw_properties = self.http_client.extract_value(response_data)
@@ -383,8 +406,11 @@ class ADOPullRequestClient(ADOBaseClient):
         """
 
         self.log.debug(f"Patching properties: {self.pull_request_id}")
-        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.repository_id}"
-        request_url += f"/pullRequests/{self.pull_request_id}/properties?api-version=5.1-preview.1"
+        request_url = (
+            self.http_client.api_endpoint(project_id=self.project_id)
+            + f"/git/repositories/{self.repository_id}"
+            + f"/pullRequests/{self.pull_request_id}/properties?api-version=5.1-preview.1"
+        )
 
         response = self.http_client.patch(request_url, operations=operations)
 
