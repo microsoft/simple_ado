@@ -30,7 +30,6 @@ class ADOClient:
 
     :param str username: The username for the user who is accessing the API
     :param str tenant: The ADO tenant to connect to
-    :param str repository_id: The identifier for the repository
     :param Tuple[str,str] credentials: The credentials to use for the API connection
     :param str status_context: The context for any statuses placed on a PR or commit
     :param Optional[Dict[str,str]] extra_headers: Any extra headers which should be sent with the API requests
@@ -58,7 +57,6 @@ class ADOClient:
         *,
         username: str,
         tenant: str,
-        repository_id: str,
         credentials: Tuple[str, str],
         status_context: str,
         extra_headers: Optional[Dict[str, str]] = None,
@@ -71,9 +69,7 @@ class ADOClient:
         else:
             self.log = log.getChild("ado")
 
-        self.context = ADOContext(
-            username=username, repository_id=repository_id, status_context=status_context
-        )
+        self.context = ADOContext(username=username, status_context=status_context)
 
         self.http_client = ADOHTTPClient(
             tenant=tenant, credentials=credentials, log=self.log, extra_headers=extra_headers,
@@ -107,20 +103,22 @@ class ADOClient:
 
     def create_pull_request(
         self,
+        *,
         source_branch: str,
         target_branch: str,
-        *,
+        repository_id: str,
         title: Optional[str] = None,
         description: Optional[str] = None,
         reviewer_ids: Optional[List[str]] = None,
     ) -> ADOResponse:
         """Creates a pull request with the given information
 
-        :param source_branch: The source branch of the pull request
-        :param target_branch: The target branch of the pull request
-        :param title: The title of the pull request
-        :param description: The description of the pull request
-        :param reviewer_ids: The reviewer IDs to be added to the pull request
+        :param str source_branch: The source branch of the pull request
+        :param str target_branch: The target branch of the pull request
+        :param str repository_id: The ID for the repository
+        :param Optional[str] title: The title of the pull request
+        :param Optional[str] description: The description of the pull request
+        :param Optional[List[str]] reviewer_ids: The reviewer IDs to be added to the pull request
 
         :returns: The ADO response with the data in it
 
@@ -128,9 +126,7 @@ class ADOClient:
         """
         self.log.debug("Creating pull request")
 
-        request_url = (
-            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}"
-        )
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}"
         request_url += "/pullRequests?api-version=5.1"
 
         body: Dict[str, Any] = {
@@ -159,11 +155,13 @@ class ADOClient:
         """
         return ADOPullRequestClient(self.context, self.http_client, self.log, pull_request_id)
 
-    def list_all_pull_requests(self, *, branch_name: Optional[str] = None) -> ADOResponse:
+    def list_all_pull_requests(
+        self, *, branch_name: Optional[str] = None, repository_id: str,
+    ) -> ADOResponse:
         """Get the pull requests for a branch from ADO.
 
-        :param branch_name: The name of the branch to fetch the pull requests for.
-        :type branch_name: Optional[str]
+        :param Optional[str] branch_name: The name of the branch to fetch the pull requests for.
+        :param str repository_id: The ID for the repository
 
         :returns: The ADO Response with the pull request data
         """
@@ -176,7 +174,7 @@ class ADOClient:
         while True:
 
             request_url = f"{self.http_client.api_endpoint()}/git/repositories"
-            request_url += f"/{self.context.repository_id}/pullRequests?"
+            request_url += f"/{repository_id}/pullRequests?"
 
             request_url += f"$top=100&$skip={offset}"
 

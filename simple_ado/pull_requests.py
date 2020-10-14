@@ -47,46 +47,45 @@ class ADOPullRequestClient(ADOBaseClient):
         self.pull_request_id = pull_request_id
         super().__init__(context, http_client, log.getChild(f"pr.{pull_request_id}"))
 
-    def details(self) -> ADOResponse:
+    def details(self, repository_id: str,) -> ADOResponse:
         """Get the details for the PR from ADO.
+
+        :param str repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
 
         self.log.debug(f"Getting PR: {self.pull_request_id}")
-        request_url = (
-            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}"
-        )
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}"
         request_url += f"/pullRequests/{self.pull_request_id}?api-version=3.0-preview"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
-    def workitems(self) -> ADOResponse:
+    def workitems(self, *, repository_id: str,) -> ADOResponse:
         """Get the workitems associated with the PR from ADO.
+
+        :param str repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
 
         self.log.debug(f"Getting workitems: {self.pull_request_id}")
-        request_url = (
-            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}"
-        )
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}"
         request_url += f"/pullRequests/{self.pull_request_id}/workitems?api-version=5.0"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
-    def get_threads(self, *, include_deleted: bool = False) -> List[ADOThread]:
+    def get_threads(self, *, include_deleted: bool = False, repository_id: str,) -> List[ADOThread]:
         """Get the comments on the PR from ADO.
 
         :param bool include_deleted: Set to True if deleted threads should be included.
+        :param str repository_id: The ID for the repository
 
         :returns: A list of ADOThreads that were found
         """
 
         self.log.debug(f"Getting threads: {self.pull_request_id}")
-        request_url = (
-            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}"
-        )
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}"
         request_url += f"/pullRequests/{self.pull_request_id}/threads?api-version=3.0-preview"
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
@@ -104,6 +103,7 @@ class ADOPullRequestClient(ADOBaseClient):
         comment_location: Optional[ADOCommentLocation] = None,
         status: Optional[ADOCommentStatus] = None,
         comment_identifier: Optional[str] = None,
+        repository_id: str,
     ) -> ADOResponse:
         """Create a thread using a single root comment.
 
@@ -112,13 +112,19 @@ class ADOPullRequestClient(ADOBaseClient):
         :param Optional[ADOCommentStatus] status: The status of the comment
         :param Optional[str] comment_identifier: A unique identifier for the comment that can be used for identification
                                                  at a later date
+        :param str repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
 
         self.log.debug(f"Creating comment: ({self.pull_request_id}) {comment_text}")
         comment = ADOComment(comment_text, comment_location)
-        return self.create_comment(comment, status=status, comment_identifier=comment_identifier)
+        return self.create_comment(
+            comment,
+            status=status,
+            comment_identifier=comment_identifier,
+            repository_id=repository_id,
+        )
 
     def create_comment(
         self,
@@ -126,6 +132,7 @@ class ADOPullRequestClient(ADOBaseClient):
         *,
         status: Optional[ADOCommentStatus] = None,
         comment_identifier: Optional[str] = None,
+        repository_id: str,
     ) -> ADOResponse:
         """Create a thread using a single root comment.
 
@@ -133,25 +140,28 @@ class ADOPullRequestClient(ADOBaseClient):
         :param Optional[ADOCommentStatus] status: The status of the comment
         :param Optional[str] comment_identifier: A unique identifier for the comment that can be used for identification
                                                  at a later date
+        :param str repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
 
         self.log.debug(f"Creating comment: ({self.pull_request_id}) {comment}")
         return self.create_thread(
-            [comment.generate_representation()],
+            comments=[comment.generate_representation()],
             thread_location=comment.location,
             status=status,
             comment_identifier=comment_identifier,
+            repository_id=repository_id,
         )
 
     def create_thread(
         self,
-        comments: List[Dict[str, Any]],
         *,
+        comments: List[Dict[str, Any]],
         thread_location: Optional[ADOCommentLocation] = None,
         status: Optional[ADOCommentStatus] = None,
         comment_identifier: Optional[str] = None,
+        repository_id: str,
     ) -> ADOResponse:
         """Create a thread on a PR.
 
@@ -160,15 +170,14 @@ class ADOPullRequestClient(ADOBaseClient):
         :param Optional[ADOCommentStatus] status: The status of the comment
         :param Optional[str] comment_identifier: A unique identifier for the comment that can be used for identification
                                                  at a later date
+        :param str repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
 
         self.log.debug(f"Creating thread ({self.pull_request_id})")
 
-        request_url = (
-            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}"
-        )
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}"
         request_url += f"/pullRequests/{self.pull_request_id}/threads?api-version=3.0-preview"
 
         properties = {
@@ -192,10 +201,11 @@ class ADOPullRequestClient(ADOBaseClient):
         response = self.http_client.post(request_url, json_data=body)
         return self.http_client.decode_response(response)
 
-    def delete_thread(self, thread: ADOThread) -> None:
+    def delete_thread(self, *, thread: ADOThread, repository_id: str) -> None:
         """Delete a comment thread from a pull request.
 
         :param thread: The thread to delete
+        :param str repository_id: The ID for the repository
         """
 
         thread_id = thread["id"]
@@ -205,9 +215,7 @@ class ADOPullRequestClient(ADOBaseClient):
         for comment in thread["comments"]:
             comment_id = comment["id"]
             self.log.debug(f"Deleting comment: {comment_id}")
-            request_url = (
-                f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}"
-            )
+            request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}"
             request_url += f"/pullRequests/{self.pull_request_id}/threads/{thread_id}"
             request_url += f"/comments/{comment_id}?api-version=3.0-preview"
             requests.delete(
@@ -217,13 +225,18 @@ class ADOPullRequestClient(ADOBaseClient):
             )
 
     def create_thread_list(
-        self, threads: List[ADOComment], comment_identifier: Optional[str] = None
+        self,
+        *,
+        threads: List[ADOComment],
+        comment_identifier: Optional[str] = None,
+        repository_id: str,
     ) -> None:
         """Create a list of threads
 
         :param List[ADOComment] threads: The threads to create
         :param Optional[str] comment_identifier: A unique identifier for the comments that can be used for
                                                  identification at a later date
+        :param str repository_id: The ID for the repository
 
         :raises ADOException: If a thread is not an ADO comment
         """
@@ -237,7 +250,9 @@ class ADOPullRequestClient(ADOBaseClient):
 
         for thread in threads:
             self.log.debug("Adding thread")
-            self.create_comment(thread, comment_identifier=comment_identifier)
+            self.create_comment(
+                thread, comment_identifier=comment_identifier, repository_id=repository_id
+            )
 
     def set_status(
         self,
@@ -247,6 +262,7 @@ class ADOPullRequestClient(ADOBaseClient):
         *,
         iteration: Optional[int] = None,
         target_url: Optional[str] = None,
+        repository_id: str,
     ) -> ADOResponse:
         """Set a status on a PR.
 
@@ -255,6 +271,7 @@ class ADOPullRequestClient(ADOBaseClient):
         :param str description: The text to show in the status
         :param Optional[int] iteration: The iteration of the PR to set the status on
         :param Optional[str] target_url: An optional URL to set which is opened when the description is clicked.
+        :param str repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
@@ -263,9 +280,7 @@ class ADOPullRequestClient(ADOBaseClient):
             f"Setting PR status ({state}) on PR ({self.pull_request_id}): {identifier} -> {description}"
         )
 
-        request_url = (
-            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}"
-        )
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}"
         request_url += f"/pullRequests/{self.pull_request_id}/statuses?api-version=4.0-preview"
 
         body = {
@@ -332,10 +347,11 @@ class ADOPullRequestClient(ADOBaseClient):
 
         return False
 
-    def threads_with_identifier(self, identifier: str) -> List[ADOThread]:
+    def threads_with_identifier(self, identifier: str, *, repository_id: str) -> List[ADOThread]:
         """Get the threads on a PR which begin with the prefix specified.
 
         :param str identifier: The identifier to look for threads with
+        :param str repository_id: The ID for the repository
 
         :returns: The list of threads matching the identifier
 
@@ -348,7 +364,7 @@ class ADOPullRequestClient(ADOBaseClient):
 
         matching_threads = []
 
-        for thread in self.get_threads():
+        for thread in self.get_threads(repository_id=repository_id):
             self.log.debug("Handling thread...")
 
             if self._thread_matches_identifier(thread, identifier):
@@ -356,30 +372,31 @@ class ADOPullRequestClient(ADOBaseClient):
 
         return matching_threads
 
-    def delete_threads_with_identifier(self, identifier: str) -> None:
+    def delete_threads_with_identifier(self, identifier: str, repository_id: str) -> None:
         """Delete the threads on a PR which begin with the prefix specified.
 
         :param str identifier: The identifier property value to look for threads matching
+        :param str repository_id: The ID for the repository
         """
 
         self.log.debug(
             f'Deleting threads with identifier "{identifier}" on PR {self.pull_request_id}'
         )
 
-        for thread in self.threads_with_identifier(identifier):
+        for thread in self.threads_with_identifier(identifier, repository_id=repository_id):
             self.log.debug(f"Deleting thread: {thread}")
-            self.delete_thread(thread)
+            self.delete_thread(thread=thread, repository_id=repository_id)
 
-    def get_properties(self) -> Dict[str, PropertyValue]:
+    def get_properties(self, repository_id: str,) -> Dict[str, PropertyValue]:
         """Get the properties on the PR from ADO.
+
+        :param str repository_id: The ID for the repository
 
         :returns: The properties that were found
         """
 
         self.log.debug(f"Getting properties: {self.pull_request_id}")
-        request_url = (
-            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}"
-        )
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}"
         request_url += f"/pullRequests/{self.pull_request_id}/properties?api-version=5.1-preview.1"
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
@@ -389,21 +406,22 @@ class ADOPullRequestClient(ADOBaseClient):
 
         return properties
 
-    def patch_properties(self, operations: List[PatchOperation]) -> Dict[str, PropertyValue]:
+    def patch_properties(
+        self, *, operations: List[PatchOperation], repository_id: str,
+    ) -> Dict[str, PropertyValue]:
         """Patch the properties on the PR.
 
         Usually add_property(), delete_property() and update_property() are
         going to be what you need instead of this base function.
 
         :param operations: The raw operations
+        :param str repository_id: The ID for the repository
 
         :returns: The new properties
         """
 
         self.log.debug(f"Patching properties: {self.pull_request_id}")
-        request_url = (
-            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}"
-        )
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}"
         request_url += f"/pullRequests/{self.pull_request_id}/properties?api-version=5.1-preview.1"
 
         response = self.http_client.patch(request_url, operations=operations)
@@ -415,25 +433,27 @@ class ADOPullRequestClient(ADOBaseClient):
 
         return properties
 
-    def add_property(self, name: str, value: str) -> Dict[str, PropertyValue]:
+    def add_property(self, name: str, value: str, repository_id: str) -> Dict[str, PropertyValue]:
         """Add a property to the PR.
 
         :param name: The name of the property to add
         :param value: The value of the property to add
+        :param str repository_id: The ID for the repository
 
         :returns: The new properties
         """
 
         operation = AddOperation("/" + name, value)
-        return self.patch_properties([operation])
+        return self.patch_properties(operations=[operation], repository_id=repository_id)
 
-    def delete_property(self, name: str) -> Dict[str, PropertyValue]:
+    def delete_property(self, name: str, repository_id: str) -> Dict[str, PropertyValue]:
         """Delete a property from the PR.
 
         :param name: The name of the property to delete
+        :param str repository_id: The ID for the repository
 
         :returns: The new properties
         """
 
         operation = DeleteOperation("/" + name)
-        return self.patch_properties([operation])
+        return self.patch_properties(operations=[operation], repository_id=repository_id)

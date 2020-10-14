@@ -26,7 +26,6 @@ class LibraryTests(unittest.TestCase):
         self.client = simple_ado.ADOClient(
             username=self.test_config.username,
             tenant=self.test_config.tenant,
-            repository_id=self.test_config.repository_id,
             credentials=(self.test_config.username, self.test_config.token),
             status_context="simple_ado",
         )
@@ -39,6 +38,7 @@ class LibraryTests(unittest.TestCase):
                 "bcb7f5028bf4f26a005d315a4863670e3125c262",
             ],
             output_path=os.path.expanduser("~/Downloads/blobs.zip"),
+            repository_id=self.test_config.repository_id,
         )
 
     def test_get_blob(self):
@@ -46,30 +46,38 @@ class LibraryTests(unittest.TestCase):
         diff = self.client.git.get_blob(
             blob_id="7351cd0c84377c067602e97645e9c91100c38a6e",
             blob_format=simple_ado.git.ADOGitClient.BlobFormat.text,
+            repository_id=self.test_config.repository_id,
         )
         print(diff)
 
     def test_git_diff(self):
         """Test git diff."""
-        all_prs = self.client.list_all_pull_requests()
+        all_prs = self.client.list_all_pull_requests(repository_id=self.test_config.repository_id)
         details = all_prs[0]
         diff = self.client.git.diff_between_commits(
-            details["lastMergeTargetCommit"]["commitId"],
-            details["lastMergeSourceCommit"]["commitId"],
+            base_commit=details["lastMergeTargetCommit"]["commitId"],
+            target_commit=details["lastMergeSourceCommit"]["commitId"],
+            repository_id=self.test_config.repository_id,
         )
         assert len(diff["changes"]) > 0
 
     def test_properties(self):
         """Test get properties."""
-        all_prs = self.client.list_all_pull_requests()
+        all_prs = self.client.list_all_pull_requests(repository_id=self.test_config.repository_id)
         latest_pr = all_prs[0]
         pr_id = latest_pr["pullRequestId"]
         pr_id = 441259
-        base_properties = self.client.pull_request(pr_id).get_properties()
+        base_properties = self.client.pull_request(pr_id).get_properties(
+            repository_id=self.test_config.repository_id
+        )
         base_count = len(base_properties)
-        new_properties = self.client.pull_request(pr_id).add_property("Hello", "World")
+        new_properties = self.client.pull_request(pr_id).add_property(
+            "Hello", "World", repository_id=self.test_config.repository_id
+        )
         self.assertEqual(base_count + 1, len(new_properties))
-        after_deletion = self.client.pull_request(pr_id).delete_property("Hello")
+        after_deletion = self.client.pull_request(pr_id).delete_property(
+            "Hello", repository_id=self.test_config.repository_id
+        )
         self.assertEqual(len(after_deletion), base_count)
         print("Done")
 
@@ -80,15 +88,17 @@ class LibraryTests(unittest.TestCase):
 
     def test_list_refs(self):
         """Test list refs."""
-        refs = self.client.git.get_refs()
+        refs = self.client.git.get_refs(repository_id=self.test_config.repository_id)
         self.assertTrue(len(refs) > 0, "Failed to find any refs")
 
     def test_get_commit(self):
         """Test get commit."""
-        refs = self.client.git.get_refs()
+        refs = self.client.git.get_refs(repository_id=self.test_config.repository_id)
         ref = refs[0]
         commit_id = ref["objectId"]
-        commit = self.client.git.get_commit(commit_id)
+        commit = self.client.git.get_commit(
+            commit_id=commit_id, repository_id=self.test_config.repository_id
+        )
         self.assertIsNotNone(commit)
 
     # TODO: We can't test this until we can also create branches
@@ -100,7 +110,7 @@ class LibraryTests(unittest.TestCase):
 
     def test_get_pull_requests(self):
         """Test get pull requests."""
-        refs = self.client.list_all_pull_requests()
+        refs = self.client.list_all_pull_requests(repository_id=self.test_config.repository_id)
         self.assertTrue(len(refs) > 0)
 
     def test_get_pools(self):

@@ -93,10 +93,11 @@ class ADOGitClient(ADOBaseClient):
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
 
-    def get_status(self, sha: str) -> ADOResponse:
+    def get_status(self, *, sha: str, repository_id: str) -> ADOResponse:
         """Set a status on a PR.
 
         :param str sha: The SHA of the commit to add the status to.
+        :param str repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
 
@@ -108,7 +109,9 @@ class ADOGitClient(ADOBaseClient):
         if len(sha) != 40:
             raise ADOException("The SHA for a commit must be the full 40 character version")
 
-        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}/commits/{sha}/"
+        request_url = (
+            f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}/commits/{sha}/"
+        )
         request_url += "statuses?api-version=2.1"
 
         response = self.http_client.get(request_url)
@@ -117,11 +120,12 @@ class ADOGitClient(ADOBaseClient):
 
     def set_status(
         self,
+        *,
         sha: str,
         state: ADOGitStatusState,
         identifier: str,
         description: str,
-        *,
+        repository_id: str,
         target_url: Optional[str] = None,
     ) -> ADOResponse:
         """Set a status on a PR.
@@ -130,8 +134,8 @@ class ADOGitClient(ADOBaseClient):
         :param ADOGitStatusState state: The state to set the status to.
         :param str identifier: A unique identifier for the status (so it can be changed later)
         :param str description: The text to show in the status
-        :param target_url: An optional URL to set which is opened when the description is clicked.
-        :type target_url: str or None
+        :param str repository_id: The ID for the repository
+        :param Optional[str] target_url: An optional URL to set which is opened when the description is clicked.
 
         :returns: The ADO response with the data in it
 
@@ -146,7 +150,9 @@ class ADOGitClient(ADOBaseClient):
         if state == ADOGitStatusState.NOT_SET:
             raise ADOException("The NOT_SET state cannot be used for statuses on commits")
 
-        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}/commits/{sha}/"
+        request_url = (
+            f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}/commits/{sha}/"
+        )
         request_url += "statuses?api-version=2.1"
 
         body = {
@@ -161,20 +167,23 @@ class ADOGitClient(ADOBaseClient):
         response = self.http_client.post(request_url, json_data=body)
         return self.http_client.decode_response(response)
 
-    def diff_between_commits(self, base_commit: str, target_commit: str) -> ADOResponse:
+    def diff_between_commits(
+        self, *, base_commit: str, target_commit: str, repository_id: str,
+    ) -> ADOResponse:
         """Get the diff between two commits.
 
-        :param base_commit: The full hash of the base commit to perform the diff against.
-        :param target_commit: The full hash of the commit to perform the diff of.
-        :type base_commit: str
-        :type target_commit: str
+        :param str base_commit: The full hash of the base commit to perform the diff against.
+        :param str target_commit: The full hash of the commit to perform the diff of.
+        :param str repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
 
         self.log.debug(f"Fetching commit diff: {base_commit}..{target_commit}")
 
-        base_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}/diffs/commits?"
+        base_url = (
+            f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}/diffs/commits?"
+        )
 
         changes = []
         skip = 0
@@ -204,18 +213,19 @@ class ADOGitClient(ADOBaseClient):
 
             skip += 100
 
-    def download_zip(self, branch: str, output_path: str) -> None:
+    def download_zip(self, *, branch: str, output_path: str, repository_id: str,) -> None:
         """Download the zip of the branch specified.
 
         :param str branch: The name of the branch to download.
         :param str output_path: The path to write the output to.
+        :param str repository_id: The ID for the repository
 
         :raises ADOException: If the output path already exists
         :raises ADOHTTPException: If we fail to fetch the zip for any reason
         """
 
         self.log.debug(f"Downloading branch: {branch}")
-        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}/Items?"
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}/Items?"
 
         parameters = {
             "path": "/",
@@ -238,6 +248,7 @@ class ADOGitClient(ADOBaseClient):
     def get_refs(
         self,
         *,
+        repository_id: str,
         filter_startswith: Optional[str] = None,
         filter_contains: Optional[str] = None,
         include_links: Optional[bool] = None,
@@ -252,6 +263,7 @@ class ADOGitClient(ADOBaseClient):
 
         All non-specified options use the ADO default.
 
+        :param str repository_id: The ID for the repository
         :param Optional[str] filter_startswith: A filter to apply to the refs
                                                 (starts with)
         :param Optional[str] filter_contains: A filter to apply to the refs
@@ -285,9 +297,7 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Getting refs")
 
-        request_url = (
-            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}/refs?"
-        )
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}/refs?"
 
         parameters: Dict[str, Any] = {}
 
@@ -329,12 +339,15 @@ class ADOGitClient(ADOBaseClient):
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
 
-    def get_commit(self, commit_id: str, *, change_count: Optional[int] = None,) -> ADOResponse:
+    def get_commit(
+        self, *, commit_id: str, repository_id: str, change_count: Optional[int] = None
+    ) -> ADOResponse:
         """Set a status on a PR.
 
         All non-specified options use the ADO default.
 
         :param str commit_id: The id of the commit
+        :param str repository_id: The ID for the repository
         :param Optional[int] change_count: The number of changes to include in
                                            the result
 
@@ -343,9 +356,7 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Getting commit: {commit_id}")
 
-        request_url = (
-            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}"
-        )
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}"
         request_url += f"/commits/{commit_id}?api-version=5.0"
 
         if change_count:
@@ -354,19 +365,18 @@ class ADOGitClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
-    def update_refs(self, updates: List[ADOReferenceUpdate]) -> ADOResponse:
+    def update_refs(self, *, updates: List[ADOReferenceUpdate], repository_id: str,) -> ADOResponse:
         """Update a list of references.
 
-        :param updates: The list of updates to make
+        :param List[ADOReferenceUpdate] updates: The list of updates to make
+        :param str repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
 
         self.log.debug("Updating references")
 
-        request_url = (
-            f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}"
-        )
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}"
         request_url += "/refs?api-version=5.0"
 
         data = [update.json_data() for update in updates]
@@ -375,15 +385,18 @@ class ADOGitClient(ADOBaseClient):
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
 
-    def delete_branch(self, branch_name: str, object_id: str) -> ADOResponse:
+    def delete_branch(self, branch_name: str, object_id: str, repository_id: str) -> ADOResponse:
         """Delete a branch
 
         :param branch_name: The full name of the branch. e.g. refs/heads/my_branch
         :param object_id: The ID of the object the branch currently points to
+        :param str repository_id: The ID for the repository
 
         :returns: The ADO response
         """
-        return self.update_refs([ADOReferenceUpdate(branch_name, object_id, None)])
+        return self.update_refs(
+            updates=[ADOReferenceUpdate(branch_name, object_id, None)], repository_id=repository_id
+        )
 
     class VersionControlRecursionType(enum.Enum):
         """Specifies the level of recursion to use when getting an item."""
@@ -411,6 +424,7 @@ class ADOGitClient(ADOBaseClient):
         self,
         *,
         path: str,
+        repository_id: str,
         scope_path: Optional[str] = None,
         recursion_level: Optional[VersionControlRecursionType] = None,
         include_content_metadata: Optional[bool] = None,
@@ -426,6 +440,7 @@ class ADOGitClient(ADOBaseClient):
         All non-specified options use the ADO default.
 
         :param str path: The item path,
+        :param str repository_id: The ID for the repository
         :param Optional[str] scope_path: The path scope
         :param Optional[VersionControlRecursionType] recursion_level: The recursion level
         :param Optional[bool] include_content_metadata: Set to include content metadata
@@ -441,7 +456,7 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Getting item")
 
-        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{self.context.repository_id}/items?"
+        request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}/items?"
 
         parameters: Dict[str, Any] = {"path": path, "api-version": "5.1"}
 
@@ -489,6 +504,7 @@ class ADOGitClient(ADOBaseClient):
         self,
         *,
         blob_id: str,
+        repository_id: str,
         blob_format: Optional[BlobFormat] = None,
         download: Optional[bool] = None,
         file_name: Optional[str] = None,
@@ -499,6 +515,7 @@ class ADOGitClient(ADOBaseClient):
         All non-specified options use the ADO default.
 
         :param str blob_id: The SHA1 of the blob
+        :param str repository_id: The ID for the repository
         :param Optional[BlobFormat] blob_format: The format to get the blob in
         :param Optional[bool] download: Set to True to download rather than get a response
         :param Optional[str] file_name: The file name to use for the download if download is set to True
@@ -510,7 +527,7 @@ class ADOGitClient(ADOBaseClient):
         self.log.debug(f"Getting blob")
 
         request_url = self.http_client.api_endpoint(is_default_collection=False)
-        request_url += f"/git/repositories/{self.context.repository_id}/blobs/{blob_id}?"
+        request_url += f"/git/repositories/{repository_id}/blobs/{blob_id}?"
 
         parameters: Dict[str, Any] = {
             "api-version": "5.1",
@@ -538,19 +555,22 @@ class ADOGitClient(ADOBaseClient):
 
         return self.http_client.decode_response(response)
 
-    def get_blobs(self, *, blob_ids: List[str], output_path: str) -> ADOResponse:
+    def get_blobs(
+        self, *, blob_ids: List[str], output_path: str, repository_id: str,
+    ) -> ADOResponse:
         """Get a git item.
 
         All non-specified options use the ADO default.
 
         :param List[str] blob_ids: The SHA1s of the blobs
         :param str output_path: The location to write out the zip to
+        :param str repository_id: The ID for the repository
         """
 
         self.log.debug(f"Getting blobs")
 
         request_url = self.http_client.api_endpoint(is_default_collection=False)
-        request_url += f"/git/repositories/{self.context.repository_id}/blobs?api-version=5.1"
+        request_url += f"/git/repositories/{repository_id}/blobs?api-version=5.1"
 
         if os.path.exists(output_path):
             raise ADOException("The output path already exists")

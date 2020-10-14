@@ -3,6 +3,14 @@
 # Pickle collected data for later comparisons.
 persistent=yes
 
+# Require full doc comments
+# Require the correct doc comment style
+# Avoid compare to empty string
+# Avoid overlapping exceptions
+# Limit cyclomatic complexity
+load-plugins=pylint.extensions.docparams,pylint.extensions.docstyle,pylint.extensions.emptystring,pylint.extensions.overlapping_exceptions,pylint.extensions.redefined_variable_type,pylint.extensions.mccabe
+
+
 [MESSAGES CONTROL]
 
 # C0330 bad-continuation: Wrong hanging indentation before block
