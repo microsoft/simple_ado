@@ -295,6 +295,8 @@ class ADOGitClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
+        # pylint: disable=too-complex
+
         self.log.debug(f"Getting refs")
 
         request_url = f"{self.http_client.api_endpoint()}/git/repositories/{repository_id}/refs?"
@@ -338,6 +340,8 @@ class ADOGitClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
+
+        # pylint: enable=too-complex
 
     def get_commit(
         self, *, commit_id: str, repository_id: str, change_count: Optional[int] = None
@@ -449,7 +453,7 @@ class ADOGitClient(ADOBaseClient):
         :param Optional[str] version: Version string identifier (name of tag/branch, SHA1 of commit)
         :param Optional[GitVersionType] version_type: Version type (branch, tag or commit).
         :param Optional[bool] include_content: Set to true to include item content when requesting JSON
-        :param Optional[bool]resolve_lfs: Set to true to resolve LFS pointer files to resolve actual content
+        :param Optional[bool] resolve_lfs: Set to true to resolve LFS pointer files to resolve actual content
 
         :returns: The ADO response with the data in it
         """
@@ -565,6 +569,8 @@ class ADOGitClient(ADOBaseClient):
         :param List[str] blob_ids: The SHA1s of the blobs
         :param str output_path: The location to write out the zip to
         :param str repository_id: The ID for the repository
+
+        :raises FileExistsError: If the output path already exists
         """
 
         self.log.debug(f"Getting blobs")
@@ -573,7 +579,7 @@ class ADOGitClient(ADOBaseClient):
         request_url += f"/git/repositories/{repository_id}/blobs?api-version=5.1"
 
         if os.path.exists(output_path):
-            raise ADOException("The output path already exists")
+            raise FileExistsError("The output path already exists")
 
         with self.http_client.post(
             request_url,

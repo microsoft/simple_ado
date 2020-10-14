@@ -34,8 +34,6 @@ class ADOGovernanceClient(ADOBaseClient):
         :param str governed_repository_id: The ID of the governed repository (not necessarily the same as the ADO one)
 
         :raises ADOHTTPException: If removing the policy failed
-
-        :returns: The ADO response with the data in it
         """
 
         request_url = self.http_client.api_endpoint(

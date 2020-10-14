@@ -96,6 +96,8 @@ class ADOHTTPClient:
         :param Optional[str] subdomain: A subdomain that should be used (if any)
         :param Optional[str] project_id: The project ID. This must be set if `is_project` is set
 
+        :raises ADOException: If `is_project` is set, but `project_id` is not.
+
         :returns: The constructed base URL
         """
 

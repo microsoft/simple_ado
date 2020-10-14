@@ -309,6 +309,8 @@ class ADOPullRequestClient(ADOBaseClient):
         :raises ADOException: If we couldn't find the author or the properties
         """
 
+        # pylint: disable=too-complex
+
         try:
             # Deleted threads can stay around if they have other comments, so we
             # check if it was deleted before we check anything else.
@@ -346,6 +348,8 @@ class ADOPullRequestClient(ADOBaseClient):
             return True
 
         return False
+
+        # pylint: enable=too-complex
 
     def threads_with_identifier(self, identifier: str, *, repository_id: str) -> List[ADOThread]:
         """Get the threads on a PR which begin with the prefix specified.

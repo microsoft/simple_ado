@@ -105,8 +105,6 @@ class ADOBuildClient(ADOBaseClient):
         :param build_id: The ID of the build
         :param artifact_name: The name of the artifact to fetch
         :param str output_path: The path to write the output to.
-
-        :returns: The ADO response with the data in it
         """
 
         parameters = {
