@@ -12,7 +12,6 @@ import urllib.parse
 
 
 from simple_ado.base_client import ADOBaseClient
-from simple_ado.context import ADOContext
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 
 
@@ -27,15 +26,12 @@ class TaskAgentPoolActionFilter(enum.Enum):
 class ADOPoolsClient(ADOBaseClient):
     """Wrapper class around the undocumented ADO pools APIs.
 
-    :param context: The context information for the client
     :param http_client: The HTTP client to use for the client
     :param log: The logger to use
     """
 
-    def __init__(
-        self, context: ADOContext, http_client: ADOHTTPClient, log: logging.Logger
-    ) -> None:
-        super().__init__(context, http_client, log.getChild("pools"))
+    def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
+        super().__init__(http_client, log.getChild("pools"))
 
     def get_pools(
         self,

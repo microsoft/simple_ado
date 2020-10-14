@@ -9,7 +9,6 @@ import logging
 from typing import cast
 
 from simple_ado.base_client import ADOBaseClient
-from simple_ado.context import ADOContext
 from simple_ado.exceptions import ADOException
 from simple_ado.http_client import ADOHTTPClient
 from simple_ado.types import TeamFoundationId
@@ -18,15 +17,12 @@ from simple_ado.types import TeamFoundationId
 class ADOUserClient(ADOBaseClient):
     """Wrapper class around the ADO user APIs.
 
-    :param context: The context information for the client
     :param http_client: The HTTP client to use for the client
     :param log: The logger to use
     """
 
-    def __init__(
-        self, context: ADOContext, http_client: ADOHTTPClient, log: logging.Logger
-    ) -> None:
-        super().__init__(context, http_client, log.getChild("user"))
+    def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
+        super().__init__(http_client, log.getChild("user"))
 
     def get_team_foundation_id(self, identity: str) -> TeamFoundationId:
         """Fetch the unique Team Foundation GUID for a given identity.

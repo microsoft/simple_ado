@@ -12,7 +12,6 @@ import urllib.parse
 
 
 from simple_ado.base_client import ADOBaseClient
-from simple_ado.context import ADOContext
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 from simple_ado.types import TeamFoundationId
 from simple_ado.utilities import download_from_response_stream
@@ -21,15 +20,12 @@ from simple_ado.utilities import download_from_response_stream
 class ADOBuildClient(ADOBaseClient):
     """Wrapper class around the ADO Build APIs.
 
-    :param context: The context information for the client
     :param http_client: The HTTP client to use for the client
     :param log: The logger to use
     """
 
-    def __init__(
-        self, context: ADOContext, http_client: ADOHTTPClient, log: logging.Logger
-    ) -> None:
-        super().__init__(context, http_client, log.getChild("build"))
+    def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
+        super().__init__(http_client, log.getChild("build"))
 
     def queue_build(
         self,

@@ -13,7 +13,6 @@ import urllib.parse
 
 
 from simple_ado.base_client import ADOBaseClient
-from simple_ado.context import ADOContext
 from simple_ado.exceptions import ADOException
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 from simple_ado.types import TeamFoundationId
@@ -63,17 +62,14 @@ class ADOBranchPolicy(enum.Enum):
 class ADOSecurityClient(ADOBaseClient):
     """Wrapper class around the undocumented ADO Security APIs.
 
-    :param context: The context information for the client
     :param http_client: The HTTP client to use for the client
     :param log: The logger to use
     """
 
     GIT_PERMISSIONS_NAMESPACE: ClassVar[str] = "2e9eb7ed-3c0a-47d4-87c1-0ffdd275fd87"
 
-    def __init__(
-        self, context: ADOContext, http_client: ADOHTTPClient, log: logging.Logger
-    ) -> None:
-        super().__init__(context, http_client, log.getChild("security"))
+    def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
+        super().__init__(http_client, log.getChild("security"))
 
     def get_policies(self, project_id: str) -> ADOResponse:
         """Gets the existing policies.

@@ -11,7 +11,6 @@ import os
 from typing import Any, cast, Dict, List, Optional
 
 from simple_ado.base_client import ADOBaseClient
-from simple_ado.context import ADOContext
 from simple_ado.exceptions import ADOException, ADOHTTPException
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 from simple_ado.utilities import boolstr
@@ -101,15 +100,12 @@ class WorkItemRelationType(enum.Enum):
 class ADOWorkItemsClient(ADOBaseClient):
     """Wrapper class around the ADO work items APIs.
 
-    :param context: The context information for the client
     :param http_client: The HTTP client to use for the client
     :param log: The logger to use
     """
 
-    def __init__(
-        self, context: ADOContext, http_client: ADOHTTPClient, log: logging.Logger
-    ) -> None:
-        super().__init__(context, http_client, log.getChild("workitems"))
+    def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
+        super().__init__(http_client, log.getChild("workitems"))
 
     def get(self, identifier: str) -> ADOResponse:
         """Get the data about a work item.

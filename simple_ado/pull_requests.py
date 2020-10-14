@@ -18,7 +18,6 @@ from simple_ado.comments import (
     ADOCommentProperty,
     ADOCommentStatus,
 )
-from simple_ado.context import ADOContext
 from simple_ado.exceptions import ADOException
 from simple_ado.git import ADOGitStatusState
 from simple_ado.http_client import ADOHTTPClient, ADOResponse, ADOThread
@@ -29,7 +28,6 @@ from simple_ado.models import PatchOperation, AddOperation, DeleteOperation, Pro
 class ADOPullRequestClient(ADOBaseClient):
     """Wrapper class around the ADO Pull Request APIs.
 
-    :param context: The context information for the client
     :param http_client: The HTTP client to use for the client
     :param log: The logger to use
     :param pull_request_id: The ID of the pull request
@@ -38,14 +36,10 @@ class ADOPullRequestClient(ADOBaseClient):
     pull_request_id: int
 
     def __init__(
-        self,
-        context: ADOContext,
-        http_client: ADOHTTPClient,
-        log: logging.Logger,
-        pull_request_id: int,
+        self, http_client: ADOHTTPClient, log: logging.Logger, pull_request_id: int,
     ) -> None:
         self.pull_request_id = pull_request_id
-        super().__init__(context, http_client, log.getChild(f"pr.{pull_request_id}"))
+        super().__init__(http_client, log.getChild(f"pr.{pull_request_id}"))
 
     def details(self, repository_id: str,) -> ADOResponse:
         """Get the details for the PR from ADO.
@@ -259,19 +253,21 @@ class ADOPullRequestClient(ADOBaseClient):
         state: ADOGitStatusState,
         identifier: str,
         description: str,
+        repository_id: str,
+        context: str,
         *,
         iteration: Optional[int] = None,
         target_url: Optional[str] = None,
-        repository_id: str,
     ) -> ADOResponse:
         """Set a status on a PR.
 
         :param ADOGitStatusState state: The state to set the status to.
         :param str identifier: A unique identifier for the status (so it can be changed later)
         :param str description: The text to show in the status
+        :param str repository_id: The ID for the repository
+        :param str context: The context for the build status
         :param Optional[int] iteration: The iteration of the PR to set the status on
         :param Optional[str] target_url: An optional URL to set which is opened when the description is clicked.
-        :param str repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
@@ -286,7 +282,7 @@ class ADOPullRequestClient(ADOBaseClient):
         body = {
             "state": state.value,
             "description": description,
-            "context": {"name": self.context.status_context, "genre": identifier},
+            "context": {"name": context, "genre": identifier},
         }
 
         if iteration is not None:
@@ -309,7 +305,7 @@ class ADOPullRequestClient(ADOBaseClient):
         :raises ADOException: If we couldn't find the author or the properties
         """
 
-        # pylint: disable=too-complex
+        _ = self
 
         try:
             # Deleted threads can stay around if they have other comments, so we
@@ -319,15 +315,6 @@ class ADOPullRequestClient(ADOBaseClient):
         except Exception:
             # If it's not there, it's not set
             pass
-
-        try:
-            # It wasn't one of the specified users comments
-            if thread["comments"][0]["author"]["uniqueName"] != self.context.username:
-                return False
-        except:
-            raise ADOException(
-                "Could not find comments.0.author.uniqueName in thread: " + str(thread)
-            )
 
         try:
             properties = thread["properties"]
@@ -348,8 +335,6 @@ class ADOPullRequestClient(ADOBaseClient):
             return True
 
         return False
-
-        # pylint: enable=too-complex
 
     def threads_with_identifier(self, identifier: str, *, repository_id: str) -> List[ADOThread]:
         """Get the threads on a PR which begin with the prefix specified.

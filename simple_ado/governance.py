@@ -9,7 +9,6 @@ import logging
 
 
 from simple_ado.base_client import ADOBaseClient
-from simple_ado.context import ADOContext
 from simple_ado.exceptions import ADOHTTPException
 from simple_ado.http_client import ADOHTTPClient
 
@@ -17,15 +16,12 @@ from simple_ado.http_client import ADOHTTPClient
 class ADOGovernanceClient(ADOBaseClient):
     """Wrapper class around the ADO Governance APIs.
 
-    :param context: The context information for the client
     :param http_client: The HTTP client to use for the client
     :param log: The logger to use
     """
 
-    def __init__(
-        self, context: ADOContext, http_client: ADOHTTPClient, log: logging.Logger
-    ) -> None:
-        super().__init__(context, http_client, log.getChild("governance"))
+    def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
+        super().__init__(http_client, log.getChild("governance"))
 
     def remove_policy(self, *, policy_id: str, governed_repository_id: str) -> None:
         """Remove a policy from a repository.

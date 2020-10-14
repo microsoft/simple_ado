@@ -12,7 +12,6 @@ import urllib.parse
 import requests
 
 from simple_ado.builds import ADOBuildClient
-from simple_ado.context import ADOContext
 from simple_ado.exceptions import ADOException
 from simple_ado.git import ADOGitClient
 from simple_ado.graph import ADOGraphClient
@@ -28,10 +27,8 @@ from simple_ado.workitems import ADOWorkItemsClient
 class ADOClient:
     """Wrapper class around the ADO API.
 
-    :param str username: The username for the user who is accessing the API
     :param str tenant: The ADO tenant to connect to
     :param Tuple[str,str] credentials: The credentials to use for the API connection
-    :param str status_context: The context for any statuses placed on a PR or commit
     :param Optional[Dict[str,str]] extra_headers: Any extra headers which should be sent with the API requests
     :param Optional[logging.Logger] log: The logger to use for logging (a new one will be used if one is not supplied)
     """
@@ -40,7 +37,6 @@ class ADOClient:
 
     log: logging.Logger
 
-    context: ADOContext
     http_client: ADOHTTPClient
 
     builds: ADOBuildClient
@@ -55,10 +51,8 @@ class ADOClient:
     def __init__(
         self,
         *,
-        username: str,
         tenant: str,
         credentials: Tuple[str, str],
-        status_context: str,
         extra_headers: Optional[Dict[str, str]] = None,
         log: Optional[logging.Logger] = None,
     ) -> None:
@@ -69,20 +63,18 @@ class ADOClient:
         else:
             self.log = log.getChild("ado")
 
-        self.context = ADOContext(username=username, status_context=status_context)
-
         self.http_client = ADOHTTPClient(
             tenant=tenant, credentials=credentials, log=self.log, extra_headers=extra_headers,
         )
 
-        self.builds = ADOBuildClient(self.context, self.http_client, self.log)
-        self.git = ADOGitClient(self.context, self.http_client, self.log)
-        self.governance = ADOGovernanceClient(self.context, self.http_client, self.log)
-        self.graph = ADOGraphClient(self.context, self.http_client, self.log)
-        self.pools = ADOPoolsClient(self.context, self.http_client, self.log)
-        self.security = ADOSecurityClient(self.context, self.http_client, self.log)
-        self.user = ADOUserClient(self.context, self.http_client, self.log)
-        self.workitems = ADOWorkItemsClient(self.context, self.http_client, self.log)
+        self.builds = ADOBuildClient(self.http_client, self.log)
+        self.git = ADOGitClient(self.http_client, self.log)
+        self.governance = ADOGovernanceClient(self.http_client, self.log)
+        self.graph = ADOGraphClient(self.http_client, self.log)
+        self.pools = ADOPoolsClient(self.http_client, self.log)
+        self.security = ADOSecurityClient(self.http_client, self.log)
+        self.user = ADOUserClient(self.http_client, self.log)
+        self.workitems = ADOWorkItemsClient(self.http_client, self.log)
 
     def verify_access(self) -> bool:
         """Verify that we have access to ADO.
@@ -153,7 +145,7 @@ class ADOClient:
 
         :returns: A new ADOPullRequest client for the pull request specified
         """
-        return ADOPullRequestClient(self.context, self.http_client, self.log, pull_request_id)
+        return ADOPullRequestClient(self.http_client, self.log, pull_request_id)
 
     def list_all_pull_requests(
         self, *, branch_name: Optional[str] = None, repository_id: str,

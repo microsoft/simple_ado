@@ -24,10 +24,8 @@ class LibraryTests(unittest.TestCase):
         """Set up method."""
         self.test_config = TestDetails()
         self.client = simple_ado.ADOClient(
-            username=self.test_config.username,
             tenant=self.test_config.tenant,
             credentials=(self.test_config.username, self.test_config.token),
-            status_context="simple_ado",
         )
 
     def test_get_blobs(self):

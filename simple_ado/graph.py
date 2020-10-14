@@ -8,22 +8,18 @@ from typing import Any, List
 
 
 from simple_ado.base_client import ADOBaseClient
-from simple_ado.context import ADOContext
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 
 
 class ADOGraphClient(ADOBaseClient):
     """Wrapper class around the ADO Graph APIs.
 
-    :param context: The context information for the client
     :param http_client: The HTTP client to use for the client
     :param log: The logger to use
     """
 
-    def __init__(
-        self, context: ADOContext, http_client: ADOHTTPClient, log: logging.Logger
-    ) -> None:
-        super().__init__(context, http_client, log.getChild("graph"))
+    def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
+        super().__init__(http_client, log.getChild("graph"))
 
     def list_groups(self) -> List[Any]:
         """Get the groups in the organization.

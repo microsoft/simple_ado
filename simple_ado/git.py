@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Optional
 import urllib.parse
 
 from simple_ado.base_client import ADOBaseClient
-from simple_ado.context import ADOContext
 from simple_ado.exceptions import ADOException
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 from simple_ado.utilities import download_from_response_stream
@@ -72,15 +71,12 @@ class ADOReferenceUpdate:
 class ADOGitClient(ADOBaseClient):
     """Wrapper class around the ADO Git APIs.
 
-    :param context: The context information for the client
     :param http_client: The HTTP client to use for the client
     :param log: The logger to use
     """
 
-    def __init__(
-        self, context: ADOContext, http_client: ADOHTTPClient, log: logging.Logger
-    ) -> None:
-        super().__init__(context, http_client, log.getChild("git"))
+    def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
+        super().__init__(http_client, log.getChild("git"))
 
     def all_repositories(self) -> ADOResponse:
         """Get a list of repositories in the project.
@@ -126,6 +122,7 @@ class ADOGitClient(ADOBaseClient):
         identifier: str,
         description: str,
         repository_id: str,
+        context: str,
         target_url: Optional[str] = None,
     ) -> ADOResponse:
         """Set a status on a PR.
@@ -135,6 +132,7 @@ class ADOGitClient(ADOBaseClient):
         :param str identifier: A unique identifier for the status (so it can be changed later)
         :param str description: The text to show in the status
         :param str repository_id: The ID for the repository
+        :param str context: The context to use for build status notifications
         :param Optional[str] target_url: An optional URL to set which is opened when the description is clicked.
 
         :returns: The ADO response with the data in it
@@ -158,7 +156,7 @@ class ADOGitClient(ADOBaseClient):
         body = {
             "state": state.value,
             "description": description,
-            "context": {"name": self.context.status_context, "genre": identifier},
+            "context": {"name": context, "genre": identifier},
         }
 
         if target_url is not None:
