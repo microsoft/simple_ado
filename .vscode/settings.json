@@ -9,10 +9,10 @@
         "**/.pytest_cache/**": true,
         "**/.mypy_cache/**": true
     },
-    "python.pythonPath": "${workspaceFolder}/bin/python3",
+    "python.pythonPath": "venv/bin/python",
     "python.linting.enabled": true,
     "python.linting.pylintEnabled": true,
-    "python.linting.pylintPath": "${workspaceFolder}/bin/pylint",
+    "python.linting.pylintPath": "${workspaceFolder}/venv/bin/pylint",
     "python.linting.pylintArgs": [
         "--rcfile=${workspaceFolder}/pylintrc",
         "--extension-pkg-whitelist=mypy",
@@ -20,14 +20,14 @@
         "import sys; sys.path.insert(0, '${workspaceFolder}/simple_ado')"
     ],
     "python.linting.mypyEnabled": true,
-    "python.linting.mypyPath": "${workspaceFolder}/bin/mypy",
+    "python.linting.mypyPath": "${workspaceFolder}/venv/bin/mypy",
     "python.linting.mypyArgs": [
         "--config-file=${workspaceFolder}/mypy.ini"
     ],
     "python.jediEnabled": true,
     "editor.formatOnSave": true,
     "python.formatting.provider": "black",
-    "python.formatting.blackPath": "${workspaceFolder}/bin/black",
+    "python.formatting.blackPath": "${workspaceFolder}/venv/bin/black",
     "python.formatting.blackArgs": [
         "--line-length",
         "100"

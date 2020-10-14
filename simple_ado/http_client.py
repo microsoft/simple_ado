@@ -48,7 +48,6 @@ class ADOHTTPClient:
     """Base class that actually makes API calls to Azure DevOps.
 
     :param str tenant: The name of the ADO tenant to connect to
-    :param str project_id: The ID of the ADO project to connect to
     :param Dict[str,str] extra_headers: Any extra headers which should be added to each request
     :param Tuple[str,str] credentials: The credentials which should be used for authentication
     :param logging.Logger log: The logger to use for logging
@@ -56,7 +55,6 @@ class ADOHTTPClient:
 
     log: logging.Logger
     tenant: str
-    project_id: str
     extra_headers: Dict[str, str]
     credentials: Tuple[str, str]
 
@@ -64,7 +62,6 @@ class ADOHTTPClient:
         self,
         *,
         tenant: str,
-        project_id: str,
         credentials: Tuple[str, str],
         log: logging.Logger,
         extra_headers: Optional[Dict[str, str]] = None,
@@ -74,7 +71,6 @@ class ADOHTTPClient:
         self.log = log.getChild("http")
 
         self.tenant = tenant
-        self.project_id = project_id
         self.credentials = credentials
 
         if extra_headers is None:
@@ -89,13 +85,16 @@ class ADOHTTPClient:
         is_project: bool = True,
         is_vssps: bool = False,
         subdomain: Optional[str] = None,
+        project_id: Optional[str] = None,
     ) -> str:
         """Generate the base url for all API calls (this varies depending on the API).
 
         :param bool is_default_collection: Whether this URL should start with the path "/DefaultCollection"
-        :param bool is_project: Whether this URL should scope down to include `project_id`
+        :param bool is_project: Whether this URL should scope down to include `project_id`. If this
+                                is True, `project_id` must be set
         :param bool is_vssps: Whether this URL is a VSSPS URL (all other parameters are ignored in that case)
         :param Optional[str] subdomain: A subdomain that should be used (if any)
+        :param Optional[str] project_id: The project ID. This must be set if `is_project` is set
 
         :returns: The constructed base URL
         """
@@ -114,7 +113,11 @@ class ADOHTTPClient:
             url += "/DefaultCollection"
 
         if is_project:
-            url += f"/{self.project_id}"
+            if not project_id:
+                raise ADOException(
+                    "The `is_project` parameter was set, but no project ID was provided"
+                )
+            url += f"/{project_id}"
 
         return url
 
@@ -126,6 +129,7 @@ class ADOHTTPClient:
         is_internal: bool = False,
         is_vssps: bool = False,
         subdomain: Optional[str] = None,
+        project_id: Optional[str] = None,
     ) -> str:
         """Generate the base url for all API calls (this varies depending on the API).
 
@@ -134,6 +138,7 @@ class ADOHTTPClient:
         :param bool is_internal: Whether this URL should use internal API endpoint "/_api"
         :param bool is_vssps: Whether this URL is a VSSPS URL (all other parameters are ignored in that case)
         :param Optional[str] subdomain: A subdomain that should be used (if any)
+        :param Optional[str] project_id: The project ID. This must be set if `is_project` is set
 
         :returns: The constructed base URL
         """
@@ -143,6 +148,7 @@ class ADOHTTPClient:
             is_project=is_project,
             is_vssps=is_vssps,
             subdomain=subdomain,
+            project_id=project_id,
         )
 
         if is_internal:

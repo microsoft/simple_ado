@@ -30,7 +30,6 @@ class ADOClient:
 
     :param str username: The username for the user who is accessing the API
     :param str tenant: The ADO tenant to connect to
-    :param str project_id: The identifier for the project
     :param str repository_id: The identifier for the repository
     :param Tuple[str,str] credentials: The credentials to use for the API connection
     :param str status_context: The context for any statuses placed on a PR or commit
@@ -59,7 +58,6 @@ class ADOClient:
         *,
         username: str,
         tenant: str,
-        project_id: str,
         repository_id: str,
         credentials: Tuple[str, str],
         status_context: str,
@@ -78,11 +76,7 @@ class ADOClient:
         )
 
         self.http_client = ADOHTTPClient(
-            tenant=tenant,
-            project_id=project_id,
-            credentials=credentials,
-            log=self.log,
-            extra_headers=extra_headers,
+            tenant=tenant, credentials=credentials, log=self.log, extra_headers=extra_headers,
         )
 
         self.builds = ADOBuildClient(self.context, self.http_client, self.log)
@@ -214,6 +208,7 @@ class ADOClient:
         is_project: bool = True,
         is_internal: bool = False,
         subdomain: Optional[str] = None,
+        project_id: Optional[str] = None,
     ) -> ADOResponse:
         """Perform a custom GET REST request.
 
@@ -232,6 +227,7 @@ class ADOClient:
         :param bool is_project: Whether this URL should scope down to include `project_id`
         :param bool is_internal: Whether this URL should use internal API endpoint "/_api"
         :param Optional[str] subdomain: A subdomain that should be used (if any)
+        :param Optional[str] project_id: The project ID. This must be set if `is_project` is set
 
         :returns: The raw response
         """
@@ -242,6 +238,7 @@ class ADOClient:
             is_project=is_project,
             is_internal=is_internal,
             subdomain=subdomain,
+            project_id=project_id,
         )
         request_url += f"/{url_fragment}?{encoded_parameters}"
 

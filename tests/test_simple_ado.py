@@ -26,7 +26,6 @@ class LibraryTests(unittest.TestCase):
         self.client = simple_ado.ADOClient(
             username=self.test_config.username,
             tenant=self.test_config.tenant,
-            project_id=self.test_config.project_id,
             repository_id=self.test_config.repository_id,
             credentials=(self.test_config.username, self.test_config.token),
             status_context="simple_ado",

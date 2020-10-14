@@ -75,27 +75,37 @@ class ADOSecurityClient(ADOBaseClient):
     ) -> None:
         super().__init__(context, http_client, log.getChild("security"))
 
-    def get_policies(self) -> ADOResponse:
+    def get_policies(self, project_id: str) -> ADOResponse:
         """Gets the existing policies.
+
+        :param project_id: The identifier for the project
 
         :returns: The ADO response with the data in it
         """
-
-        request_url = f"{self.http_client.api_endpoint(is_project=True)}/policy/Configurations?api-version=5.0"
+        request_url = (
+            self.http_client.api_endpoint(is_project=True, project_id=project_id)
+            + "/policy/Configurations?api-version=5.0"
+        )
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
 
-    def add_branch_build_policy(self, branch: str, *, build_definition_id: int) -> ADOResponse:
+    def add_branch_build_policy(
+        self, *, branch: str, build_definition_id: int, project_id: str
+    ) -> ADOResponse:
         """Adds a new build policy for a given branch.
 
         :param str branch: The git branch to set the build policy for
         :param int build_definition_id: The build definition to use when creating the build policy
+        :param str project_id: The identifier for the project
 
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.api_endpoint(is_project=True)}/policy/Configurations?api-version=5.0"
+        request_url = (
+            self.http_client.api_endpoint(is_project=True, project_id=project_id)
+            + "/policy/Configurations?api-version=5.0"
+        )
 
         body = {
             "type": {"id": ADOBranchPolicy.BUILD.value},
@@ -123,18 +133,22 @@ class ADOSecurityClient(ADOBaseClient):
         return self.http_client.decode_response(response)
 
     def add_branch_required_reviewers_policy(
-        self, branch: str, *, identities: List[str]
+        self, *, branch: str, identities: List[str], project_id: str
     ) -> ADOResponse:
         """Adds required reviewers when opening PRs against a given branch.
 
         :param str branch: The git branch to set required reviewers for
         :param List[str] identities: A list of identities to become required
                                      reviewers (should be team foundation IDs)
+        :param str project_id: The identifier for the project
 
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.api_endpoint(is_project=True)}/policy/Configurations?api-version=5.0"
+        request_url = (
+            self.http_client.api_endpoint(is_project=True, project_id=project_id)
+            + "/policy/Configurations?api-version=5.0"
+        )
 
         body = {
             "type": {"id": ADOBranchPolicy.REQUIRED_REVIEWERS.value},
@@ -163,11 +177,12 @@ class ADOSecurityClient(ADOBaseClient):
 
     def set_branch_approval_count_policy(
         self,
-        branch: str,
         *,
+        branch: str,
         minimum_approver_count: int,
         creator_vote_counts: bool = False,
         reset_on_source_push: bool = False,
+        project_id: str,
     ) -> ADOResponse:
         """Set minimum number of reviewers for a branch.
 
@@ -175,11 +190,15 @@ class ADOSecurityClient(ADOBaseClient):
         :param int minimum_approver_count: The minimum number of approvals required
         :param bool creator_vote_counts: Allow users to approve their own changes
         :param bool reset_on_source_push: Reset reviewer votes when there are new changes
+        :param project_id: The identifier for the project
 
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.api_endpoint(is_project=True)}/policy/Configurations?api-version=5.0"
+        request_url = (
+            self.http_client.api_endpoint(is_project=True, project_id=project_id)
+            + "/policy/Configurations?api-version=5.0"
+        )
 
         body = {
             "type": {"id": ADOBranchPolicy.APPROVAL_COUNT.value},
@@ -204,16 +223,22 @@ class ADOSecurityClient(ADOBaseClient):
         response = self.http_client.post(request_url, json_data=body)
         return self.http_client.decode_response(response)
 
-    def set_branch_work_item_policy(self, branch: str, *, required: bool = True) -> ADOResponse:
+    def set_branch_work_item_policy(
+        self, *, branch: str, required: bool = True, project_id: str
+    ) -> ADOResponse:
         """Set the work item policy for a branch.
 
         :param str branch: The git branch to set the work item policy on
         :param bool required: Whether or not linked work items should be mandatory
+        :param project_id: The identifier for the project
 
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.api_endpoint(is_project=True)}/policy/Configurations?api-version=5.0"
+        request_url = (
+            self.http_client.api_endpoint(is_project=True, project_id=project_id)
+            + "/policy/Configurations?api-version=5.0"
+        )
 
         body = {
             "type": {"id": ADOBranchPolicy.WORK_ITEM.value},
@@ -237,23 +262,29 @@ class ADOSecurityClient(ADOBaseClient):
 
     def set_branch_permissions(
         self,
-        branch: str,
         *,
+        branch: str,
         identity: TeamFoundationId,
         permissions: Dict[ADOBranchPermission, ADOBranchPermissionLevel],
+        project_id: str,
     ) -> ADOResponse:
         """Set permissions for an identity on a branch.
 
         :param str branch: The git branch to set permissions on
         :param TeamFoundationId identity: The identity to set permissions for (should be team foundation ID)
         :param Dict[ADOBranchPermission,ADOBranchPermissionLevel] permissions: A dictionary of permissions to set
+        :param project_id: The identifier for the project
 
         :returns: The ADO response with the data in it
         """
 
-        descriptor_info = self._get_descriptor_info(branch, identity)
+        descriptor_info = self._get_descriptor_info(
+            branch=branch, team_foundation_id=identity, project_id=project_id
+        )
 
-        request_url = self.http_client.api_endpoint(is_project=True, is_internal=True)
+        request_url = self.http_client.api_endpoint(
+            is_project=True, is_internal=True, project_id=project_id
+        )
         request_url += "/_security/ManagePermissions?__v=5"
 
         updates = []
@@ -263,7 +294,7 @@ class ADOSecurityClient(ADOBaseClient):
                     "PermissionId": level,
                     "PermissionBit": permission,
                     "NamespaceId": ADOSecurityClient.GIT_PERMISSIONS_NAMESPACE,
-                    "Token": self._generate_updates_token(branch),
+                    "Token": self._generate_updates_token(branch, project_id),
                 }
             )
 
@@ -273,7 +304,7 @@ class ADOSecurityClient(ADOBaseClient):
             "DescriptorIdentityType": descriptor_info["type"],
             "DescriptorIdentifier": descriptor_info["id"],
             "PermissionSetId": ADOSecurityClient.GIT_PERMISSIONS_NAMESPACE,
-            "PermissionSetToken": self._generate_permission_set_token(branch),
+            "PermissionSetToken": self._generate_permission_set_token(branch, project_id),
             "RefreshIdentities": False,
             "Updates": updates,
             "TokenDisplayName": None,
@@ -285,25 +316,28 @@ class ADOSecurityClient(ADOBaseClient):
         return self.http_client.decode_response(response)
 
     def _get_descriptor_info(
-        self, branch: str, team_foundation_id: TeamFoundationId
+        self, *, branch: str, team_foundation_id: TeamFoundationId, project_id: str
     ) -> Dict[str, str]:
         """Fetch the descriptor identity information for a given identity.
 
         :param str branch: The git branch of interest
         :param TeamFoundationId team_foundation_id: the unique Team Foundation GUID for the identity
+        :param project_id: The identifier for the project
 
         :returns: The raw descriptor info
 
         :raises ADOException: If we can't determine the descriptor info from the response
         """
 
-        request_url = self.http_client.api_endpoint(is_project=True, is_internal=True)
+        request_url = self.http_client.api_endpoint(
+            is_project=True, is_internal=True, project_id=project_id
+        )
         request_url += "/_security/DisplayPermissions?"
 
         parameters = {
             "tfid": team_foundation_id,
             "permissionSetId": ADOSecurityClient.GIT_PERMISSIONS_NAMESPACE,
-            "permissionSetToken": self._generate_permission_set_token(branch),
+            "permissionSetToken": self._generate_permission_set_token(branch, project_id),
             "__v": "5",
         }
 
@@ -325,20 +359,22 @@ class ADOSecurityClient(ADOBaseClient):
 
         return descriptor_info
 
-    def _generate_permission_set_token(self, branch: str) -> str:
+    def _generate_permission_set_token(self, branch: str, project_id: str) -> str:
         """Generate the token required for reading identity details and writing permissions.
 
         :param str branch: The git branch of interest
+        :param str project_id: The ID for the project
 
         :returns: The permission token
         """
         encoded_branch = branch.replace("/", "^")
-        return f"repoV2/{self.http_client.project_id}/{self.context.repository_id}/refs^heads^{encoded_branch}/"
+        return f"repoV2/{project_id}/{self.context.repository_id}/refs^heads^{encoded_branch}/"
 
-    def _generate_updates_token(self, branch: str) -> str:
+    def _generate_updates_token(self, branch: str, project_id: str) -> str:
         """Generate the token required for updating permissions.
 
         :param str branch: The git branch of interest
+        :param str project_id: The ID for the project
 
         :returns: The update token
         """
@@ -348,4 +384,4 @@ class ADOSecurityClient(ADOBaseClient):
 
         encoded_branch = "/".join(encoded_branch_nodes)
 
-        return f"repoV2/{self.http_client.project_id}/{self.context.repository_id}/refs/heads/{encoded_branch}/"
+        return f"repoV2/{project_id}/{self.context.repository_id}/refs/heads/{encoded_branch}/"
