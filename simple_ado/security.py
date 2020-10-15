@@ -79,7 +79,7 @@ class ADOSecurityClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
         request_url = (
-            self.http_client.api_endpoint(is_project=True, project_id=project_id)
+            self.http_client.api_endpoint(project_id=project_id)
             + "/policy/Configurations?api-version=5.0"
         )
         response = self.http_client.get(request_url)
@@ -100,7 +100,7 @@ class ADOSecurityClient(ADOBaseClient):
         """
 
         request_url = (
-            self.http_client.api_endpoint(is_project=True, project_id=project_id)
+            self.http_client.api_endpoint(project_id=project_id)
             + "/policy/Configurations?api-version=5.0"
         )
 
@@ -144,7 +144,7 @@ class ADOSecurityClient(ADOBaseClient):
         """
 
         request_url = (
-            self.http_client.api_endpoint(is_project=True, project_id=project_id)
+            self.http_client.api_endpoint(project_id=project_id)
             + "/policy/Configurations?api-version=5.0"
         )
 
@@ -196,7 +196,7 @@ class ADOSecurityClient(ADOBaseClient):
         """
 
         request_url = (
-            self.http_client.api_endpoint(is_project=True, project_id=project_id)
+            self.http_client.api_endpoint(project_id=project_id)
             + "/policy/Configurations?api-version=5.0"
         )
 
@@ -237,7 +237,7 @@ class ADOSecurityClient(ADOBaseClient):
         """
 
         request_url = (
-            self.http_client.api_endpoint(is_project=True, project_id=project_id)
+            self.http_client.api_endpoint(project_id=project_id)
             + "/policy/Configurations?api-version=5.0"
         )
 
@@ -288,9 +288,7 @@ class ADOSecurityClient(ADOBaseClient):
             repository_id=repository_id,
         )
 
-        request_url = self.http_client.api_endpoint(
-            is_project=True, is_internal=True, project_id=project_id
-        )
+        request_url = self.http_client.api_endpoint(is_internal=True, project_id=project_id)
         request_url += "/_security/ManagePermissions?__v=5"
 
         updates = []
@@ -345,9 +343,7 @@ class ADOSecurityClient(ADOBaseClient):
         :raises ADOException: If we can't determine the descriptor info from the response
         """
 
-        request_url = self.http_client.api_endpoint(
-            is_project=True, is_internal=True, project_id=project_id
-        )
+        request_url = self.http_client.api_endpoint(is_internal=True, project_id=project_id)
         request_url += "/_security/DisplayPermissions?"
 
         parameters = {

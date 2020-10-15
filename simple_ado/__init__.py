@@ -83,8 +83,7 @@ class ADOClient:
         """
 
         request_url = (
-            self.http_client.api_endpoint(is_default_collection=False, is_project=False)
-            + "/projects?api-version=6.0"
+            self.http_client.api_endpoint(is_default_collection=False) + "/projects?api-version=6.0"
         )
 
         try:
@@ -209,7 +208,6 @@ class ADOClient:
         url_fragment: str,
         parameters: Dict[str, Any],
         is_default_collection: bool = True,
-        is_project: bool = True,
         is_internal: bool = False,
         subdomain: Optional[str] = None,
         project_id: Optional[str] = None,
@@ -228,10 +226,9 @@ class ADOClient:
         :param str url_fragment: The part of the URL that comes after `_apis/`
         :param Dict[str,Any] parameters: The URL parameters to append
         :param bool is_default_collection: Whether this URL should start with the path "/DefaultCollection"
-        :param bool is_project: Whether this URL should scope down to include `project_id`
         :param bool is_internal: Whether this URL should use internal API endpoint "/_api"
         :param Optional[str] subdomain: A subdomain that should be used (if any)
-        :param Optional[str] project_id: The project ID. This must be set if `is_project` is set
+        :param Optional[str] project_id: The project ID (if required)
 
         :returns: The raw response
         """
@@ -239,7 +236,6 @@ class ADOClient:
         encoded_parameters = urllib.parse.urlencode(parameters)
         request_url = self.http_client.api_endpoint(
             is_default_collection=is_default_collection,
-            is_project=is_project,
             is_internal=is_internal,
             subdomain=subdomain,
             project_id=project_id,

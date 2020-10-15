@@ -47,7 +47,7 @@ class ADOPoolsClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = self.http_client.api_endpoint(is_project=False, is_default_collection=False)
+        request_url = self.http_client.api_endpoint(is_default_collection=False)
         request_url += f"/distributedtask/pools?"
 
         parameters = {"api-version": "5.1"}
@@ -84,7 +84,7 @@ class ADOPoolsClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = self.http_client.api_endpoint(is_project=False, is_default_collection=False)
+        request_url = self.http_client.api_endpoint(is_default_collection=False)
         request_url += f"/distributedtask/pools/{pool_id}/agents?"
 
         parameters = {
@@ -112,7 +112,7 @@ class ADOPoolsClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = self.http_client.api_endpoint(is_project=False, is_default_collection=False)
+        request_url = self.http_client.api_endpoint(is_default_collection=False)
         request_url += f"/distributedtask/pools/{pool_id}/agents/{agent_id}?api-version=5.1"
 
         response = self.http_client.get(request_url)
@@ -130,7 +130,7 @@ class ADOPoolsClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = self.http_client.api_endpoint(is_project=False, is_default_collection=False)
+        request_url = self.http_client.api_endpoint(is_default_collection=False)
         request_url += f"/distributedtask/pools/{pool_id}/agents/{agent_id}?api-version=5.1"
 
         response = self.http_client.patch(request_url, json_data=agent_data)
@@ -162,7 +162,7 @@ class ADOPoolsClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = self.http_client.api_endpoint(is_project=False, is_default_collection=False)
+        request_url = self.http_client.api_endpoint(is_default_collection=False)
         request_url += (
             f"/distributedtask/pools/{pool_id}/agents/{agent_id}/usercapabilities?api-version=5.1"
         )

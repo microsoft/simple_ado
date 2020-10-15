@@ -78,31 +78,30 @@ class ADOHTTPClient:
         else:
             self.extra_headers = extra_headers
 
-    def base_url(
+    def graph_endpoint(self) -> str:
+        """Generate the base url for all graph API calls (this varies depending on the API).
+
+        :returns: The constructed graph URL
+        """
+        return f"https://vssps.dev.azure.com/{self.tenant}/_apis"
+
+    def api_endpoint(
         self,
         *,
         is_default_collection: bool = True,
-        is_project: bool = True,
-        is_vssps: bool = False,
+        is_internal: bool = False,
         subdomain: Optional[str] = None,
         project_id: Optional[str] = None,
     ) -> str:
         """Generate the base url for all API calls (this varies depending on the API).
 
         :param bool is_default_collection: Whether this URL should start with the path "/DefaultCollection"
-        :param bool is_project: Whether this URL should scope down to include `project_id`. If this
-                                is True, `project_id` must be set
-        :param bool is_vssps: Whether this URL is a VSSPS URL (all other parameters are ignored in that case)
+        :param bool is_internal: Whether this URL should use internal API endpoint "/_api"
         :param Optional[str] subdomain: A subdomain that should be used (if any)
-        :param Optional[str] project_id: The project ID. This must be set if `is_project` is set
-
-        :raises ADOException: If `is_project` is set, but `project_id` is not.
+        :param Optional[str] project_id: The project ID. This will be added if supplied
 
         :returns: The constructed base URL
         """
-
-        if is_vssps:
-            return f"https://vssps.dev.azure.com/{self.tenant}/_apis"
 
         url = f"https://{self.tenant}."
 
@@ -114,44 +113,8 @@ class ADOHTTPClient:
         if is_default_collection:
             url += "/DefaultCollection"
 
-        if is_project:
-            if not project_id:
-                raise ADOException(
-                    "The `is_project` parameter was set, but no project ID was provided"
-                )
+        if project_id:
             url += f"/{project_id}"
-
-        return url
-
-    def api_endpoint(
-        self,
-        *,
-        is_default_collection: bool = True,
-        is_project: bool = True,
-        is_internal: bool = False,
-        is_vssps: bool = False,
-        subdomain: Optional[str] = None,
-        project_id: Optional[str] = None,
-    ) -> str:
-        """Generate the base url for all API calls (this varies depending on the API).
-
-        :param bool is_default_collection: Whether this URL should start with the path "/DefaultCollection"
-        :param bool is_project: Whether this URL should scope down to include `project_id`
-        :param bool is_internal: Whether this URL should use internal API endpoint "/_api"
-        :param bool is_vssps: Whether this URL is a VSSPS URL (all other parameters are ignored in that case)
-        :param Optional[str] subdomain: A subdomain that should be used (if any)
-        :param Optional[str] project_id: The project ID. This must be set if `is_project` is set
-
-        :returns: The constructed base URL
-        """
-
-        url = self.base_url(
-            is_default_collection=is_default_collection,
-            is_project=is_project,
-            is_vssps=is_vssps,
-            subdomain=subdomain,
-            project_id=project_id,
-        )
 
         if is_internal:
             url += "/_api"

@@ -40,6 +40,7 @@ class LibraryTests(unittest.TestCase):
                 "bcb7f5028bf4f26a005d315a4863670e3125c262",
             ],
             output_path=os.path.expanduser("~/Downloads/blobs.zip"),
+            project_id=self.test_config.project_id,
             repository_id=self.test_config.repository_id,
         )
 
@@ -48,6 +49,7 @@ class LibraryTests(unittest.TestCase):
         diff = self.client.git.get_blob(
             blob_id="7351cd0c84377c067602e97645e9c91100c38a6e",
             blob_format=simple_ado.git.ADOGitClient.BlobFormat.text,
+            project_id=self.test_config.project_id,
             repository_id=self.test_config.repository_id,
         )
         print(diff)

@@ -318,9 +318,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         :returns: The ADO response with the data in it
         """
-        child_url = (
-            f"{self.http_client.api_endpoint(is_project=False)}/wit/workitems/{child_identifier}"
-        )
+        child_url = f"{self.http_client.api_endpoint()}/wit/workitems/{child_identifier}"
         return self._add_link(
             parent_identifier=parent_identifier,
             child_url=child_url,
@@ -521,7 +519,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         for operation in operations:
             full_body.append(operation.body())
 
-        request_url = f"{self.http_client.api_endpoint(is_project=False)}/wit/$batch"
+        request_url = f"{self.http_client.api_endpoint()}/wit/$batch"
 
         response = self.http_client.post(request_url, json_data=full_body)
 

@@ -27,9 +27,7 @@ class ADOGraphClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = (
-            f"{self.http_client.api_endpoint(is_vssps=True)}/graph/groups?api-version=5.1-preview.1"
-        )
+        request_url = f"{self.http_client.graph_endpoint()}/graph/groups?api-version=5.1-preview.1"
 
         groups: List[Any] = []
         continuation_token = None
@@ -59,7 +57,7 @@ class ADOGraphClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.api_endpoint(is_vssps=True)}/graph/groups"
+        request_url = f"{self.http_client.graph_endpoint()}/graph/groups"
         request_url += f"/{descriptor}?api-version=5.1-preview.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
@@ -72,7 +70,7 @@ class ADOGraphClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.api_endpoint(is_vssps=True)}/graph/users"
+        request_url = f"{self.http_client.graph_endpoint()}/graph/users"
         request_url += f"/{descriptor}?api-version=5.1-preview.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
