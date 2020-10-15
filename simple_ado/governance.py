@@ -23,17 +23,20 @@ class ADOGovernanceClient(ADOBaseClient):
     def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
         super().__init__(http_client, log.getChild("governance"))
 
-    def remove_policy(self, *, policy_id: str, governed_repository_id: str) -> None:
+    def remove_policy(
+        self, *, policy_id: str, governed_repository_id: str, project_id: str
+    ) -> None:
         """Remove a policy from a repository.
 
         :param str policy_id: The ID of the policy to remove
         :param str governed_repository_id: The ID of the governed repository (not necessarily the same as the ADO one)
+        :param str project_id: The ID of the project
 
         :raises ADOHTTPException: If removing the policy failed
         """
 
         request_url = self.http_client.api_endpoint(
-            is_default_collection=False, subdomain="governance"
+            is_default_collection=False, subdomain="governance", project_id=project_id
         )
         request_url += "/ComponentGovernance/GovernedRepositories"
         request_url += f"/{governed_repository_id}/policyreferences"

@@ -541,6 +541,7 @@ class ADOGitClient(ADOBaseClient):
         self,
         *,
         blob_id: str,
+        project_id: str,
         repository_id: str,
         blob_format: Optional[BlobFormat] = None,
         download: Optional[bool] = None,
@@ -552,6 +553,7 @@ class ADOGitClient(ADOBaseClient):
         All non-specified options use the ADO default.
 
         :param str blob_id: The SHA1 of the blob
+        :param str project_id: The ID for the project
         :param str repository_id: The ID for the repository
         :param Optional[BlobFormat] blob_format: The format to get the blob in
         :param Optional[bool] download: Set to True to download rather than get a response
@@ -563,7 +565,9 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Getting blob")
 
-        request_url = self.http_client.api_endpoint(is_default_collection=False)
+        request_url = self.http_client.api_endpoint(
+            is_default_collection=False, project_id=project_id
+        )
         request_url += f"/git/repositories/{repository_id}/blobs/{blob_id}?"
 
         parameters: Dict[str, Any] = {
@@ -593,7 +597,7 @@ class ADOGitClient(ADOBaseClient):
         return self.http_client.decode_response(response)
 
     def get_blobs(
-        self, *, blob_ids: List[str], output_path: str, repository_id: str,
+        self, *, blob_ids: List[str], output_path: str, project_id: str, repository_id: str,
     ) -> ADOResponse:
         """Get a git item.
 
@@ -601,6 +605,7 @@ class ADOGitClient(ADOBaseClient):
 
         :param List[str] blob_ids: The SHA1s of the blobs
         :param str output_path: The location to write out the zip to
+        :param str project_id: The ID for the project
         :param str repository_id: The ID for the repository
 
         :raises FileExistsError: If the output path already exists
@@ -608,7 +613,9 @@ class ADOGitClient(ADOBaseClient):
 
         self.log.debug(f"Getting blobs")
 
-        request_url = self.http_client.api_endpoint(is_default_collection=False)
+        request_url = self.http_client.api_endpoint(
+            is_default_collection=False, project_id=project_id
+        )
         request_url += f"/git/repositories/{repository_id}/blobs?api-version=5.1"
 
         if os.path.exists(output_path):
