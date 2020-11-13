@@ -34,29 +34,20 @@ class ADOUserClient(ADOBaseClient):
         :raises ADOException: If we can't get the identity from the response
         """
 
-        request_url = self.http_client.api_endpoint(is_default_collection=False)
-        request_url += "/IdentityPicker/Identities?api-version=5.1-preview.1"
+        # TODO this should be in an identities space in the next major release
 
-        body = {
-            "query": identity,
-            "identityTypes": ["user", "group"],
-            "operationScopes": ["ims"],
-            "properties": ["DisplayName", "Mail"],
-            "filterByAncestorEntityIds": [],
-            "filterByEntityIds": [],
-        }
-        response = self.http_client.post(request_url, json_data=body)
+        request_url = self.http_client.graph_endpoint()
+        request_url += f"/identities?searchFilter=General&filterValue={identity}"
+        request_url += f"&queryMembership=None&api-version=6.0"
+
+        response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
+        extracted = self.http_client.extract_value(response_data)
 
-        try:
-            result = response_data["results"][0]["identities"][0]
-        except:
+        if len(extracted) == 0:
             raise ADOException("Could not resolve identity: " + identity)
 
-        if result["entityType"] == "User" and identity.lower() == result["mail"].lower():
-            return cast(TeamFoundationId, str(result["localId"]))
+        if len(extracted) > 1:
+            raise ADOException(f"Found multiple identities matching '{identity}'")
 
-        if result["entityType"] == "Group" and identity.lower() == result["displayName"].lower():
-            return cast(TeamFoundationId, str(result["localId"]))
-
-        raise ADOException("Could not resolve identity: " + identity)
+        return extracted[0]["id"]
