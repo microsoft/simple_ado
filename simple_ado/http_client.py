@@ -49,6 +49,7 @@ class ADOHTTPClient:
 
     :param str tenant: The name of the ADO tenant to connect to
     :param Dict[str,str] extra_headers: Any extra headers which should be added to each request
+    :param str user_agent: The user agent to set
     :param Tuple[str,str] credentials: The credentials which should be used for authentication
     :param logging.Logger log: The logger to use for logging
     """
@@ -57,12 +58,14 @@ class ADOHTTPClient:
     tenant: str
     extra_headers: Dict[str, str]
     credentials: Tuple[str, str]
+    _session: requests.Session
 
     def __init__(
         self,
         *,
         tenant: str,
         credentials: Tuple[str, str],
+        user_agent: str,
         log: logging.Logger,
         extra_headers: Optional[Dict[str, str]] = None,
     ) -> None:
@@ -72,6 +75,9 @@ class ADOHTTPClient:
 
         self.tenant = tenant
         self.credentials = credentials
+
+        self._session = requests.Session()
+        self._session.headers.update({"User-Agent": f"simple_ado/{user_agent}"})
 
         if extra_headers is None:
             self.extra_headers = {}
@@ -147,7 +153,7 @@ class ADOHTTPClient:
         :returns: The raw response object from the API
         """
         headers = self.construct_headers(additional_headers=additional_headers)
-        return requests.get(request_url, auth=self.credentials, headers=headers, stream=stream)
+        return self._session.get(request_url, auth=self.credentials, headers=headers, stream=stream)
 
     @retry(
         retry=retry_if_exception(_is_connection_failure),
@@ -185,7 +191,7 @@ class ADOHTTPClient:
                 additional_headers["Content-Type"] = "application/json-patch+json"
 
         headers = self.construct_headers(additional_headers=additional_headers)
-        return requests.post(
+        return self._session.post(
             request_url, auth=self.credentials, headers=headers, json=json_data, stream=stream
         )
 
@@ -223,7 +229,9 @@ class ADOHTTPClient:
                 additional_headers["Content-Type"] = "application/json-patch+json"
 
         headers = self.construct_headers(additional_headers=additional_headers)
-        return requests.patch(request_url, auth=self.credentials, headers=headers, json=json_data)
+        return self._session.patch(
+            request_url, auth=self.credentials, headers=headers, json=json_data
+        )
 
     @retry(
         retry=retry_if_exception(_is_connection_failure),
@@ -246,7 +254,9 @@ class ADOHTTPClient:
         :returns: The raw response object from the API
         """
         headers = self.construct_headers(additional_headers=additional_headers)
-        return requests.put(request_url, auth=self.credentials, headers=headers, json=json_data)
+        return self._session.put(
+            request_url, auth=self.credentials, headers=headers, json=json_data
+        )
 
     @retry(
         retry=retry_if_exception(_is_connection_failure),
@@ -264,7 +274,7 @@ class ADOHTTPClient:
         :returns: The raw response object from the API
         """
         headers = self.construct_headers(additional_headers=additional_headers)
-        return requests.delete(request_url, auth=self.credentials, headers=headers)
+        return self._session.delete(request_url, auth=self.credentials, headers=headers)
 
     @retry(
         retry=retry_if_exception(_is_connection_failure),
@@ -299,8 +309,7 @@ class ADOHTTPClient:
         with open(file_path, "rb") as file_handle:
             prepped.body = file_handle.read(file_size)
 
-        session = requests.Session()
-        response: requests.Response = session.send(prepped)
+        response: requests.Response = self._session.send(prepped)
         return response
 
     def validate_response(self, response: requests.models.Response) -> None:

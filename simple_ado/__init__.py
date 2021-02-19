@@ -29,6 +29,7 @@ class ADOClient:
 
     :param str tenant: The ADO tenant to connect to
     :param Tuple[str,str] credentials: The credentials to use for the API connection
+    :param Optional[str] user_agent: The user agent to set
     :param Optional[Dict[str,str]] extra_headers: Any extra headers which should be sent with the API requests
     :param Optional[logging.Logger] log: The logger to use for logging (a new one will be used if one is not supplied)
     """
@@ -53,6 +54,7 @@ class ADOClient:
         *,
         tenant: str,
         credentials: Tuple[str, str],
+        user_agent: Optional[str] = None,
         extra_headers: Optional[Dict[str, str]] = None,
         log: Optional[logging.Logger] = None,
     ) -> None:
@@ -64,7 +66,11 @@ class ADOClient:
             self.log = log.getChild("ado")
 
         self.http_client = ADOHTTPClient(
-            tenant=tenant, credentials=credentials, log=self.log, extra_headers=extra_headers,
+            tenant=tenant,
+            credentials=credentials,
+            user_agent=user_agent if user_agent is not None else tenant,
+            log=self.log,
+            extra_headers=extra_headers,
         )
 
         self.builds = ADOBuildClient(self.http_client, self.log)
