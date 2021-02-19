@@ -6,7 +6,6 @@
 """ADO user API wrapper."""
 
 import logging
-from typing import cast
 
 from simple_ado.base_client import ADOBaseClient
 from simple_ado.exceptions import ADOException
