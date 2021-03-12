@@ -247,6 +247,23 @@ class ADOPullRequestClient(ADOBaseClient):
             self.log.debug("Adding thread")
             self.create_comment(thread, comment_identifier=comment_identifier)
 
+    def get_statuses(self) -> ADOResponse:
+        """Get the statuses on a PR.
+
+        :returns: The ADO response with the data in it
+        """
+
+        self.log.debug(f"Getting PR statuses on PR {self.pull_request_id}")
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=self.project_id)
+            + f"/git/repositories/{self.repository_id}"
+            + f"/pullRequests/{self.pull_request_id}/statuses?api-version=6.0-preview.1"
+        )
+
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
+
     def set_status(
         self,
         state: ADOGitStatusState,

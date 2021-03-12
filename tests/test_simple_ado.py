@@ -152,3 +152,17 @@ class LibraryTests(unittest.TestCase):
         self.client.pools.update_agent_capabilities(
             pool_id=pool["id"], agent_id=agent["id"], capabilities=capabilities
         )
+
+    def test_get_pr_statuses(self):
+        """Test get properties."""
+        all_prs = self.client.list_all_pull_requests(
+            project_id=self.test_config.project_id, repository_id=self.test_config.repository_id
+        )
+        latest_pr = all_prs[0]
+        pr_id = latest_pr["pullRequestId"]
+        statuses = self.client.pull_request(
+            pr_id,
+            project_id=self.test_config.project_id,
+            repository_id=self.test_config.repository_id,
+        ).get_statuses()
+        print(statuses)
