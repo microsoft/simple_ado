@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
@@ -7,6 +5,7 @@
 
 import logging
 
+from simple_ado.exceptions import ADOException
 from simple_ado.base_client import ADOBaseClient
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 
@@ -31,6 +30,8 @@ class ADOWikiClient(ADOBaseClient):
         :param str project_id: The ID of the project
 
         :returns: The ADO response with the data in it
+
+        :raises ADOException: If we fail to fetch the page version.
         """
 
         self.log.debug(f"Get wiki page: {page_id}")
@@ -40,7 +41,10 @@ class ADOWikiClient(ADOBaseClient):
         )
         response = self.http_client.get(request_url)
         self.http_client.validate_response(response)
-        return response.headers["ETag"]
+        etag = response.headers.get("ETag")
+        if not etag:
+            raise ADOException("No ETag returned for wiki page.")
+        return etag
 
     def update_page(
         self, page_id: str, wiki_id: str, project_id: str, content: str, current_version_etag: str
