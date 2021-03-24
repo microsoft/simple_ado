@@ -21,6 +21,7 @@ from simple_ado.pools import ADOPoolsClient
 from simple_ado.pull_requests import ADOPullRequestClient
 from simple_ado.security import ADOSecurityClient
 from simple_ado.user import ADOUserClient
+from simple_ado.wiki import ADOWikiClient
 from simple_ado.workitems import ADOWorkItemsClient
 
 
@@ -47,6 +48,7 @@ class ADOClient:
     pools: ADOPoolsClient
     security: ADOSecurityClient
     user: ADOUserClient
+    wiki: ADOWikiClient
     workitems: ADOWorkItemsClient
 
     def __init__(
@@ -80,6 +82,7 @@ class ADOClient:
         self.pools = ADOPoolsClient(self.http_client, self.log)
         self.security = ADOSecurityClient(self.http_client, self.log)
         self.user = ADOUserClient(self.http_client, self.log)
+        self.wiki = ADOWikiClient(self.http_client, self.log)
         self.workitems = ADOWorkItemsClient(self.http_client, self.log)
 
     def verify_access(self) -> bool:
