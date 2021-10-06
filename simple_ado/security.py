@@ -8,7 +8,7 @@
 import enum
 import json
 import logging
-from typing import ClassVar, Dict, List
+from typing import ClassVar, Dict, List, Optional
 import urllib.parse
 
 
@@ -87,12 +87,20 @@ class ADOSecurityClient(ADOBaseClient):
         return self.http_client.extract_value(response_data)
 
     def add_branch_build_policy(
-        self, *, branch: str, build_definition_id: int, project_id: str, repository_id: str,
+        self,
+        *,
+        branch: str,
+        build_definition_id: int,
+        build_expiration: Optional[int] = None,
+        project_id: str,
+        repository_id: str,
     ) -> ADOResponse:
         """Adds a new build policy for a given branch.
 
         :param str branch: The git branch to set the build policy for
         :param int build_definition_id: The build definition to use when creating the build policy
+        :param int build_expiration: How long in minutes before the build expires. Set to None for
+                                     immediately on changes to source branch.
         :param str project_id: The identifier for the project
         :param str repository_id: The ID for the repository
 
@@ -125,6 +133,10 @@ class ADOSecurityClient(ADOBaseClient):
                 ],
             },
         }
+
+        if build_expiration:
+            body["settings"]["queueOnSourceUpdateOnly"] = True
+            body["settings"]["validDuration"] = build_expiration
 
         response = self.http_client.post(request_url, json_data=body)
         return self.http_client.decode_response(response)
