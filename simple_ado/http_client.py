@@ -5,8 +5,10 @@
 
 """ADO HTTP API wrapper."""
 
+import datetime
 import logging
 import os
+import time
 from typing import Any, cast, Dict, List, Optional, Tuple
 
 import requests
@@ -58,6 +60,7 @@ class ADOHTTPClient:
     tenant: str
     extra_headers: Dict[str, str]
     credentials: Tuple[str, str]
+    _not_before: Optional[datetime.datetime]
     _session: requests.Session
 
     def __init__(
@@ -75,6 +78,7 @@ class ADOHTTPClient:
 
         self.tenant = tenant
         self.credentials = credentials
+        self._not_before = None
 
         self._session = requests.Session()
         self._session.headers.update({"User-Agent": f"simple_ado/{user_agent}"})
@@ -90,6 +94,13 @@ class ADOHTTPClient:
         :returns: The constructed graph URL
         """
         return f"https://vssps.dev.azure.com/{self.tenant}/_apis"
+
+    def audit_endpoint(self) -> str:
+        """Generate the base url for all audit API calls.
+
+        :returns: The constructed graph URL
+        """
+        return f"https://auditservice.dev.azure.com/{self.tenant}/_apis"
 
     def api_endpoint(
         self,
@@ -129,6 +140,42 @@ class ADOHTTPClient:
 
         return url
 
+    def _wait(self):
+        """Wait as long as we need for rate limiting purposes."""
+        if not self._not_before:
+            return
+
+        remaining = self._not_before - datetime.datetime.now()
+
+        if remaining.total_seconds() < 0:
+            self._not_before = None
+            return
+
+        self.log.debug(f"Sleeping for {remaining} seconds before issuing next request")
+        time.sleep(remaining.total_seconds())
+
+    def _track_rate_limit(self, response: requests.Response) -> None:
+        """Track the rate limit info from a request.
+
+        :param response: The response to track the info from.
+        """
+
+        if "Retry-After" in response.headers:
+            # We get massive windows for retry after, so we wait 10 seconds or
+            # the duration, whichever is smaller. If we get a 429, we'll increase.
+            self._not_before = datetime.datetime.now() + datetime.timedelta(
+                seconds=min(15, int(response.headers["Retry-After"]))
+            )
+            return
+
+        # Slow down if needed
+        if int(response.headers.get("X-RateLimit-Remaining", 100)) < 10:
+            self._not_before = datetime.datetime.now() + datetime.timedelta(seconds=1)
+            return
+
+        # No limit, so go at full speed
+        self._not_before = None
+
     @retry(
         retry=(
             retry_if_exception(_is_connection_failure)
@@ -152,8 +199,19 @@ class ADOHTTPClient:
 
         :returns: The raw response object from the API
         """
+        self._wait()
+
         headers = self.construct_headers(additional_headers=additional_headers)
-        return self._session.get(request_url, auth=self.credentials, headers=headers, stream=stream)
+        response = self._session.get(
+            request_url, auth=self.credentials, headers=headers, stream=stream
+        )
+
+        self._track_rate_limit(response)
+
+        if response.status_code == 429:
+            print()
+
+        return response
 
     @retry(
         retry=retry_if_exception(_is_connection_failure),

@@ -7,6 +7,7 @@
 
 # pylint: disable=line-too-long
 
+import datetime
 import os
 import sys
 import unittest
@@ -166,3 +167,14 @@ class LibraryTests(unittest.TestCase):
             repository_id=self.test_config.repository_id,
         ).get_statuses()
         print(statuses)
+
+    def test_audit_actions(self):
+        """Test get audit actions"""
+        actions = self.client.audit.get_actions()
+        print(actions)
+
+    def test_audit_query(self):
+        """Test query audit entries."""
+        for entry in self.client.audit.query():
+            print(entry)
+            break

@@ -11,6 +11,7 @@ import urllib.parse
 
 import requests
 
+from simple_ado.audit import ADOAuditClient
 from simple_ado.builds import ADOBuildClient
 from simple_ado.exceptions import ADOException
 from simple_ado.git import ADOGitClient
@@ -41,6 +42,7 @@ class ADOClient:
 
     http_client: ADOHTTPClient
 
+    audit: ADOAuditClient
     builds: ADOBuildClient
     git: ADOGitClient
     governance: ADOGovernanceClient
@@ -75,6 +77,7 @@ class ADOClient:
             extra_headers=extra_headers,
         )
 
+        self.audit = ADOAuditClient(self.http_client, self.log)
         self.builds = ADOBuildClient(self.http_client, self.log)
         self.git = ADOGitClient(self.http_client, self.log)
         self.governance = ADOGovernanceClient(self.http_client, self.log)
