@@ -63,38 +63,38 @@ class DeleteBatchRequest(BatchRequest):
 class WorkItemRelationType(enum.Enum):
     """Defines the various relationship types between work items."""
 
-    produces_for = "System.LinkTypes.Remote.Dependency-Forward"
-    consumes_from = "System.LinkTypes.Remote.Dependency-Reverse"
+    PRODUCES_FOR = "System.LinkTypes.Remote.Dependency-Forward"
+    CONSUMES_FROM = "System.LinkTypes.Remote.Dependency-Reverse"
 
-    duplicate = "System.LinkTypes.Duplicate-Forward"
-    duplicate_of = "System.LinkTypes.Duplicate-Reverse"
+    DUPLICATE = "System.LinkTypes.Duplicate-Forward"
+    DUPLICATE_OF = "System.LinkTypes.Duplicate-Reverse"
 
-    blocked_by = "Microsoft.VSTS.BlockingLink-Forward"
-    blocking = "Microsoft.VSTS.BlockingLink-Reverse"
+    BLOCKED_BY = "Microsoft.VSTS.BlockingLink-Forward"
+    BLOCKING = "Microsoft.VSTS.BlockingLink-Reverse"
 
-    referenced_by = "Microsoft.VSTS.TestCase.SharedParameterReferencedBy-Forward"
-    references = "Microsoft.VSTS.TestCase.SharedParameterReferencedBy-Reverse"
+    REFERENCED_BY = "Microsoft.VSTS.TestCase.SharedParameterReferencedBy-Forward"
+    REFERENCES = "Microsoft.VSTS.TestCase.SharedParameterReferencedBy-Reverse"
 
-    tested_by = "Microsoft.VSTS.Common.TestedBy-Forward"
-    tests = "Microsoft.VSTS.Common.TestedBy-Reverse"
+    TESTED_BY = "Microsoft.VSTS.Common.TestedBy-Forward"
+    TESTS = "Microsoft.VSTS.Common.TestedBy-Reverse"
 
-    test_case = "Microsoft.VSTS.TestCase.SharedStepReferencedBy-Forward"
-    shared_steps = "Microsoft.VSTS.TestCase.SharedStepReferencedBy-Reverse"
+    TEST_CASE = "Microsoft.VSTS.TestCase.SharedStepReferencedBy-Forward"
+    SHARED_STEPS = "Microsoft.VSTS.TestCase.SharedStepReferencedBy-Reverse"
 
-    successor = "System.LinkTypes.Dependency-Forward"
-    predecessor = "System.LinkTypes.Dependency-Reverse"
+    SUCCESSOR = "System.LinkTypes.Dependency-Forward"
+    PREDECESSOR = "System.LinkTypes.Dependency-Reverse"
 
-    child = "System.LinkTypes.Hierarchy-Forward"
-    parent = "System.LinkTypes.Hierarchy-Reverse"
+    CHILD = "System.LinkTypes.Hierarchy-Forward"
+    PARENT = "System.LinkTypes.Hierarchy-Reverse"
 
-    remote_related = "System.LinkTypes.Remote.Related"
-    related = "System.LinkTypes.Related"
+    REMOTE_RELATED = "System.LinkTypes.Remote.Related"
+    RELATED = "System.LinkTypes.Related"
 
-    attached_file = "AttachedFile"
+    ATTACHED_FILE = "AttachedFile"
 
-    hyperlink = "Hyperlink"
+    HYPERLINK = "Hyperlink"
 
-    artifact_link = "ArtifactLink"
+    ARTIFACT_LINK = "ArtifactLink"
 
 
 class ADOWorkItemsClient(ADOBaseClient):
@@ -168,7 +168,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         )
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
-        request_url += f"&api-version=4.1"
+        request_url += "&api-version=4.1"
 
         response = self.http_client.patch(
             request_url,
@@ -229,7 +229,8 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         # Attach it to the ticket
         operation = AddOperation(
-            "/relations/-", {"rel": "AttachedFile", "url": url, "attributes": {"comment": ""}},
+            "/relations/-",
+            {"rel": "AttachedFile", "url": url, "attributes": {"comment": ""}},
         )
 
         request_url = (
@@ -237,7 +238,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         )
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
-        request_url += f"&api-version=4.1"
+        request_url += "&api-version=4.1"
 
         response = self.http_client.patch(
             request_url,
@@ -283,7 +284,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/wit/workitems/{parent_identifier}"
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
-        request_url += f"&api-version=4.1"
+        request_url += "&api-version=4.1"
 
         response = self.http_client.patch(
             request_url,
@@ -353,7 +354,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         return self._add_link(
             parent_identifier=identifier,
             child_url=hyperlink,
-            relation_type=WorkItemRelationType.hyperlink,
+            relation_type=WorkItemRelationType.HYPERLINK,
             project_id=project_id,
             bypass_rules=bypass_rules,
             supress_notifications=supress_notifications,
@@ -390,7 +391,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         )
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
-        request_url += f"&api-version=4.1"
+        request_url += "&api-version=4.1"
 
         response = self.http_client.post(
             request_url,
@@ -430,7 +431,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         )
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
-        request_url += f"&api-version=4.1"
+        request_url += "&api-version=4.1"
 
         response = self.http_client.patch(
             request_url,
@@ -489,7 +490,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         )
         request_url += f"?suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&destroy={boolstr(permanent)}"
-        request_url += f"&api-version=4.1"
+        request_url += "&api-version=4.1"
 
         response = self.http_client.delete(
             request_url, additional_headers={"Content-Type": "application/json-patch+json"}

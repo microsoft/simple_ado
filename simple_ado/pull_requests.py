@@ -126,7 +126,11 @@ class ADOPullRequestClient(ADOBaseClient):
 
         self.log.debug(f"Creating comment: ({self.pull_request_id}) {comment_text}")
         comment = ADOComment(comment_text, comment_location)
-        return self.create_comment(comment, status=status, comment_identifier=comment_identifier,)
+        return self.create_comment(
+            comment,
+            status=status,
+            comment_identifier=comment_identifier,
+        )
 
     def create_comment(
         self,
@@ -225,7 +229,10 @@ class ADOPullRequestClient(ADOBaseClient):
             )
 
     def create_thread_list(
-        self, *, threads: List[ADOComment], comment_identifier: Optional[str] = None,
+        self,
+        *,
+        threads: List[ADOComment],
+        comment_identifier: Optional[str] = None,
     ) -> None:
         """Create a list of threads
 
@@ -296,7 +303,7 @@ class ADOPullRequestClient(ADOBaseClient):
             + f"/pullRequests/{self.pull_request_id}/statuses?api-version=4.0-preview"
         )
 
-        body = {
+        body: Dict[str, Any] = {
             "state": state.value,
             "description": description,
             "context": {"name": context, "genre": identifier},
@@ -335,8 +342,8 @@ class ADOPullRequestClient(ADOBaseClient):
 
         try:
             properties = thread["properties"]
-        except:
-            raise ADOException("Could not find properties in thread: " + str(thread))
+        except Exception as ex:
+            raise ADOException("Could not find properties in thread: " + str(thread)) from ex
 
         if properties is None:
             return False

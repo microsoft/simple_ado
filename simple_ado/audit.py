@@ -13,7 +13,7 @@ import urllib.parse
 import deserialize
 
 from simple_ado.base_client import ADOBaseClient
-from simple_ado.http_client import ADOHTTPClient, ADOResponse
+from simple_ado.http_client import ADOHTTPClient
 from simple_ado.models import AuditActionInfo
 
 
@@ -35,7 +35,7 @@ class ADOAuditClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        self.log.debug(f"Getting audit actions")
+        self.log.debug("Getting audit actions")
 
         parameters = {"api-version": "6.0-preview.1"}
 

@@ -173,7 +173,11 @@ class ADOClient:
         )
 
     def list_all_pull_requests(
-        self, *, branch_name: Optional[str] = None, project_id: str, repository_id: str,
+        self,
+        *,
+        branch_name: Optional[str] = None,
+        project_id: str,
+        repository_id: str,
     ) -> ADOResponse:
         """Get the pull requests for a branch from ADO.
 

@@ -121,9 +121,9 @@ class ADOSecurityClient(ADOBaseClient):
             "settings": {
                 "buildDefinitionId": build_definition_id,
                 "displayName": None,
-                "queueOnSourceUpdateOnly": False,
+                "queueOnSourceUpdateOnly": build_expiration is not None,
                 "manualQueueOnly": False,
-                "validDuration": 0,
+                "validDuration": build_expiration if build_expiration is not None else 0,
                 "scope": [
                     {
                         "refName": f"refs/heads/{branch}",
@@ -134,15 +134,16 @@ class ADOSecurityClient(ADOBaseClient):
             },
         }
 
-        if build_expiration:
-            body["settings"]["queueOnSourceUpdateOnly"] = True
-            body["settings"]["validDuration"] = build_expiration
-
         response = self.http_client.post(request_url, json_data=body)
         return self.http_client.decode_response(response)
 
     def add_branch_required_reviewers_policy(
-        self, *, branch: str, identities: List[str], project_id: str, repository_id: str,
+        self,
+        *,
+        branch: str,
+        identities: List[str],
+        project_id: str,
+        repository_id: str,
     ) -> ADOResponse:
         """Adds required reviewers when opening PRs against a given branch.
 
@@ -236,7 +237,12 @@ class ADOSecurityClient(ADOBaseClient):
         return self.http_client.decode_response(response)
 
     def set_branch_work_item_policy(
-        self, *, branch: str, required: bool = True, project_id: str, repository_id: str,
+        self,
+        *,
+        branch: str,
+        required: bool = True,
+        project_id: str,
+        repository_id: str,
     ) -> ADOResponse:
         """Set the work item policy for a branch.
 
@@ -377,16 +383,19 @@ class ADOSecurityClient(ADOBaseClient):
                 "type": response_data["descriptorIdentityType"],
                 "id": response_data["descriptorIdentifier"],
             }
-        except:
+        except Exception as ex:
             raise ADOException(
                 "Could not determine descriptor info for team_foundation_id: "
                 + str(team_foundation_id)
-            )
+            ) from ex
 
         return descriptor_info
 
     def _generate_permission_set_token(
-        self, branch: str, project_id: str, repository_id: str,
+        self,
+        branch: str,
+        project_id: str,
+        repository_id: str,
     ) -> str:
         """Generate the token required for reading identity details and writing permissions.
 
@@ -400,7 +409,12 @@ class ADOSecurityClient(ADOBaseClient):
         encoded_branch = branch.replace("/", "^")
         return f"repoV2/{project_id}/{repository_id}/refs^heads^{encoded_branch}/"
 
-    def _generate_updates_token(self, branch: str, project_id: str, repository_id: str,) -> str:
+    def _generate_updates_token(
+        self,
+        branch: str,
+        project_id: str,
+        repository_id: str,
+    ) -> str:
         """Generate the token required for updating permissions.
 
         :param str branch: The git branch of interest

@@ -383,7 +383,8 @@ class ADOHTTPClient:
 
         if response.status_code < 200 or response.status_code >= 300:
             raise ADOHTTPException(
-                f"ADO returned a non-200 status code, configuration={self}", response,
+                f"ADO returned a non-200 status code, configuration={self}",
+                response,
             )
 
     def decode_response(self, response: requests.models.Response) -> ADOResponse:
@@ -403,8 +404,8 @@ class ADOHTTPClient:
 
         try:
             content: ADOResponse = response.json()
-        except:
-            raise ADOException("The response did not contain JSON")
+        except Exception as ex:
+            raise ADOException("The response did not contain JSON") from ex
 
         return content
 
@@ -423,8 +424,8 @@ class ADOHTTPClient:
         try:
             value: ADOResponse = response_data["value"]
             return value
-        except:
-            raise ADOException("The response was invalid (did not contain a value).")
+        except Exception as ex:
+            raise ADOException("The response was invalid (did not contain a value).") from ex
 
     def construct_headers(
         self, *, additional_headers: Optional[Dict[str, str]] = None
@@ -438,7 +439,7 @@ class ADOHTTPClient:
 
         headers = {"Accept": "application/json"}
 
-        for header_name, header_value in self.extra_headers:
+        for header_name, header_value in self.extra_headers.items():
             headers[header_name] = header_value
 
         if additional_headers is None:

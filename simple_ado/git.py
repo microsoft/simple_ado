@@ -172,7 +172,12 @@ class ADOGitClient(ADOBaseClient):
         return self.http_client.decode_response(response)
 
     def diff_between_commits(
-        self, *, base_commit: str, target_commit: str, project_id: str, repository_id: str,
+        self,
+        *,
+        base_commit: str,
+        target_commit: str,
+        project_id: str,
+        repository_id: str,
     ) -> ADOResponse:
         """Get the diff between two commits.
 
@@ -220,7 +225,12 @@ class ADOGitClient(ADOBaseClient):
             skip += 100
 
     def download_zip(
-        self, *, branch: str, output_path: str, project_id: str, repository_id: str,
+        self,
+        *,
+        branch: str,
+        output_path: str,
+        project_id: str,
+        repository_id: str,
     ) -> None:
         """Download the zip of the branch specified.
 
@@ -309,7 +319,7 @@ class ADOGitClient(ADOBaseClient):
 
         # pylint: disable=too-complex
 
-        self.log.debug(f"Getting refs")
+        self.log.debug("Getting refs")
 
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}/refs?"
 
@@ -390,7 +400,11 @@ class ADOGitClient(ADOBaseClient):
         return self.http_client.decode_response(response)
 
     def update_refs(
-        self, *, updates: List[ADOReferenceUpdate], project_id: str, repository_id: str,
+        self,
+        *,
+        updates: List[ADOReferenceUpdate],
+        project_id: str,
+        repository_id: str,
     ) -> ADOResponse:
         """Update a list of references.
 
@@ -433,24 +447,24 @@ class ADOGitClient(ADOBaseClient):
     class VersionControlRecursionType(enum.Enum):
         """Specifies the level of recursion to use when getting an item."""
 
-        full = "full"
-        none = "none"
-        one_level = "oneLevel"
-        one_level_plus_nested_empty_folders = "oneLevelPlusNestedEmptyFolders"
+        FULL = "full"
+        NONE = "none"
+        ONE_LEVEL = "oneLevel"
+        ONE_LEVEL_PLUS_NESTED_EMPTY_FOLDERS = "oneLevelPlusNestedEmptyFolders"
 
     class GitVersionOptions(enum.Enum):
         """Version options."""
 
-        first_parent = "firstParent"
-        none = "none"
-        previous_change = "previousChange"
+        FIRST_PARENT = "firstParent"
+        NONE = "none"
+        PREVIOUS_CHANGE = "previousChange"
 
     class GitVersionType(enum.Enum):
         """Version type. Determines how the ID of an item is interpreted."""
 
-        branch = "branch"
-        commit = "commit"
-        tag = "tag"
+        BRANCH = "branch"
+        COMMIT = "commit"
+        TAG = "tag"
 
     # pylint: disable=too-many-locals
     def get_item(
@@ -489,7 +503,7 @@ class ADOGitClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        self.log.debug(f"Getting item")
+        self.log.debug("Getting item")
 
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}/items?"
 
@@ -532,10 +546,10 @@ class ADOGitClient(ADOBaseClient):
     class BlobFormat(enum.Enum):
         """The type of format to get a blob in."""
 
-        json = "json"
-        zip = "zip"
-        text = "text"
-        octetstream = "octetstream"
+        JSON = "json"
+        ZIP = "zip"
+        TEXT = "text"
+        OCTETSTREAM = "octetstream"
 
     def get_blob(
         self,
@@ -563,7 +577,7 @@ class ADOGitClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        self.log.debug(f"Getting blob")
+        self.log.debug("Getting blob")
 
         request_url = self.http_client.api_endpoint(
             is_default_collection=False, project_id=project_id
@@ -590,14 +604,19 @@ class ADOGitClient(ADOBaseClient):
 
         response = self.http_client.get(request_url)
 
-        if blob_format == ADOGitClient.BlobFormat.text:
+        if blob_format == ADOGitClient.BlobFormat.TEXT:
             self.http_client.validate_response(response)
             return response.text
 
         return self.http_client.decode_response(response)
 
     def get_blobs(
-        self, *, blob_ids: List[str], output_path: str, project_id: str, repository_id: str,
+        self,
+        *,
+        blob_ids: List[str],
+        output_path: str,
+        project_id: str,
+        repository_id: str,
     ) -> ADOResponse:
         """Get a git item.
 
@@ -611,7 +630,7 @@ class ADOGitClient(ADOBaseClient):
         :raises FileExistsError: If the output path already exists
         """
 
-        self.log.debug(f"Getting blobs")
+        self.log.debug("Getting blobs")
 
         request_url = self.http_client.api_endpoint(
             is_default_collection=False, project_id=project_id

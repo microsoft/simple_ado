@@ -7,16 +7,21 @@ from typing import Any, Dict, Optional
 class OperationType(enum.Enum):
     """An ADO operation."""
 
-    add = "add"
-    copy = "copy"
-    move = "move"
-    remove = "remove"
-    replace = "replace"
-    test = "test"
+    ADD = "add"
+    COPY = "copy"
+    MOVE = "move"
+    REMOVE = "remove"
+    REPLACE = "replace"
+    TEST = "test"
 
 
 class PatchOperation:
     """Represents a PATCH operation."""
+
+    operation: OperationType
+    path: str
+    value: Optional[Any]
+    from_path: Optional[str]
 
     def __init__(
         self,
@@ -37,7 +42,7 @@ class PatchOperation:
         self.value = value
         self.from_path = from_path
 
-    def serialize(self) -> Dict[str, str]:
+    def serialize(self) -> Dict[str, Any]:
         """Serialize for sending to ADO.
 
         :returns: A dictionary.
@@ -60,11 +65,11 @@ class AddOperation(PatchOperation):
     """Represents an add PATCH operation."""
 
     def __init__(self, field: str, value: Any):
-        super().__init__(OperationType.add, field, value)
+        super().__init__(OperationType.ADD, field, value)
 
 
 class DeleteOperation(PatchOperation):
     """Represents a delete PATCH operation."""
 
     def __init__(self, field: str):
-        super().__init__(OperationType.remove, field, None)
+        super().__init__(OperationType.REMOVE, field, None)

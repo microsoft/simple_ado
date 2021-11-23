@@ -7,7 +7,6 @@
 
 # pylint: disable=line-too-long
 
-import datetime
 import os
 import sys
 import unittest
@@ -49,7 +48,7 @@ class LibraryTests(unittest.TestCase):
         """Test get blob."""
         diff = self.client.git.get_blob(
             blob_id="7351cd0c84377c067602e97645e9c91100c38a6e",
-            blob_format=simple_ado.git.ADOGitClient.BlobFormat.text,
+            blob_format=simple_ado.git.ADOGitClient.BlobFormat.TEXT,
             project_id=self.test_config.project_id,
             repository_id=self.test_config.repository_id,
         )
@@ -145,7 +144,7 @@ class LibraryTests(unittest.TestCase):
     def test_capabilities(self):
         """Test setting capabilities."""
         pool = self.client.pools.get_pools(
-            action_filter=simple_ado.pools.TaskAgentPoolActionFilter.manage
+            action_filter=simple_ado.pools.TaskAgentPoolActionFilter.MANAGE
         )[0]
         agent = self.client.pools.get_agents(pool_id=pool["id"])[0]
         capabilities = agent["userCapabilities"]

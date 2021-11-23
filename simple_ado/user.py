@@ -8,9 +8,7 @@
 import logging
 
 from simple_ado.base_client import ADOBaseClient
-from simple_ado.exceptions import ADOException
 from simple_ado.http_client import ADOHTTPClient
-from simple_ado.types import TeamFoundationId
 
 
 class ADOUserClient(ADOBaseClient):

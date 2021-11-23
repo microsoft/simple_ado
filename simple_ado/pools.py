@@ -18,9 +18,9 @@ from simple_ado.http_client import ADOHTTPClient, ADOResponse
 class TaskAgentPoolActionFilter(enum.Enum):
     """Represents an agent pool action filter."""
 
-    manage = "manage"
-    none = "none"
-    use = "use"
+    MANAGE = "manage"
+    NONE = "none"
+    USE = "use"
 
 
 class ADOPoolsClient(ADOBaseClient):
@@ -48,7 +48,7 @@ class ADOPoolsClient(ADOBaseClient):
         """
 
         request_url = self.http_client.api_endpoint(is_default_collection=False)
-        request_url += f"/distributedtask/pools?"
+        request_url += "/distributedtask/pools?"
 
         parameters = {"api-version": "5.1"}
 

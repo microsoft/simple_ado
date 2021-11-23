@@ -69,7 +69,9 @@ class ADOWikiClient(ADOBaseClient):
         )
         response = self.http_client.patch(
             request_url,
-            json_data={"content": content,},
+            json_data={
+                "content": content,
+            },
             additional_headers={
                 "Content-Type": "application/json",
                 "If-Match": current_version_etag,
