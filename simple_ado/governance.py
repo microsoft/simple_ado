@@ -30,6 +30,22 @@ class ADOGovernanceClient(ADOBaseClient):
         HIGH = 2
         CRITICAL = 3
 
+        @classmethod
+        def _missing_(cls, value):
+            if value == "low":
+                return cls(0)
+
+            if value == "medium":
+                return cls(1)
+
+            if value == "high":
+                return cls(2)
+
+            if value == "critical":
+                return cls(3)
+
+            return super()._missing_(value)
+
     def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
         super().__init__(http_client, log.getChild("governance"))
 
