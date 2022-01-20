@@ -8,6 +8,7 @@
 import enum
 import logging
 from typing import Any, Dict, List, Optional, Tuple
+import urllib.parse
 
 
 from simple_ado.base_client import ADOBaseClient
@@ -260,3 +261,79 @@ class ADOGovernanceClient(ADOBaseClient):
             governed_repository_id=governed_repository_id,
             project_id=project_id,
         )
+
+    def get_branches(
+        self,
+        *,
+        tracked_only: bool = True,
+        governed_repository_id: str,
+        project_id: str,
+    ) -> Dict[str, Any]:
+        """Get the branches for the goverened repository.
+
+        Note: Due to lack of documentation, the pagination for this API is
+        unclear and therefore this call can only return the top 99,999 results.
+        If there are any more than this, the call will return the top 99,999 and
+        exit.
+
+        :param bool tracked_only: Set to True if only tracked branches should be returned (default), False otherwise
+        :param str governed_repository_id: The ID of the governed repository (not necessarily the same as the ADO one)
+        :param str project_id: The ID of the project
+
+        :returns: The settings for the alerts on the repo
+        """
+
+        request_url = self.http_client.api_endpoint(
+            is_default_collection=False, subdomain="governance", project_id=project_id
+        )
+        request_url += (
+            f"/ComponentGovernance/GovernedRepositories/{governed_repository_id}/Branches?"
+        )
+
+        parameters = {"top": 99999, "isTracked": tracked_only}
+
+        request_url += urllib.parse.urlencode(parameters)
+
+        response = self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
+
+    def get_alerts(
+        self,
+        *,
+        branch_name: str,
+        include_history: bool = False,
+        include_development_dependencies: bool = True,
+        governed_repository_id: str,
+        project_id: str,
+    ) -> Dict[str, Any]:
+        """Get the alerts on a given branch.
+
+        :param str branch_name: The branch to get the alerts for
+        :param bool include_history: It isn't clear what this parameter does. Defaults to False
+        :param bool include_development_dependencies: Set to True to include alerts on development
+                                                      dependencies, False otherwise (defaults to True)
+        :param str governed_repository_id: The ID of the governed repository (not necessarily the same as the ADO one)
+        :param str project_id: The ID of the project
+
+        :returns: The settings for the alerts on the repo
+        """
+
+        request_url = self.http_client.api_endpoint(
+            is_default_collection=False, subdomain="governance", project_id=project_id
+        )
+        request_url += (
+            f"/ComponentGovernance/GovernedRepositories/{governed_repository_id}"
+            + f"/Branches/{branch_name}/Alerts?"
+        )
+
+        parameters = {
+            "includeHistory": include_history,
+            "includeDevelopmentDependencies": include_development_dependencies,
+        }
+
+        request_url += urllib.parse.urlencode(parameters)
+
+        response = self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
