@@ -23,12 +23,12 @@ class ADOIdentitiesClient(ADOBaseClient):
     def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
         super().__init__(http_client, log.getChild("user"))
 
-    def get_team_foundation_id(self, identity: str) -> TeamFoundationId:
+    def search(self, identity: str) -> TeamFoundationId:
         """Fetch the unique Team Foundation GUID for a given identity.
 
         :param str identity: The identity to fetch for (should be email for users and display name for groups)
 
-        :returns: The team foundation ID
+        :returns: The found identities
 
         :raises ADOException: If we can't get the identity from the response
         """
@@ -39,12 +39,24 @@ class ADOIdentitiesClient(ADOBaseClient):
 
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
-        extracted = self.http_client.extract_value(response_data)
+        return self.http_client.extract_value(response_data)
 
-        if len(extracted) == 0:
+    def get_team_foundation_id(self, identity: str) -> TeamFoundationId:
+        """Fetch the unique Team Foundation GUID for a given identity.
+
+        :param str identity: The identity to fetch for (should be email for users and display name for groups)
+
+        :returns: The team foundation ID
+
+        :raises ADOException: If we can't get the identity from the response
+        """
+
+        results = self.search(identity)
+
+        if len(results) == 0:
             raise ADOException("Could not resolve identity: " + identity)
 
-        if len(extracted) > 1:
+        if len(results) > 1:
             raise ADOException(f"Found multiple identities matching '{identity}'")
 
-        return extracted[0]["id"]
+        return results[0]["id"]

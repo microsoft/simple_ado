@@ -74,3 +74,14 @@ class ADOGraphClient(ADOBaseClient):
         request_url += f"/{descriptor}?api-version=5.1-preview.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
+
+    def get_users(self) -> ADOResponse:
+        """Get the users
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = f"{self.http_client.graph_endpoint()}/graph/users"
+        request_url += "?api-version=6.0-preview.1"
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
