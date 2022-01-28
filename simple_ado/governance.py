@@ -7,7 +7,7 @@
 
 import enum
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 import urllib.parse
 
 
@@ -51,29 +51,65 @@ class ADOGovernanceClient(ADOBaseClient):
         super().__init__(http_client, log.getChild("governance"))
 
     def get_governed_repositories(self, *, project_id: str) -> Dict[str, Any]:
-        """Get alert settings for governance for a repository.
+        """Get all governed repositories for the project
 
         :param str project_id: The ID of the project
 
-        :returns: The settings for the alerts on the repo
+        :returns: The governed repositories
         """
 
         request_url = self.http_client.api_endpoint(
             is_default_collection=False, subdomain="governance", project_id=project_id
         )
-        request_url += "/ComponentGovernance/GovernedRepositories"
+        request_url += "/ComponentGovernance/GovernedRepositories?api-version=6.1-preview.1"
 
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
 
+    def get_governed_repository(
+        self, *, governed_repository_id: Union[str, int], project_id: str
+    ) -> Dict[str, Any]:
+        """Get a particular governed repository.
+
+        :param Union[str,int] governed_repository_id: The repository governance ID
+        :param str project_id: The ID of the project
+
+        :returns: The governed repository details
+        """
+
+        request_url = self.http_client.api_endpoint(
+            is_default_collection=False, subdomain="governance", project_id=project_id
+        )
+        request_url += f"/ComponentGovernance/GovernedRepositories/{governed_repository_id}?api-version=6.1-preview.1"
+
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
+
+    def delete_governed_repository(
+        self, *, governed_repository_id: Union[str, int], project_id: str
+    ) -> None:
+        """Delete a governed repository.
+
+        :param Union[str,int] governed_repository_id: The repository governance ID
+        :param str project_id: The ID of the project
+        """
+
+        request_url = self.http_client.api_endpoint(
+            is_default_collection=False, subdomain="governance", project_id=project_id
+        )
+        request_url += f"/ComponentGovernance/GovernedRepositories/{governed_repository_id}?api-version=6.1-preview.1"
+
+        response = self.http_client.delete(request_url)
+        self.http_client.validate_response(response)
+
     def remove_policy(
-        self, *, policy_id: str, governed_repository_id: str, project_id: str
+        self, *, policy_id: str, governed_repository_id: Union[str, int], project_id: str
     ) -> None:
         """Remove a policy from a repository.
 
         :param str policy_id: The ID of the policy to remove
-        :param str governed_repository_id: The ID of the governed repository (not necessarily the same as the ADO one)
+        :param Union[str,int] governed_repository_id: The repository governance ID
         :param str project_id: The ID of the project
 
         :raises ADOHTTPException: If removing the policy failed
@@ -94,12 +130,16 @@ class ADOGovernanceClient(ADOBaseClient):
             )
 
     def _set_alert_settings(
-        self, *, alert_settings: Dict[str, Any], governed_repository_id: str, project_id: str
+        self,
+        *,
+        alert_settings: Dict[str, Any],
+        governed_repository_id: Union[str, int],
+        project_id: str,
     ) -> None:
         """Set alert settings for governance for a repository.
 
         :param Dict[str,Any] alert_settings: The settings for the alert on the repo
-        :param str governed_repository_id: The ID of the governed repository (not necessarily the same as the ADO one)
+        :param Union[str,int] governed_repository_id: The repository governance ID
         :param str project_id: The ID of the project
 
         :raises ADOHTTPException: If setting the alert settings failed
@@ -119,10 +159,12 @@ class ADOGovernanceClient(ADOBaseClient):
                 f"Failed to set alert settings on repo {governed_repository_id}", response
             )
 
-    def get_alert_settings(self, *, governed_repository_id: str, project_id: str) -> Dict[str, Any]:
+    def get_alert_settings(
+        self, *, governed_repository_id: Union[str, int], project_id: str
+    ) -> Dict[str, Any]:
         """Get alert settings for governance for a repository.
 
-        :param str governed_repository_id: The ID of the governed repository (not necessarily the same as the ADO one)
+        :param Union[str,int] governed_repository_id: The repository governance ID
         :param str project_id: The ID of the project
 
         :returns: The settings for the alerts on the repo
@@ -138,10 +180,12 @@ class ADOGovernanceClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
-    def get_show_banner_in_repo_view(self, *, governed_repository_id: str, project_id: str) -> bool:
+    def get_show_banner_in_repo_view(
+        self, *, governed_repository_id: Union[str, int], project_id: str
+    ) -> bool:
         """Get whether to show the banner in the repo view or not.
 
-        :param str governed_repository_id: The ID of the governed repository (not necessarily the same as the ADO one)
+        :param Union[str,int] governed_repository_id: The repository governance ID
         :param str project_id: The ID of the project
 
         :returns: True if the banner is shown in the repo view, False otherwise
@@ -154,12 +198,12 @@ class ADOGovernanceClient(ADOBaseClient):
         return current_settings["showRepositoryWarningBanner"]
 
     def set_show_banner_in_repo_view(
-        self, *, show_banner: bool, governed_repository_id: str, project_id: str
+        self, *, show_banner: bool, governed_repository_id: Union[str, int], project_id: str
     ) -> None:
         """Set whether to show the banner in the repo view or not.
 
         :param bool show_banner: Set to True to show the banner in the repo view, False to hide it
-        :param str governed_repository_id: The ID of the governed repository (not necessarily the same as the ADO one)
+        :param Union[str,int] governed_repository_id: The repository governance ID
         :param str project_id: The ID of the project
         """
 
@@ -176,11 +220,11 @@ class ADOGovernanceClient(ADOBaseClient):
         )
 
     def get_minimum_alert_severity(
-        self, *, governed_repository_id: str, project_id: str
+        self, *, governed_repository_id: Union[str, int], project_id: str
     ) -> AlertSeverity:
         """Get the minimum severity to alert for.
 
-        :param str governed_repository_id: The ID of the governed repository (not necessarily the same as the ADO one)
+        :param Union[str,int] governed_repository_id: The repository governance ID
         :param str project_id: The ID of the project
 
         :returns: The minimum alert severity
@@ -193,12 +237,16 @@ class ADOGovernanceClient(ADOBaseClient):
         return ADOGovernanceClient.AlertSeverity(current_settings["minimumAlertSeverity"])
 
     def set_minimum_alert_severity(
-        self, *, alert_severity: AlertSeverity, governed_repository_id: str, project_id: str
+        self,
+        *,
+        alert_severity: AlertSeverity,
+        governed_repository_id: Union[str, int],
+        project_id: str,
     ) -> None:
         """Set the minimum severity to alert for.
 
         :param AlertSeverity alert_severity: The minimum alert serverity to notify about
-        :param str governed_repository_id: The ID of the governed repository (not necessarily the same as the ADO one)
+        :param Union[str,int] governed_repository_id: The repository governance ID
         :param str project_id: The ID of the project
         """
 
@@ -222,7 +270,7 @@ class ADOGovernanceClient(ADOBaseClient):
         area_path: str,
         work_item_type: str,
         extra_fields: Optional[List[Tuple[str, str]]] = None,
-        governed_repository_id: str,
+        governed_repository_id: Union[str, int],
         project_id: str,
     ) -> None:
         """Set whether to show the banner in the repo view or not.
@@ -232,7 +280,7 @@ class ADOGovernanceClient(ADOBaseClient):
         :param str area_path: The area path to open the tickets under
         :param str work_item_type: The type of work item to create (this must match one in your project)
         :param extra_fields: An optional list of tuples of field IDs and values to set on the created work item
-        :param str governed_repository_id: The ID of the governed repository (not necessarily the same as the ADO one)
+        :param Union[str,int] governed_repository_id: The repository governance ID
         :param str project_id: The ID of the project
         """
 
@@ -266,7 +314,7 @@ class ADOGovernanceClient(ADOBaseClient):
         self,
         *,
         tracked_only: bool = True,
-        governed_repository_id: str,
+        governed_repository_id: Union[str, int],
         project_id: str,
     ) -> Dict[str, Any]:
         """Get the branches for the goverened repository.
@@ -277,7 +325,7 @@ class ADOGovernanceClient(ADOBaseClient):
         exit.
 
         :param bool tracked_only: Set to True if only tracked branches should be returned (default), False otherwise
-        :param str governed_repository_id: The ID of the governed repository (not necessarily the same as the ADO one)
+        :param Union[str,int] governed_repository_id: The repository governance ID
         :param str project_id: The ID of the project
 
         :returns: The settings for the alerts on the repo
@@ -304,7 +352,7 @@ class ADOGovernanceClient(ADOBaseClient):
         branch_name: str,
         include_history: bool = False,
         include_development_dependencies: bool = True,
-        governed_repository_id: str,
+        governed_repository_id: Union[str, int],
         project_id: str,
     ) -> Dict[str, Any]:
         """Get the alerts on a given branch.
@@ -313,7 +361,7 @@ class ADOGovernanceClient(ADOBaseClient):
         :param bool include_history: It isn't clear what this parameter does. Defaults to False
         :param bool include_development_dependencies: Set to True to include alerts on development
                                                       dependencies, False otherwise (defaults to True)
-        :param str governed_repository_id: The ID of the governed repository (not necessarily the same as the ADO one)
+        :param Union[str,int] governed_repository_id: The repository governance ID
         :param str project_id: The ID of the project
 
         :returns: The settings for the alerts on the repo
