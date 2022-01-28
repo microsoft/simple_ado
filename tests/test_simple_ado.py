@@ -177,3 +177,43 @@ class LibraryTests(unittest.TestCase):
         for entry in self.client.audit.query():
             print(entry)
             break
+
+    def test_goverance(self):
+        """Test getting governance repos."""
+
+        governed_repos_list = self.client.governance.get_governed_repositories(
+            project_id=self.test_config.project_id,
+        )
+
+        repo = self.client.governance.get_governed_repository(
+            governed_repository_id=governed_repos_list[0]["id"],
+            project_id=self.test_config.project_id,
+        )
+
+        del repo["policies"]
+        del repo["projectReference"]
+
+        self.assertEqual(repo, governed_repos_list[0])
+
+        branches = self.client.governance.get_branches(
+            tracked_only=True,
+            governed_repository_id=repo["id"],
+            project_id=self.test_config.project_id,
+        )
+
+        self.assertTrue(len(branches) > 0)
+
+        shows_banner = self.client.governance.get_show_banner_in_repo_view(
+            governed_repository_id=repo["id"],
+            project_id=self.test_config.project_id,
+        )
+
+        self.assertIsNotNone(shows_banner)
+
+        alerts = self.client.governance.get_alerts(
+            branch_name=branches[0]["name"],
+            governed_repository_id=repo["id"],
+            project_id=self.test_config.project_id,
+        )
+
+        self.assertIsNotNone(alerts)
