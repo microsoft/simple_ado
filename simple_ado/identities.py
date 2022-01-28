@@ -6,6 +6,7 @@
 """ADO identities API wrapper."""
 
 import logging
+from typing import Any, cast, Dict, List
 
 from simple_ado.base_client import ADOBaseClient
 from simple_ado.exceptions import ADOException
@@ -23,7 +24,7 @@ class ADOIdentitiesClient(ADOBaseClient):
     def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
         super().__init__(http_client, log.getChild("user"))
 
-    def search(self, identity: str) -> TeamFoundationId:
+    def search(self, identity: str) -> List[Dict[str, Any]]:
         """Fetch the unique Team Foundation GUID for a given identity.
 
         :param str identity: The identity to fetch for (should be email for users and display name for groups)
@@ -59,4 +60,6 @@ class ADOIdentitiesClient(ADOBaseClient):
         if len(results) > 1:
             raise ADOException(f"Found multiple identities matching '{identity}'")
 
-        return results[0]["id"]
+        result = results[0]
+
+        return cast(TeamFoundationId, result["id"])
