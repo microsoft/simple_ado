@@ -94,6 +94,19 @@ class ADOSecurityClient(ADOBaseClient):
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
 
+    def delete_policy(self, project_id: str, policy_id: int) -> None:
+        """Delete a policy.
+
+        :param project_id: The identifier for the project
+        :param policy_id: The ID of the policy to delete
+        """
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/policy/Configurations/{policy_id}?api-version=6.0"
+        )
+        response = self.http_client.delete(request_url)
+        self.http_client.validate_response(response)
+
     # pylint: disable=too-many-locals
     def add_branch_status_check_policy(
         self,
