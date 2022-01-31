@@ -52,11 +52,19 @@ class ADOBranchPolicy(enum.Enum):
 
     APPROVAL_COUNT: str = "fa4e907d-c16b-4a4c-9dfa-4906e5d171dd"
     BUILD: str = "0609b952-1397-4640-95ec-e00a01b2c241"
-    REQUIRED_REVIEWERS: str = "fd2167ab-b0be-447a-8ec8-39368250530e"
     CASE_ENFORCEMENT: str = "7ed39669-655c-494e-b4a0-a08b4da0fcce"
     MAXIMUM_BLOB_SIZE: str = "2e26e725-8201-4edd-8bf5-978563c34a80"
     MERGE_STRATEGY: str = "fa4e907d-c16b-4a4c-9dfa-4916e5d171ab"
+    REQUIRED_REVIEWERS: str = "fd2167ab-b0be-447a-8ec8-39368250530e"
+    STATUS_CHECK: str = "cbdc66da-9728-4af8-aada-9a5a32e4a226"
     WORK_ITEM: str = "40e92b44-2fe1-4dd6-b3d8-74a9c21d0c6e"
+
+
+class ADOPolicyApplicability(enum.Enum):
+    """Different types of policy applicability."""
+
+    APPLY_BY_DEFAULT = None
+    CONDITIONAL = 1
 
 
 class ADOSecurityClient(ADOBaseClient):
@@ -85,6 +93,81 @@ class ADOSecurityClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
+
+    # pylint: disable=too-many-locals
+    def add_branch_status_check_policy(
+        self,
+        *,
+        branch: str,
+        is_blocking: bool = True,
+        is_enabled: bool = True,
+        required_status_author_id: Optional[str] = None,
+        default_display_name: Optional[str] = None,
+        invalidate_on_source_update: bool = True,
+        filename_filter: Optional[List[str]] = None,
+        applicability: ADOPolicyApplicability = ADOPolicyApplicability.APPLY_BY_DEFAULT,
+        status_name: str,
+        status_genre: str,
+        project_id: str,
+        repository_id: str,
+    ) -> ADOResponse:
+        """Adds a new status check policy for a given branch.
+
+        :param str branch: The git branch to set the policy for
+        :param bool is_blocking: Whether the status blocks PR completion or not.
+        :param bool is_enabled: Whether the status is enabled or not.
+        :param Optional[str] required_status_author_id: The ID of a required author (None if anyone)
+        :param Optional[str] default_display_name: The default display name for the policy
+        :param bool invalidate_on_source_update: Set to True to invalid the status when an update to
+                                                 the PR happens, False otherwise
+        :param Optional[List[str]] filename_filter: A list of file name filters this policy should
+                                                    only apply to
+        :param ADOPolicyApplicability applicability: Set to apply always or just if the status is posted
+        :param str status_name: The name of the status
+        :param str status_genre: The genre of the status
+        :param str project_id: The identifier for the project
+        :param str repository_id: The ID for the repository
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + "/policy/Configurations?api-version=5.0"
+        )
+
+        settings = {
+            "authorId": required_status_author_id,
+            "defaultDisplayName": default_display_name,
+            "invalidateOnSourceUpdate": invalidate_on_source_update,
+            "policyApplicability": applicability.value,
+            "statusName": status_name,
+            "statusGenre": status_genre,
+            "scope": [
+                {
+                    "repositoryId": repository_id,
+                    "refName": f"refs/heads/{branch}",
+                    "matchKind": "Exact",
+                }
+            ],
+        }
+
+        if filename_filter:
+            settings["filenamePatterns"] = filename_filter
+
+        body = {
+            "type": {"id": ADOBranchPolicy.STATUS_CHECK.value},
+            "revision": 1,
+            "isDeleted": False,
+            "isBlocking": is_blocking,
+            "isEnabled": is_enabled,
+            "settings": settings,
+        }
+
+        response = self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
+
+    # pylint: enable=too-many-locals
 
     def add_branch_build_policy(
         self,
