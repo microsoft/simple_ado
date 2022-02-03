@@ -88,3 +88,31 @@ class ADOPipelineClient(ADOBaseClient):
 
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
+
+    def preview(
+        self, *, project_id: str, pipeline_id: int, pipeline_version: Optional[int] = None
+    ) -> str:
+        """Queue a dry run of the pipeline to return the final yaml.
+
+        :param project_id: The ID of the project
+        :param pipeline_id: The identifier of the pipeline to get the info for
+        :param pipeline_version: The version of the pipeline to get the info for
+
+        :returns: The raw YAML generated after parsing the templates
+        """
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/pipelines/{pipeline_id}/preview?api-version=7.1-preview.1"
+        )
+
+        if pipeline_version:
+            request_url += f"pipelineVersion={pipeline_version}"
+
+        body = {
+            "previewRun": True,
+        }
+
+        response = self.http_client.post(request_url, json_data=body)
+        data = self.http_client.decode_response(response)
+        return data["finalYaml"]

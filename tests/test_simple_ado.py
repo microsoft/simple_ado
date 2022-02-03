@@ -12,6 +12,8 @@ import os
 import sys
 import unittest
 
+import yaml
+
 from . import TestDetails
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.abspath(__file__), "..", "..")))
@@ -243,3 +245,10 @@ class LibraryTests(unittest.TestCase):
                 project_id=self.test_config.project_id, pipeline_id=basic_pipeline["id"]
             )
             assert pipeline is not None
+            break
+
+        raw_yaml = self.client.pipelines.preview(
+            project_id=self.test_config.project_id, pipeline_id=12778
+        )
+        data = yaml.safe_load(raw_yaml)
+        assert data is not None
