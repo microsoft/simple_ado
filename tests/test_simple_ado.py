@@ -217,3 +217,19 @@ class LibraryTests(unittest.TestCase):
         )
 
         self.assertIsNotNone(alerts)
+
+    def test_get_branch_policies(self):
+        """Test getting governance repos."""
+
+        from collections import defaultdict
+
+        policy_map = defaultdict(list)
+
+        for policy in self.client.security.get_policies(self.test_config.project_id):
+            for scope in policy["settings"]["scope"]:
+                policy_map[scope["repositoryId"]].append(policy)
+
+        for repo in self.client.git.all_repositories(self.test_config.project_id):
+            policies = policy_map.get(repo["id"])
+
+            assert policies is not None
