@@ -19,6 +19,7 @@ from simple_ado.git import ADOGitClient
 from simple_ado.graph import ADOGraphClient
 from simple_ado.governance import ADOGovernanceClient
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
+from simple_ado.pipelines import ADOPipelineClient
 from simple_ado.pools import ADOPoolsClient
 from simple_ado.pull_requests import ADOPullRequestClient
 from simple_ado.security import ADOSecurityClient
@@ -49,6 +50,7 @@ class ADOClient:
     governance: ADOGovernanceClient
     graph: ADOGraphClient
     identities: ADOIdentitiesClient
+    pipelines: ADOPipelineClient
     pools: ADOPoolsClient
     security: ADOSecurityClient
     user: ADOUserClient
@@ -85,6 +87,7 @@ class ADOClient:
         self.git = ADOGitClient(self.http_client, self.log)
         self.governance = ADOGovernanceClient(self.http_client, self.log)
         self.graph = ADOGraphClient(self.http_client, self.log)
+        self.pipelines = ADOPipelineClient(self.http_client, self.log)
         self.pools = ADOPoolsClient(self.http_client, self.log)
         self.security = ADOSecurityClient(self.http_client, self.log)
         self.user = ADOUserClient(self.http_client, self.log)

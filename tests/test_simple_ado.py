@@ -7,6 +7,7 @@
 
 # pylint: disable=line-too-long
 
+from collections import defaultdict
 import os
 import sys
 import unittest
@@ -221,8 +222,6 @@ class LibraryTests(unittest.TestCase):
     def test_get_branch_policies(self):
         """Test getting governance repos."""
 
-        from collections import defaultdict
-
         policy_map = defaultdict(list)
 
         for policy in self.client.security.get_policies(self.test_config.project_id):
@@ -233,3 +232,14 @@ class LibraryTests(unittest.TestCase):
             policies = policy_map.get(repo["id"])
 
             assert policies is not None
+
+    def test_get_pipelines(self):
+        """Test getting pipelines."""
+
+        for basic_pipeline in self.client.pipelines.get_pipelines(
+            project_id=self.test_config.project_id, top=10
+        ):
+            pipeline = self.client.pipelines.get_pipeline(
+                project_id=self.test_config.project_id, pipeline_id=basic_pipeline["id"]
+            )
+            assert pipeline is not None
