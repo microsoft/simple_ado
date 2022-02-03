@@ -91,14 +91,14 @@ class ADOPipelineClient(ADOBaseClient):
 
     def preview(
         self, *, project_id: str, pipeline_id: int, pipeline_version: Optional[int] = None
-    ) -> str:
+    ) -> Optional[str]:
         """Queue a dry run of the pipeline to return the final yaml.
 
         :param project_id: The ID of the project
         :param pipeline_id: The identifier of the pipeline to get the info for
         :param pipeline_version: The version of the pipeline to get the info for
 
-        :returns: The raw YAML generated after parsing the templates
+        :returns: The raw YAML generated after parsing the templates (None if it is not a YAML pipeline)
         """
 
         request_url = (
@@ -115,4 +115,4 @@ class ADOPipelineClient(ADOBaseClient):
 
         response = self.http_client.post(request_url, json_data=body)
         data = self.http_client.decode_response(response)
-        return data["finalYaml"]
+        return data.get("finalYaml")
