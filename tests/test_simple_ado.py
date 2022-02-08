@@ -238,17 +238,34 @@ class LibraryTests(unittest.TestCase):
     def test_get_pipelines(self):
         """Test getting pipelines."""
 
+        pipeline = None
+
         for basic_pipeline in self.client.pipelines.get_pipelines(
             project_id=self.test_config.project_id, top=10
         ):
             pipeline = self.client.pipelines.get_pipeline(
                 project_id=self.test_config.project_id, pipeline_id=basic_pipeline["id"]
             )
-            assert pipeline is not None
             break
+
+        assert pipeline is not None
 
         raw_yaml = self.client.pipelines.preview(
             project_id=self.test_config.project_id, pipeline_id=12778
         )
         data = yaml.safe_load(raw_yaml)
         assert data is not None
+
+        run = None
+
+        for base_run in self.client.pipelines.get_top_ten_thousand_runs(
+            project_id=self.test_config.project_id, pipeline_id=pipeline["id"]
+        ):
+            run = self.client.pipelines.get_run(
+                project_id=self.test_config.project_id,
+                pipeline_id=pipeline["id"],
+                run_id=base_run["id"],
+            )
+            break
+
+        assert run is not None

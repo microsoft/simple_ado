@@ -116,3 +116,39 @@ class ADOPipelineClient(ADOBaseClient):
         response = self.http_client.post(request_url, json_data=body)
         data = self.http_client.decode_response(response)
         return data.get("finalYaml")
+
+    def get_top_ten_thousand_runs(self, *, project_id: str, pipeline_id: int) -> ADOResponse:
+        """Get the top 10,000 runs for a pipeline.
+
+        :param project_id: The ID of the project
+        :param pipeline_id: The identifier of the pipeline to get the runs for
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/pipelines/{pipeline_id}/runs?api-version=6.0-preview.1"
+        )
+
+        response = self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
+
+    def get_run(self, *, project_id: str, pipeline_id: int, run_id: int) -> ADOResponse:
+        """Get a pipeline run.
+
+        :param project_id: The ID of the project
+        :param pipeline_id: The identifier of the pipeline to get the run for
+        :param run_id: The identifier of the run to get
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/pipelines/{pipeline_id}/runs/{run_id}?api-version=6.0-preview.1"
+        )
+
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
