@@ -103,6 +103,10 @@ class LibraryTests(unittest.TestCase):
         """Test list repos."""
         repos = self.client.git.all_repositories(project_id=self.test_config.project_id)
         self.assertTrue(len(repos) > 0, "Failed to find any repos")
+        repo = self.client.git.get_repository(
+            project_id=self.test_config.project_id, repository_id=repos[0]["id"]
+        )
+        self.assertIsNotNone(repo, "Failed to get repo")
 
     def test_list_refs(self):
         """Test list refs."""

@@ -91,6 +91,19 @@ class ADOGitClient(ADOBaseClient):
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
 
+    def get_repository(self, *, project_id: str, repository_id: str) -> ADOResponse:
+        """Get a repository from the project.
+
+        :param str project_id: The ID of the project
+        :param str repository_id: The ID of the repository
+
+        :returns: The ADO response with the data in it
+        """
+        self.log.debug(f"Getting repository {repository_id}")
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}?api-version=6.0"
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
+
     def get_status(self, *, sha: str, project_id: str, repository_id: str) -> ADOResponse:
         """Set a status on a PR.
 
