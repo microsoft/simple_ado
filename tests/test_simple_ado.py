@@ -8,6 +8,7 @@
 # pylint: disable=line-too-long
 
 from collections import defaultdict
+import functools
 import os
 import sys
 import unittest
@@ -281,3 +282,16 @@ class LibraryTests(unittest.TestCase):
             break
 
         assert run is not None
+
+    def test_get_groups_users(self):
+        """Test getting groups/users."""
+
+        project_descriptor = self.client.graph.get_scope_descriptors(self.test_config.project_id)
+
+        for group in self.client.graph.list_groups(scope_descriptor=project_descriptor["value"]):
+            details = self.client.graph.get_group(group["descriptor"])
+            self.assertIsNotNone(details)
+            for member in self.client.graph.list_users_in_container(group["descriptor"]):
+                self.assertIsNotNone(member)
+                break
+            break
