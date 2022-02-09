@@ -100,7 +100,10 @@ class ADOGitClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
         self.log.debug(f"Getting repository {repository_id}")
-        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}?api-version=6.0"
+        request_url = (
+            f"{self.http_client.api_endpoint(project_id=project_id)}/git/"
+            + f"repositories/{repository_id}?api-version=6.0"
+        )
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
