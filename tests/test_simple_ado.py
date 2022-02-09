@@ -107,6 +107,14 @@ class LibraryTests(unittest.TestCase):
             project_id=self.test_config.project_id, repository_id=repos[0]["id"]
         )
         self.assertIsNotNone(repo, "Failed to get repo")
+        default_branch = repo["defaultBranch"].replace("refs/heads/", "")
+
+        stats = self.client.git.get_stats_for_branch(
+            project_id=self.test_config.project_id,
+            repository_id=repo["id"],
+            branch_name=default_branch,
+        )
+        self.assertIsNotNone(stats)
 
     def test_list_refs(self):
         """Test list refs."""

@@ -380,6 +380,26 @@ class ADOGitClient(ADOBaseClient):
 
     # pylint: enable=too-many-locals
 
+    def get_stats_for_branch(
+        self, *, project_id: str, repository_id: str, branch_name: str
+    ) -> ADOResponse:
+        """Get the stats for a branch.
+
+        :param str project_id: The ID of the project
+        :param str repository_id: The ID for the repository
+        :param str branch_name: The name of the branch to get the stats for
+
+        :returns: The ADO response with the data in it
+        """
+
+        self.log.debug("Getting stats")
+
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}"
+        request_url += f"/stats/branches?name={branch_name}&api-version=6.0"
+
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
+
     def get_commit(
         self,
         *,
