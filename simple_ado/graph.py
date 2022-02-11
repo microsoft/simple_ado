@@ -34,6 +34,36 @@ class ADOGraphClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
+    def get_storage_key(self, subject_descriptor: str) -> ADOResponse:
+        """Get the storage key for a given subject descriptor.
+
+        :param subject_descriptor: Descriptor of the subject to resolve
+
+        :returns: The storage key
+        """
+
+        request_url = f"{self.http_client.graph_endpoint()}/graph/storagekeys/{subject_descriptor}"
+        request_url += "/?api-version=6.0-preview.1"
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
+
+    def lookup_subjects(self, subject_descriptors: List[str]) -> List[Any]:
+        """Lookup the various subject descriptors.
+
+        :param subject_descriptors: Descriptors of the subjects to resolve
+
+        :returns: The lookup keys
+        """
+
+        request_url = f"{self.http_client.graph_endpoint()}/graph/subjectlookup"
+        request_url += "/?api-version=6.0-preview.1"
+
+        data = {"lookupKeys": [{"descriptor": descriptor} for descriptor in subject_descriptors]}
+
+        response = self.http_client.post(request_url, json_data=data)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
+
     def list_groups(self, *, scope_descriptor: Optional[str] = None) -> List[Any]:
         """Get the groups in the organization.
 

@@ -8,7 +8,6 @@
 # pylint: disable=line-too-long
 
 from collections import defaultdict
-import functools
 import os
 import sys
 import unittest
