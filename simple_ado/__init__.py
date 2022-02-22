@@ -13,6 +13,7 @@ import requests
 
 from simple_ado.audit import ADOAuditClient
 from simple_ado.builds import ADOBuildClient
+from simple_ado.endpoints import ADOEndpointsClient
 from simple_ado.exceptions import ADOException
 from simple_ado.identities import ADOIdentitiesClient
 from simple_ado.git import ADOGitClient
@@ -46,6 +47,7 @@ class ADOClient:
 
     audit: ADOAuditClient
     builds: ADOBuildClient
+    endpoints: ADOEndpointsClient
     git: ADOGitClient
     governance: ADOGovernanceClient
     graph: ADOGraphClient
@@ -83,6 +85,7 @@ class ADOClient:
 
         self.audit = ADOAuditClient(self.http_client, self.log)
         self.builds = ADOBuildClient(self.http_client, self.log)
+        self.endpoints = ADOEndpointsClient(self.http_client, self.log)
         self.identities = ADOIdentitiesClient(self.http_client, self.log)
         self.git = ADOGitClient(self.http_client, self.log)
         self.governance = ADOGovernanceClient(self.http_client, self.log)
