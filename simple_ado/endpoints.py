@@ -65,10 +65,10 @@ class ADOEndpointsClient(ADOBaseClient):
 
         parameters: Dict[str, Any] = {"api-version": "6.0-preview.1"}
 
-        if not top or top < 25:
+        if not top or top < 50:
             parameters["top"] = top
         else:
-            parameters["top"] = 25
+            parameters["top"] = 50
 
         request_url += urllib.parse.urlencode(parameters)
 
