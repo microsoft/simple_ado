@@ -294,3 +294,18 @@ class LibraryTests(unittest.TestCase):
                 self.assertIsNotNone(member)
                 break
             break
+
+    def test_get_endpoints(self):
+        """Test getting endpoints groups/users."""
+
+        endpoints = self.client.endpoints.get_endpoints(
+            project_id=self.test_config.project_id, endpoint_type="azurerm"
+        )
+
+        for endpoint in endpoints:
+            for item in self.client.endpoints.get_usage_history(
+                project_id=self.test_config.project_id, endpoint_id=endpoint["id"], top=75
+            ):
+                assert item is not None
+
+        assert endpoints is not None
