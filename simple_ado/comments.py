@@ -159,9 +159,9 @@ class ADOComment:
             details["location"] = self.location.generate_representation()
         return str(details)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """Returns a raw representation of the object which can be used to reconstruct it later.
 
         :returns: A raw representation of the object
         """
-        return self.__str__()
+        return str(self)
