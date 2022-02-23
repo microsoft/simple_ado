@@ -7,7 +7,7 @@
 
 import json
 import logging
-from typing import Dict, Optional
+from typing import Any, Dict, Iterator, List, Optional, Union
 import urllib.parse
 
 
@@ -81,6 +81,47 @@ class ADOBuildClient(ADOBaseClient):
         )
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
+
+    def get_builds(
+        self,
+        *,
+        project_id: str,
+        definitions: Optional[List[int]] = None,
+    ) -> Iterator[Dict[str, Any]]:
+        """Get the info for a build.
+
+        :param str project_id: The ID of the project
+        :param int definitions: An optional list of build definition IDs to filter on
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = self.http_client.api_endpoint(project_id=project_id) + "/build/builds/?"
+
+        parameters = {
+            "api-version": "4.1",
+        }
+
+        if definitions:
+            parameters["definitions"] = ",".join(map(str, definitions))
+
+        request_url += urllib.parse.urlencode(parameters)
+
+        url = request_url
+
+        while True:
+            response = self.http_client.get(url)
+            decoded = self.http_client.decode_response(response)
+            yield from decoded["value"]
+
+            continuation_token = response.headers.get(
+                "X-MS-ContinuationToken", response.headers.get("x-ms-continuationtoken")
+            )
+
+            if not continuation_token:
+                break
+
+            url = request_url + f"&continuationToken={continuation_token}"
 
     def get_artifact_info(
         self, *, project_id: str, build_id: int, artifact_name: str
