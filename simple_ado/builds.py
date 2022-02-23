@@ -173,6 +173,50 @@ class ADOBuildClient(ADOBaseClient):
         with self.http_client.get(request_url, stream=True) as response:
             download_from_response_stream(response=response, output_path=output_path, log=self.log)
 
+    def get_leases(self, *, project_id: str, build_id: int) -> ADOResponse:
+        """Get the retention leases for a build.
+
+        :param str project_id: The ID of the project
+        :param build_id: The ID of the build
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/build/builds/{build_id}/leases?api-version=7.1-preview.1"
+        )
+
+        self.log.debug(f"Fetching leases for build {build_id}...")
+
+        response = self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
+
+    def delete_leases(self, *, project_id: str, lease_ids: Union[int, List[int]]) -> None:
+        """Delete leases.
+
+        :param str project_id: The ID of the project
+        :param lease_ids: The IDs of the leases to delete
+        """
+
+        if isinstance(lease_ids, int):
+            all_ids = [lease_ids]
+        else:
+            all_ids = lease_ids
+
+        ids = ",".join(map(str, all_ids))
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/build/retention/leases?api-version=7.1-preview.2&ids={ids}"
+        )
+
+        self.log.debug(f"Deleting leases '{ids}'...")
+
+        response = self.http_client.delete(request_url)
+        self.http_client.validate_response(response)
+
     def delete_definition(self, *, project_id: str, definition_id: int) -> None:
         """Delete a definition and all associated builds.
 

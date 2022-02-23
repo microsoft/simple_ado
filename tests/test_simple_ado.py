@@ -5,7 +5,7 @@
 
 """Tests for the package."""
 
-# pylint: disable=line-too-long
+# pylint: disable=line-too-long,too-many-public-methods
 
 from collections import defaultdict
 import os
@@ -309,3 +309,21 @@ class LibraryTests(unittest.TestCase):
                 assert item is not None
 
         assert endpoints is not None
+
+    def test_get_leases(self):
+        """Remove a pipeline."""
+
+        for pipeline in self.client.pipelines.get_pipelines(
+            top=3, project_id=self.test_config.project_id
+        ):
+            pipeline_id = pipeline["id"]
+
+            for build in self.client.builds.get_builds(
+                project_id=self.test_config.project_id, definitions=[pipeline_id]
+            ):
+                leases = self.client.builds.get_leases(
+                    project_id=self.test_config.project_id, build_id=build["id"]
+                )
+
+                assert leases is not None
+                break
