@@ -172,3 +172,18 @@ class ADOBuildClient(ADOBaseClient):
 
         with self.http_client.get(request_url, stream=True) as response:
             download_from_response_stream(response=response, output_path=output_path, log=self.log)
+
+    def delete_definition(self, *, project_id: str, definition_id: int) -> None:
+        """Delete a definition and all associated builds.
+
+        :param project_id: The ID of the project
+        :param definition_id: The identifier of the definition to delete
+        """
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/build/definitions/{definition_id}?api-version=7.1-preview.7"
+        )
+
+        response = self.http_client.delete(request_url)
+        self.http_client.validate_response(response)
