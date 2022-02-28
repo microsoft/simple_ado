@@ -412,8 +412,8 @@ class ADOSecurityClient(ADOBaseClient):
                     "PermissionId": level,
                     "PermissionBit": permission,
                     "NamespaceId": ADOSecurityClient.GIT_PERMISSIONS_NAMESPACE,
-                    "Token": self._generate_updates_token(
-                        branch=branch, project_id=project_id, repository_id=repository_id
+                    "Token": self.generate_updates_token(
+                        branch_name=branch, project_id=project_id, repository_id=repository_id
                     ),
                 }
             )
@@ -505,26 +505,141 @@ class ADOSecurityClient(ADOBaseClient):
         encoded_branch = branch.replace("/", "^")
         return f"repoV2/{project_id}/{repository_id}/refs^heads^{encoded_branch}/"
 
-    def _generate_updates_token(
+    def generate_updates_token(
         self,
-        branch: str,
+        *,
         project_id: str,
-        repository_id: str,
+        repository_id: Optional[str] = None,
+        branch_name: Optional[str] = None,
     ) -> str:
         """Generate the token required for updating permissions.
 
-        :param str branch: The git branch of interest
-        :param str project_id: The ID for the project
-        :param str repository_id: The ID for the repository
+        A project ID must always be set. Repository ID and branch name are
+        optional, but if a branch name is set, then a repository ID must also be
+        set.
+
+        :param project_id: The ID for the project
+        :param repository_id: The ID for the repository
+        :param branch_name: The git branch of interest
 
         :returns: The update token
         """
 
         _ = self
 
+        token = f"repoV2/{project_id}/"
+
+        if not repository_id:
+            return token
+
+        token += f"{repository_id}/"
+
+        if not branch_name:
+            return token
+
         # Encode each node in the branch to hex
-        encoded_branch_nodes = [node.encode("utf-16le").hex() for node in branch.split("/")]
+        encoded_branch_nodes = [node.encode("utf-16le").hex() for node in branch_name.split("/")]
 
         encoded_branch = "/".join(encoded_branch_nodes)
 
-        return f"repoV2/{project_id}/{repository_id}/refs/heads/{encoded_branch}/"
+        return token + f"refs/heads/{encoded_branch}/"
+
+    def query_namespaces(
+        self, *, namespace_id: str, local_only: Optional[bool] = None
+    ) -> ADOResponse:
+        """Query a namespace
+
+        :param namespace_id: The identifier for the namespace
+        :param local_only: Specify whether to check local namespaces only or not
+
+        :returns: The ADO response with the data in it
+        """
+        request_url = (
+            self.http_client.api_endpoint()
+            + f"/securitynamespaces/{namespace_id}?api-version=7.1-preview.1"
+        )
+
+        if local_only is not None:
+            request_url += f"&localOnly={local_only}".lower()
+
+        response = self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
+
+    def query_access_control_lists(
+        self,
+        *,
+        namespace_id: str,
+        descriptors: Optional[List[str]] = None,
+        token: Optional[str] = None,
+    ) -> ADOResponse:
+        """Query a namespace
+
+        :param namespace_id: The identifier for the namespace
+        :param descriptors: An optional of list of descriptors to filter down to those.
+        :param token: An optional token to filter down to
+
+        :returns: The ADO response with the data in it
+        """
+
+        if descriptors is None:
+            descriptors = []
+
+        descriptors = [
+            "Microsoft.TeamFoundation.Identity;" + descriptor
+            if not descriptor.startswith("Microsoft.TeamFoundation.Identity;")
+            else descriptor
+            for descriptor in descriptors
+        ]
+
+        request_url = (
+            self.http_client.api_endpoint()
+            + f"/accesscontrollists/{namespace_id}?api-version=7.1-preview.1"
+        )
+
+        if len(descriptors) > 0:
+            request_url += "&descriptors=" + ",".join(descriptors)
+
+        if token:
+            request_url += f"&token={token}"
+
+        response = self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
+
+    def get_permissions(
+        self,
+        *,
+        branch: str,
+        team_foundation_id: TeamFoundationId,
+        project_id: str,
+        repository_id: str,
+    ) -> Dict[str, str]:
+        """Get the permissions for a branch
+
+        :param str branch: The name of the branch to get the permissions for
+        :param TeamFoundationId team_foundation_id: the unique Team Foundation GUID for the identity
+        :param project_id: The identifier for the project
+        :param str repository_id: The ID for the repository
+
+        :returns: The raw descriptor info
+
+        :raises ADOException: If we can't determine the descriptor info from the response
+        """
+
+        request_url = self.http_client.api_endpoint(is_internal=True, project_id=project_id)
+        request_url += "/_security/DisplayPermissions?"
+
+        parameters = {
+            "tfid": team_foundation_id,
+            "permissionSetId": ADOSecurityClient.GIT_PERMISSIONS_NAMESPACE,
+            "permissionSetToken": self._generate_permission_set_token(
+                branch=branch, project_id=project_id, repository_id=repository_id
+            ),
+            "__v": "5",
+        }
+
+        request_url += urllib.parse.urlencode(parameters)
+
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
