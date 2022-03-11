@@ -597,7 +597,7 @@ class ADOGitClient(ADOBaseClient):
         download: Optional[bool] = None,
         file_name: Optional[str] = None,
         resolve_lfs: Optional[bool] = None,
-    ) -> ADOResponse:
+    ) -> Any:
         """Get a git item.
 
         All non-specified options use the ADO default.
@@ -610,7 +610,7 @@ class ADOGitClient(ADOBaseClient):
         :param Optional[str] file_name: The file name to use for the download if download is set to True
         :param Optional[bool] resolve_lfs: Set to true to resolve LFS pointer files to resolve actual content
 
-        :returns: The ADO response with the data in it
+        :returns: The data returned and the return type depends on what you set blob_format to
         """
 
         self.log.debug("Getting blob")
@@ -644,7 +644,11 @@ class ADOGitClient(ADOBaseClient):
             self.http_client.validate_response(response)
             return response.text
 
-        return self.http_client.decode_response(response)
+        if blob_format == ADOGitClient.BlobFormat.JSON:
+            return self.http_client.decode_response(response)
+
+        self.http_client.validate_response(response)
+        return response.content
 
     def get_blobs(
         self,
