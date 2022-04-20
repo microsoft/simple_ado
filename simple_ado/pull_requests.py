@@ -94,7 +94,8 @@ class ADOPullRequestClient(ADOBaseClient):
             + f"/pullRequests/{self.pull_request_id}/iterations?api-version=6.0"
         )
         response = self.http_client.get(request_url)
-        return self.http_client.decode_response(response)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
 
     def get_threads(self, *, include_deleted: bool = False) -> List[ADOThread]:
         """Get the comments on the PR from ADO.
