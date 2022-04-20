@@ -82,6 +82,20 @@ class ADOPullRequestClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
+    def iterations(self) -> ADOResponse:
+        """Get the iterations of this PR.
+
+        :returns: The ADO response with the iterations data in it
+        """
+        self.log.debug(f"Getting iterations: {self.pull_request_id}")
+        request_url = (
+            self.http_client.api_endpoint(project_id=self.project_id)
+            + f"/git/repositories/{self.repository_id}"
+            + f"/pullRequests/{self.pull_request_id}/iterations?api-version=6.0"
+        )
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
+
     def get_threads(self, *, include_deleted: bool = False) -> List[ADOThread]:
         """Get the comments on the PR from ADO.
 
