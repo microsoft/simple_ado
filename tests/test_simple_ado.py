@@ -327,3 +327,17 @@ class LibraryTests(unittest.TestCase):
 
                 assert leases is not None
                 break
+
+    def test_get_definitions(self):
+        """Get definitions."""
+
+        for definition in self.client.builds.get_definitions(
+            project_id=self.test_config.project_id
+        ):
+            definition_id = definition["id"]
+
+            full_definition = self.client.builds.get_definition(
+                project_id=self.test_config.project_id, definition_id=definition_id
+            )
+
+            assert full_definition is not None
