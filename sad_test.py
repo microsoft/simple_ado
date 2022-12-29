@@ -1,19 +1,23 @@
 import json
 from json.decoder import JSONDecodeError
 import os
-import simple_ado.simple_ado
-from ..pyBifrost.helpers.ado_url import AdoUrl
+import simple_ado
+from helpers.ado_url import AdoUrl
+import argparse
+import logging
 
 def main():
+    logger = logging.getLogger("test")
     au = AdoUrl(repoUrlStr=repoUrlStr)
     print("* Fetching the repo: " + repoUrlStr)
     try:
         print("** Setting up ADOHTTPClient with " + au.adoOrg)
         http = simple_ado.http_client.ADOHTTPClient(tenant=au.adoOrg,
                     credentials=(os.environ["SIMPLE_ADO_USERNAME"],os.environ["SIMPLE_ADO_BASE_TOKEN"]),
-                    user_agent="test"
+                    user_agent="test",
+                    log = logger
                 )
-        git_client = simple_ado.git.ADOGitClient(http_client=http)
+        git_client = simple_ado.git.ADOGitClient(http_client=http, log=logger)
         print("** Getting Repository: " + au.adoRepo + " from " + au.adoProj)
         repo = git_client.get_repository(repository_id=au.adoRepo, project_id=au.adoProj)
         print("** Getting an Item: " + repo["id"] + " from " + au.adoProj + " and path = " + outputDir)
@@ -22,6 +26,8 @@ def main():
         branch = branch.split("/")[-1]
         output = os.path.join(outputDir, au.adoRepo + ".zip")
         zip = git_client.download_zip(output_path=output, repository_id=repo["id"], branch=branch, project_id=au.adoProj)
+    except Exception as e:
+        print(e)
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(
@@ -38,7 +44,7 @@ if __name__=="__main__":
         parser.print_help()
         exit(1)
     else:
-        output = args.output
+        outputDir = args.output
         progress = args.progress
         repoUrlStr = args.repoUrlStr
     main()
