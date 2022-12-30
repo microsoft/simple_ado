@@ -22,7 +22,7 @@ jobs:
       versionSpec: '$(python.version)'
       architecture: 'x64'
 
-  - script: curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+  - script: curl -sSL https://install.python-poetry.org | python
     displayName: Install Poetry
 
   - script: python -m venv $(System.DefaultWorkingDirectory)
