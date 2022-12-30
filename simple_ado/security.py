@@ -21,22 +21,22 @@ from simple_ado.types import TeamFoundationId
 class ADOBranchPermission(enum.IntEnum):
     """Possible types of git branch permissions."""
 
-    ADMINISTER: int = 2 ** 0
-    READ: int = 2 ** 1
-    CONTRIBUTE: int = 2 ** 2
-    FORCE_PUSH: int = 2 ** 3
-    CREATE_BRANCH: int = 2 ** 4
-    CREATE_TAG: int = 2 ** 5
-    MANAGE_NOTES: int = 2 ** 6
-    BYPASS_PUSH_POLICIES: int = 2 ** 7
-    CREATE_REPOSITORY: int = 2 ** 8
-    DELETE_REPOSITORY: int = 2 ** 9
-    RENAME_REPOSITORY: int = 2 ** 10
-    EDIT_POLICIES: int = 2 ** 11
-    REMOVE_OTHERS_LOCKS: int = 2 ** 12
-    MANAGE_PERMISSIONS: int = 2 ** 13
-    CONTRIBUTE_TO_PULL_REQUESTS: int = 2 ** 14
-    BYPASS_PULL_REQUEST_POLICIES: int = 2 ** 15
+    ADMINISTER: int = 2**0
+    READ: int = 2**1
+    CONTRIBUTE: int = 2**2
+    FORCE_PUSH: int = 2**3
+    CREATE_BRANCH: int = 2**4
+    CREATE_TAG: int = 2**5
+    MANAGE_NOTES: int = 2**6
+    BYPASS_PUSH_POLICIES: int = 2**7
+    CREATE_REPOSITORY: int = 2**8
+    DELETE_REPOSITORY: int = 2**9
+    RENAME_REPOSITORY: int = 2**10
+    EDIT_POLICIES: int = 2**11
+    REMOVE_OTHERS_LOCKS: int = 2**12
+    MANAGE_PERMISSIONS: int = 2**13
+    CONTRIBUTE_TO_PULL_REQUESTS: int = 2**14
+    BYPASS_PULL_REQUEST_POLICIES: int = 2**15
 
 
 class ADOBranchPermissionLevel(enum.IntEnum):
