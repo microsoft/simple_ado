@@ -7,6 +7,8 @@ __pycache__
 bin/
 dist/
 lib/
+output/
+token.bin
 pip-wheel-metadata/
 lib64/
 lib64

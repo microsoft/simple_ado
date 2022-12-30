@@ -1,33 +1,12 @@
 import os
+import pathlib
+
 import simple_ado
 import argparse
 import logging
-import colorama
-from tqdm import tqdm
 from auth_helper import AuthHelper
-
-def handle_progress(chunk_size=None,response=None,output=None):
-    if chunk_size and response:
-        print("output hp = " + output)
-        length = int(response.headers.get("content-length",0))
-        print("content length = " + str(length))
-        if length == 0:
-            print("Dealing with Unknown Size")
-            with open(output, "wb") as file:
-                for chunk in tqdm(response.iter_content(chunk_size),
-                                  desc="Unknown file size",
-                                  unit="kB", unit_scale=True, unit_divisor=1024):
-                    file.write(chunk)
-                    file.flush()
-        else:
-            with open(output, "wb") as file:
-                for chunk in tqdm(response.iter_content(chunk_size),
-                                  desc="Downloading file",
-                                  total=length/1024, unit="kB",
-                                  unit_scale = True, unit_divisor=1024):
-                    file.write(chunk)
-                    file.flush()
-    return 0
+from simple_ado import ADOException
+from simple_ado.exceptions import ADOHTTPException
 
 def main():
     logger = logging.getLogger("test")
@@ -36,8 +15,9 @@ def main():
     token = os.environ["SIMPLE_ADO_BASE_TOKEN"]
     username = os.environ["SIMPLE_ADO_USERNAME"]
     tenant = os.environ["SIMPLE_ADO_TENANT"]
-
-    output = os.path.join(outputDir, repo_id + ".zip")
+    output = pathlib.Path(__file__).parent / pathlib.Path(outputDir) / pathlib.Path(repo_id + ".zip")
+    if not pathlib.Path.is_dir(pathlib.Path(output).parent):
+        pathlib.Path.mkdir(pathlib.Path(output).parent)
     print("* Fetching the repo: " + repoUrlStr)
     
     try:
@@ -53,16 +33,26 @@ def main():
         git_client = simple_ado.git.ADOGitClient(http_client=http, log=logger)
         print("** Getting Repository: " + repo_id + " from " + project_id)
         repo = git_client.get_repository(repository_id=repo_id, project_id=project_id)
-        print("** Getting an Item: " + repo["id"] + " from " + project_id + " and path = " + outputDir)
-        #item = git_client.get_item(repository_id=repo["id"],path="/",project_id=project_id,include_content_metadata=True,include_content=False)
         branch = repo["defaultBranch"]
         branch = branch.split("/")[-1]
-        callback=None
-        if progress:
-            callback=handle_progress
-        zip = git_client.download_zip(output_path=output, repository_id=repo["id"], branch=branch, project_id=project_id,callback=callback)
-    except Exception as e:
-        print(e)
+        #callback=None
+        #if progress:
+        #    callback=handle_progress
+        #zip = git_client.download_zip(output_path=output, repository_id=repo["id"], branch=branch, project_id=project_id,callback=callback)
+        zip = git_client.download_zip(output_path=output, repository_id=repo["id"], branch=branch, project_id=project_id)
+    except ADOHTTPException as e:
+        print("ADOHTTPException " + str(e.response.status_code) + " on: ")
+        print("e.message = " + e.message)
+        print("e.response = " + str(e.response.content))
+        print("e.request.url = " + e.response.request.url + " path: " + e.response.request.path_url)
+        if e.response.request.body:
+            print("e.request.body = " + e.response.request.body)
+    except ADOException as e:
+        if "The output path already exists" in str(e):
+            print("Skipping for " + repoUrlStr + " it already exists.")
+            pass
+        else:
+            print("ADOException " + str(e) + " on: ")
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(
