@@ -1,6 +1,5 @@
 import os
 import simple_ado
-from helpers.ado_url import AdoUrl
 import argparse
 import logging
 import colorama
