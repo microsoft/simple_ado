@@ -6,6 +6,8 @@ bin/
 dist/
 lib/
 pip-wheel-metadata/
+lib64/
+lib64
 pyvenv.cfg
 simple_ado.egg-info/
 coverage.xml
