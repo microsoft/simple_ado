@@ -247,6 +247,7 @@ class ADOGitClient(ADOBaseClient):
         output_path: str,
         project_id: str,
         repository_id: str,
+        callback = None
     ) -> None:
         """Download the zip of the branch specified.
 
@@ -278,7 +279,7 @@ class ADOGitClient(ADOBaseClient):
             raise ADOException("The output path already exists")
 
         with self.http_client.get(request_url, stream=True) as response:
-            download_from_response_stream(response=response, output_path=output_path, log=self.log)
+            download_from_response_stream(response=response, output_path=output_path, log=self.log, callback=callback)
 
     # pylint: disable=too-many-locals
     def get_refs(
