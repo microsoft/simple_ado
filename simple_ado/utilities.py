@@ -1,9 +1,12 @@
 """Utilities for dealing with the ADO REST API."""
 
 import logging
+
 import requests
 
 from simple_ado.exceptions import ADOHTTPException
+
+from callable import Callable
 
 
 def boolstr(value: bool) -> str:
@@ -17,14 +20,14 @@ def boolstr(value: bool) -> str:
 
 
 def download_from_response_stream(
-        *, response: requests.Response, output_path: str, log: logging.Logger, callback=None 
-) -> None:
+        *, response: requests.Response, output_path: str, log: logging.Logger, callback: Callable[[int, requests.Response, str], int]
+    ) -> None:
     """Downloads a file from an already open response stream.
 
     :param requests.Response response: The response to download from
     :param str output_path: The path to write the file out to
     :param logging.Logger log: The log to use for progress updates
-
+    :param Callable[[int,requests.Response,str], int]: A callback function to user code to track progress updates
     :raises ADOHTTPException: If we fail to fetch the file for any reason
     """
 
