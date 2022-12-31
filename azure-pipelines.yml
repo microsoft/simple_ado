@@ -30,7 +30,7 @@ jobs:
 
   - script: |
       source bin/activate
-      $HOME/.poetry/bin/poetry install
+      $HOME/.local/bin/poetry install
     displayName: 'Install dependencies'
 
   - script: |
