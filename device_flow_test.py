@@ -1,58 +1,58 @@
 import os
 import pathlib
-
+import sys
 import simple_ado
 import argparse
 import logging
-from auth_helper import AuthHelper
+from auth_helper import AuthHelper, AuthError
 from simple_ado import ADOException
 from simple_ado.exceptions import ADOHTTPException
 
 def main():
-    logger = logging.getLogger("test")
+    logging.basicConfig(level=logging.DEBUG,handlers=[logging.StreamHandler(sys.stdout)])
+    logger = logging.getLogger("ado.device_flow_test")
+    app_id = os.environ["appId"]
+    scope = os.environ["scope"]
     project_id = os.environ["SIMPLE_ADO_PROJECT_ID"]
     repo_id = os.environ["SIMPLE_ADO_REPO_ID"]
-    token = os.environ["SIMPLE_ADO_BASE_TOKEN"]
-    username = os.environ["SIMPLE_ADO_USERNAME"]
     tenant = os.environ["SIMPLE_ADO_TENANT"]
-    output = pathlib.Path(__file__).parent / pathlib.Path(outputDir) / pathlib.Path(repo_id + ".zip")
+    output = pathlib.Path.home() / pathlib.Path(outputDir) / pathlib.Path(repo_id + ".zip")
     if not pathlib.Path.is_dir(pathlib.Path(output).parent):
         pathlib.Path.mkdir(pathlib.Path(output).parent)
-    print("* Fetching the repo: " + repoUrlStr)
+    logger.debug("* Fetching the repo: " + repoUrlStr)
     
     try:
-        ah = AuthHelper()
-        token = ah.adoAuthenticate()
+        ah = AuthHelper(scope=scope,app_id=app_id,log=logger)
+        token = ah.device_flow_auth()
 
-        print("** Setting up ADOHTTPClient with " + tenant)
+        logger.debug("** Setting up ADOHTTPClient with " + tenant)
         http = simple_ado.http_client.ADOHTTPClient(tenant=tenant,
                     credentials=token,
                     user_agent="test",
                     log = logger
                 )
         git_client = simple_ado.git.ADOGitClient(http_client=http, log=logger)
-        print("** Getting Repository: " + repo_id + " from " + project_id)
+        logger.debug("** Getting Repository: " + repo_id + " from " + project_id)
         repo = git_client.get_repository(repository_id=repo_id, project_id=project_id)
         branch = repo["defaultBranch"]
         branch = branch.split("/")[-1]
-        #callback=None
-        #if progress:
-        #    callback=handle_progress
-        #zip = git_client.download_zip(output_path=output, repository_id=repo["id"], branch=branch, project_id=project_id,callback=callback)
         zip = git_client.download_zip(output_path=output, repository_id=repo["id"], branch=branch, project_id=project_id)
+        logger.debug("Completed.")
     except ADOHTTPException as e:
-        print("ADOHTTPException " + str(e.response.status_code) + " on: ")
-        print("e.message = " + e.message)
-        print("e.response = " + str(e.response.content))
-        print("e.request.url = " + e.response.request.url + " path: " + e.response.request.path_url)
+        logger.critical("ADOHTTPException " + str(e.response.status_code) + " on: ")
+        logger.critical("e.message = " + e.message)
+        logger.critical("e.response = " + str(e.response.content))
+        logger.critical("e.request.url = " + e.response.request.url + " path: " + e.response.request.path_url)
         if e.response.request.body:
-            print("e.request.body = " + e.response.request.body)
+            logger.critical("e.request.body = " + e.response.request.body)
     except ADOException as e:
         if "The output path already exists" in str(e):
-            print("Skipping for " + repoUrlStr + " it already exists.")
+            logger.debug("Skipping for " + repoUrlStr + " it already exists.")
             pass
         else:
-            print("ADOException " + str(e) + " on: ")
+            logger.critical("ADOException " + str(e) + " on: ")
+    except AuthError as e:
+        logger.debug(str(e))
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser(

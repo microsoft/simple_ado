@@ -8,7 +8,7 @@
 import enum
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Callable
 import urllib.parse
 
 from simple_ado.base_client import ADOBaseClient
