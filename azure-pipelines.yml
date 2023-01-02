@@ -2,18 +2,21 @@
 jobs:
 
 - job: 'Test'
-  pool: 'Hosted macOS'
+  pool:
+    vmImage: 'macOS-latest'
   strategy:
     matrix:
-      Python36:
-        python.version: '3.6'
       Python37:
         python.version: '3.7'
       Python38:
         python.version: '3.8'
       Python39:
         python.version: '3.9'
-    maxParallel: 4
+      Python310:
+        python.version: '3.10'
+      Python311:
+        python.version: '3.11'
+    maxParallel: 8
 
   steps:
   - task: UsePythonVersion@0
@@ -21,7 +24,7 @@ jobs:
       versionSpec: '$(python.version)'
       architecture: 'x64'
 
-  - script: curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+  - script: curl -sSL https://install.python-poetry.org | python
     displayName: Install Poetry
 
   - script: python -m venv $(System.DefaultWorkingDirectory)
@@ -29,7 +32,7 @@ jobs:
 
   - script: |
       source bin/activate
-      $HOME/.poetry/bin/poetry install
+      $HOME/.local/bin/poetry install
     displayName: 'Install dependencies'
 
   - script: |

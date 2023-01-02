@@ -247,6 +247,7 @@ class ADOGitClient(ADOBaseClient):
         output_path: str,
         project_id: str,
         repository_id: str,
+        callback: Optional[Callable[[int, int], None]] = None
     ) -> None:
         """Download the zip of the branch specified.
 
@@ -254,6 +255,9 @@ class ADOGitClient(ADOBaseClient):
         :param str output_path: The path to write the output to.
         :param str project_id: The ID of the project
         :param str repository_id: The ID for the repository
+        :param callback: The callback for download progress updates. First
+                         parameter is bytes downloaded, second is total bytes.
+                         The latter will be 0 if the content length is unknown.
 
         :raises ADOException: If the output path already exists
         :raises ADOHTTPException: If we fail to fetch the zip for any reason
@@ -278,7 +282,12 @@ class ADOGitClient(ADOBaseClient):
             raise ADOException("The output path already exists")
 
         with self.http_client.get(request_url, stream=True) as response:
-            download_from_response_stream(response=response, output_path=output_path, log=self.log)
+            download_from_response_stream(
+                response=response,
+                output_path=output_path,
+                log=self.log,
+                callback=callback
+            )
 
     # pylint: disable=too-many-locals
     def get_refs(
