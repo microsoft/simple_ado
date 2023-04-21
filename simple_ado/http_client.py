@@ -178,8 +178,8 @@ class ADOHTTPClient:
 
     @retry(
         retry=(
-            retry_if_exception(_is_connection_failure)
-            | retry_if_exception(_is_retryable_get_failure)
+            retry_if_exception(_is_connection_failure)  # type: ignore
+            | retry_if_exception(_is_retryable_get_failure) # type: ignore
         ),
         wait=wait_random_exponential(max=10),
         stop=stop_after_attempt(5),
@@ -214,7 +214,7 @@ class ADOHTTPClient:
         return response
 
     @retry(
-        retry=retry_if_exception(_is_connection_failure),
+        retry=retry_if_exception(_is_connection_failure),   # type: ignore
         wait=wait_random_exponential(max=10),
         stop=stop_after_attempt(5),
     )
@@ -254,7 +254,7 @@ class ADOHTTPClient:
         )
 
     @retry(
-        retry=retry_if_exception(_is_connection_failure),
+        retry=retry_if_exception(_is_connection_failure),   # type: ignore
         wait=wait_random_exponential(max=10),
         stop=stop_after_attempt(5),
     )
@@ -292,7 +292,7 @@ class ADOHTTPClient:
         )
 
     @retry(
-        retry=retry_if_exception(_is_connection_failure),
+        retry=retry_if_exception(_is_connection_failure),   # type: ignore
         wait=wait_random_exponential(max=10),
         stop=stop_after_attempt(5),
     )
@@ -317,7 +317,7 @@ class ADOHTTPClient:
         )
 
     @retry(
-        retry=retry_if_exception(_is_connection_failure),
+        retry=retry_if_exception(_is_connection_failure),   # type: ignore
         wait=wait_random_exponential(max=10),
         stop=stop_after_attempt(5),
     )
@@ -335,7 +335,7 @@ class ADOHTTPClient:
         return self._session.delete(request_url, auth=self.credentials, headers=headers)
 
     @retry(
-        retry=retry_if_exception(_is_connection_failure),
+        retry=retry_if_exception(_is_connection_failure),   # type: ignore
         wait=wait_random_exponential(max=10),
         stop=stop_after_attempt(5),
     )
