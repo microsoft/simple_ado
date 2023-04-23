@@ -6,8 +6,6 @@ jobs:
     vmImage: 'macOS-latest'
   strategy:
     matrix:
-      Python37:
-        python.version: '3.7'
       Python38:
         python.version: '3.8'
       Python39:
@@ -47,27 +45,28 @@ jobs:
       python -m mypy --ignore-missing-imports tests/
     displayName: 'Type Check'
 
-  - script: |
-      source bin/activate
-      python -m pytest tests --cov=simple_ado --cov-report html --cov-report xml --doctest-modules --junitxml=junit/test-results.xml
-    env:
-      SIMPLE_ADO_BASE_TOKEN: $(SIMPLE_ADO_BASE_TOKEN)
-    displayName: 'pytest'
+  # Disable for now until we set up a testable Azure DevOps instance
+  # - script: |
+  #     source bin/activate
+  #     python -m pytest tests --cov=simple_ado --cov-report html --cov-report xml --doctest-modules --junitxml=junit/test-results.xml
+  #   env:
+  #     SIMPLE_ADO_BASE_TOKEN: $(SIMPLE_ADO_BASE_TOKEN)
+  #   displayName: 'pytest'
 
-  - script: |
-      source bin/activate
-      python inlinecss.py htmlcov
-    displayName: 'Inline CSS'
+  # - script: |
+  #     source bin/activate
+  #     python inlinecss.py htmlcov
+  #   displayName: 'Inline CSS'
 
-  - task: PublishTestResults@2
-    inputs:
-      testResultsFiles: '**/test-results.xml'
-      testRunTitle: 'Python $(python.version)'
-    condition: succeededOrFailed()
+  # - task: PublishTestResults@2
+  #   inputs:
+  #     testResultsFiles: '**/test-results.xml'
+  #     testRunTitle: 'Python $(python.version)'
+  #   condition: succeededOrFailed()
 
-  # Publish Code Coverage Results
-  - task: PublishCodeCoverageResults@1
-    inputs:
-      codeCoverageTool: 'cobertura'
-      summaryFileLocation: $(System.DefaultWorkingDirectory)/coverage.xml
-      reportDirectory: $(System.DefaultWorkingDirectory)/htmlcov
+  # # Publish Code Coverage Results
+  # - task: PublishCodeCoverageResults@1
+  #   inputs:
+  #     codeCoverageTool: 'cobertura'
+  #     summaryFileLocation: $(System.DefaultWorkingDirectory)/coverage.xml
+  #     reportDirectory: $(System.DefaultWorkingDirectory)/htmlcov
