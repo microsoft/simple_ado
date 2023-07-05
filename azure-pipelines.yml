@@ -1,4 +1,3 @@
-
 jobs:
 
 - job: 'Test'
@@ -44,6 +43,18 @@ jobs:
       python -m mypy --ignore-missing-imports simple_ado/
       python -m mypy --ignore-missing-imports tests/
     displayName: 'Type Check'
+  
+  - task: EsrpRelease@2
+    inputs:
+      ConnectedServiceName: 'OM-ESRP-Release-Publishing'
+      Intent: 'PackageDistribution'
+      ContentType: 'PyPi'
+      PackageLocation: 'dist'
+      Owners: 'jizhen@microsoft.com'
+      Approvers: 'jizhen@microsoft.com'
+      ServiceEndpointUrl: 'https://api.esrp.microsoft.com'
+      MainPublisher: 'ESRPRELPACMAN'
+      DomainTenantId: '72f988bf-86f1-41af-91ab-2d7cd011db47'
 
   # Disable for now until we set up a testable Azure DevOps instance
   # - script: |
