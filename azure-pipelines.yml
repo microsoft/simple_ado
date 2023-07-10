@@ -44,6 +44,8 @@ jobs:
         displayName: "Type Check"
 
   - job: "Publish"
+    pool:
+      vmImage: "ubuntu-latest"
 
     steps:
       - task: UsePythonVersion@0
