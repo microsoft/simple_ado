@@ -43,6 +43,25 @@ jobs:
           python -m mypy --ignore-missing-imports tests/
         displayName: "Type Check"
 
+  - job: "Publish"
+
+    steps:
+      - task: UsePythonVersion@0
+        inputs:
+          versionSpec: "3.x"
+
+      - script: |
+          curl -sSL https://install.python-poetry.org | python3 -
+        displayName: "Install Poetry"
+
+      - script: |
+          poetry install
+        displayName: "Install dependencies"
+
+      - script: |
+          poetry build
+        displayName: "Build"
+
       - task: EsrpRelease@2
         inputs:
           ConnectedServiceName: "OM-ESRP-Release-Publishing"
