@@ -124,6 +124,25 @@ class ADOWorkItemsClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
+    def list(self, identifiers: List[int], project_id: str) -> ADOResponse:
+        """Get a list of work items.
+
+        :param identifiers: The list of requested work item ids
+        :param str project_id: The ID of the project
+
+        :returns: The ADO response with the data in it
+        """
+
+        ids = ",".join(map(str, identifiers))
+
+        self.log.debug(f"Getting work items: {ids}")
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/wit/workitems?api-version=4.1&ids={ids}&$expand=all"
+        )
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
+
     def get_work_item_types(self, project_id: str) -> ADOResponse:
         """Get the types of work items supported by the project.
 
