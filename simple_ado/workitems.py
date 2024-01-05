@@ -479,6 +479,23 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         return self.http_client.decode_response(response)
 
+    def execute_query_by_id(self, query_id: str, project_id: str) -> ADOResponse:
+        """Gets the results of the query given the query ID.
+
+        :param query_id: The query id to execute
+        :param str project_id: The ID of the project
+
+        :returns: The ADO response with the data in it
+        """
+
+        self.log.debug(f"Executing query with id: {query_id}")
+
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/wit/wiql/{query_id}?api-version=4.1"
+
+        response = self.http_client.get(request_url)
+
+        return self.http_client.decode_response(response)
+
     def delete(
         self,
         *,
