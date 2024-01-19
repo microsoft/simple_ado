@@ -586,7 +586,119 @@ class ADOGitClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
-    # pylint: enable=too-many-locals
+    # pylint: disable=line-too-long
+    def get_commits(
+        self,
+        *,
+        project_id: str,
+        repository_id: str,
+        skip: Optional[int] = None,
+        top: Optional[int] = None,
+        from_date: Optional[str] = None,
+        to_date: Optional[str] = None,
+        from_commit_id: Optional[str] = None,
+        to_commit_id: Optional[str] = None,
+        author: Optional[str] = None,
+        user: Optional[str] = None,
+        exclude_deletes: Optional[bool] = None,
+        inlcude_links: Optional[bool] = None,
+        include_push_data: Optional[bool] = None,
+        include_user_image_url: Optional[bool] = None,
+        include_work_items: Optional[bool] = None,
+        item_path: Optional[str] = None,
+        item_version: Optional[str] = None,
+        item_version_options: Optional[GitVersionOptions] = None,
+        item_version_type: Optional[GitVersionType] = None,
+    ) -> ADOResponse:
+        """Retrieve git commits for a project
+
+        All non-specified options use the ADO default.
+
+        :param str project_id: The ID of the project
+        :param str repository_id: The ID for the repository
+        :param Optional[int] skip: Number of entries to skip
+        :param Optional[int] top: Maximum number of entries to retrieve
+        :param Optional[str] from_date: If provided, only include history entries created after this date
+        :param Optional[str] to_date: If provided, only include history entries created before this date
+        :param Optional[str] from_commit_id: If provided, a lower bound for filtering commits alphabetically
+        :param Optional[str] to_commit_id: If provided, an upper bound for filtering commits alphabetically
+        :param Optional[str] author: Alias or display name of the author
+        :param Optional[str] user: Alias or display name of the committer
+        :param Optional[bool] exclude_deletes: If itemPath is specified, determines whether to exclude delete entries of the specified path.
+        :param Optional[bool] inlcude_links: Whether to include the _links field on the shallow references
+        :param Optional[bool] include_push_data: Whether to include the push information
+        :param Optional[bool] include_user_image_url: Whether to include the image Url for committers and authors
+        :param Optional[bool] include_work_items: Whether to include linked work items
+        :param Optional[str] item_path: Path of item to search under
+        :param Optional[str] item_version: Version string identifier (name of tag/branch, SHA1 of commit)
+        :param Optional[GitVersionOptions] item_version_options: Version options - Specify additional modifiers to version (e.g Previous)
+        :param Optional[GitVersionType] item_version_type: Version type (branch, tag, or commit). Determines how Id is interpreted
+
+        :returns: The ADO response with the data in it
+        """
+        self.log.debug("Getting commits")
+
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}/commits?"
+
+        parameters: Dict[str, Any] = {"api-version": "7.2-preview.2"}
+
+        if skip is not None:
+            parameters["$skip"] = skip
+
+        if top is not None:
+            parameters["$top"] = top
+
+        if from_date is not None:
+            parameters["fromDate"] = from_date
+
+        if to_date is not None:
+            parameters["toDate"] = to_date
+
+        if from_commit_id is not None:
+            parameters["fromCommitId"] = from_commit_id
+
+        if to_commit_id is not None:
+            parameters["toCommitId"] = to_commit_id
+
+        if author is not None:
+            parameters["author"] = author
+
+        if user is not None:
+            parameters["user"] = user
+
+        if exclude_deletes is not None:
+            parameters["excludeDeletes"] = exclude_deletes
+
+        if inlcude_links is not None:
+            parameters["includeLinks"] = inlcude_links
+
+        if include_push_data is not None:
+            parameters["includePushData"] = include_push_data
+
+        if include_user_image_url is not None:
+            parameters["includeUserImageUrl"] = include_user_image_url
+
+        if include_work_items is not None:
+            parameters["includeWorkItems"] = include_work_items
+
+        if item_path is not None:
+            parameters["itemPath"] = item_path
+
+        if item_version is not None:
+            parameters["itemVersion.version"] = item_version
+
+        if item_version_options is not None:
+            parameters["itemVersion.versionOptions"] = item_version_options.value
+
+        if item_version_type is not None:
+            parameters["itemVersion.versionType"] = item_version_type.value
+
+        request_url += urllib.parse.urlencode(parameters)
+
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
+
+    # pylint: enable=too-many-locals, line-too-long
 
     class BlobFormat(enum.Enum):
         """The type of format to get a blob in."""
