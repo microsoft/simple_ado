@@ -6,7 +6,7 @@
 """ADO API wrapper."""
 
 import logging
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 import urllib.parse
 
 import requests
@@ -22,7 +22,7 @@ from simple_ado.governance import ADOGovernanceClient
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 from simple_ado.pipelines import ADOPipelineClient
 from simple_ado.pools import ADOPoolsClient
-from simple_ado.pull_requests import ADOPullRequestClient
+from simple_ado.pull_requests import ADOPullRequestClient, ADOPullRequestStatus
 from simple_ado.security import ADOSecurityClient
 from simple_ado.user import ADOUserClient
 from simple_ado.wiki import ADOWikiClient
@@ -184,12 +184,15 @@ class ADOClient:
         branch_name: Optional[str] = None,
         project_id: str,
         repository_id: str,
-    ) -> ADOResponse:
+        top: int | None = None,
+        pr_status: ADOPullRequestStatus | None = None,
+    ) -> Iterator[Any]:
         """Get the pull requests for a branch from ADO.
 
         :param Optional[str] branch_name: The name of the branch to fetch the pull requests for.
         :param project_id: The ID of the project
         :param str repository_id: The ID for the repository
+        :param top: How many PRs to retrieve
 
         :returns: The ADO Response with the pull request data
         """
@@ -197,16 +200,24 @@ class ADOClient:
         self.log.debug("Fetching PRs")
 
         offset = 0
-        all_prs: List[Any] = []
 
         while True:
-
             request_url = (
                 self.http_client.api_endpoint(project_id=project_id)
                 + f"/git/repositories/{repository_id}/pullRequests?"
             )
 
-            request_url += f"$top=100&$skip={offset}"
+            parameters = {"$skip": offset}
+
+            if top:
+                parameters["$top"] = top
+
+            if pr_status:
+                parameters["searchCriteria.status"] = pr_status.value
+
+            encoded_parameters = urllib.parse.urlencode(parameters)
+
+            request_url += encoded_parameters
 
             if branch_name is not None:
                 request_url += f"&sourceRefName={_canonicalize_branch_name(branch_name)}"
@@ -221,11 +232,9 @@ class ADOClient:
             if len(extracted) == 0:
                 break
 
-            all_prs.extend(extracted)
+            yield from extracted
 
-            offset += 100
-
-        return all_prs
+            offset += len(extracted)
 
     def custom_get(
         self,

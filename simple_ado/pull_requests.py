@@ -5,6 +5,7 @@
 
 """ADO Pull Request API wrapper."""
 
+import enum
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -23,6 +24,16 @@ from simple_ado.git import ADOGitStatusState
 from simple_ado.http_client import ADOHTTPClient, ADOResponse, ADOThread
 
 from simple_ado.models import PatchOperation, AddOperation, DeleteOperation, PropertyValue
+
+
+class ADOPullRequestStatus(enum.Enum):
+    """Possible values of pull request states."""
+
+    ABANDONED: str = "abandoned"
+    ACTIVE: str = "active"
+    ALL: str = "all"
+    COMPLETED: str = "completed"
+    NOT_SET: str = "notSet"
 
 
 class ADOPullRequestClient(ADOBaseClient):

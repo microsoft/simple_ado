@@ -7,6 +7,9 @@ import os
 from typing import Any, Dict, List, Optional
 
 import toml
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class TestDetails:

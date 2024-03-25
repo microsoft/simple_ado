@@ -8,6 +8,7 @@
 # pylint: disable=line-too-long,too-many-public-methods
 
 from collections import defaultdict
+import datetime
 import os
 import sys
 import unittest
@@ -341,3 +342,18 @@ class LibraryTests(unittest.TestCase):
             )
 
             assert full_definition is not None
+
+    def test_list_prs(self):
+        """Test list PRs diff."""
+        count = 0
+        one_month_ago = datetime.datetime.now() - datetime.timedelta(days=28)
+        for pr in self.client.list_all_pull_requests(
+            project_id=self.test_config.project_id,
+            repository_id=self.test_config.repository_id,
+            pr_status=simple_ado.pull_requests.ADOPullRequestStatus.COMPLETED,
+        ):
+            closed_date = datetime.datetime.strptime(pr["closedDate"][:-2], "%Y-%m-%dT%H:%M:%S.%f")
+            if closed_date < one_month_ago:
+                break
+            count += 1
+        assert count > 0
