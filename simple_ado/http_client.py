@@ -196,19 +196,31 @@ class ADOHTTPClient:
         *,
         additional_headers: dict[str, str] | None = None,
         stream: bool = False,
+        allow_redirects: bool = True,
+        set_accept_json: bool = True,
     ) -> requests.Response:
         """Issue a GET request with the correct headers.
 
         :param request_url: The URL to issue the request to
         :param additional_headers: Any additional headers to add to the request
         :param stream: Set to True to stream the response back
+        :param allow_redirects: Set to False to disable redirects
+        :param set_accept_json: Set to False to disable setting the Accept header
 
         :returns: The raw response object from the API
         """
         self._wait()
 
-        headers = self.construct_headers(additional_headers=additional_headers)
-        response = self._session.get(request_url, headers=headers, stream=stream)
+        headers = self.construct_headers(
+            additional_headers=additional_headers, set_accept_json=False
+        )
+
+        response = self._session.get(
+            request_url,
+            headers=headers,
+            stream=stream,
+            allow_redirects=allow_redirects,
+        )
 
         self._track_rate_limit(response)
 
@@ -428,19 +440,28 @@ class ADOHTTPClient:
             value: ADOResponse = response_data["value"]
             return value
         except Exception as ex:
-            raise ADOException("The response was invalid (did not contain a value).") from ex
+            raise ADOException(
+                "The response was invalid (did not contain a value)."
+            ) from ex
 
     def construct_headers(
-        self, *, additional_headers: dict[str, str] | None = None
+        self,
+        *,
+        additional_headers: dict[str, str] | None = None,
+        set_accept_json: bool = True,
     ) -> dict[str, str]:
         """Contruct the headers used for a request, adding anything additional.
 
         :param additional_headers: A dictionary of the additional headers to add.
+        :param set_accept_json: Set to False to disable setting the Accept header
 
         :returns: A dictionary of the headers for a request
         """
 
-        headers = {"Accept": "application/json"}
+        headers = {}
+
+        if set_accept_json:
+            headers["Accept"] = "application/json"
 
         headers["Authorization"] = self.auth.get_authorization_header()
 
