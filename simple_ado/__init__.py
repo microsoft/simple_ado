@@ -6,7 +6,7 @@
 """ADO API wrapper."""
 
 import logging
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Iterator
 import urllib.parse
 
 import requests
@@ -32,11 +32,11 @@ from simple_ado.workitems import ADOWorkItemsClient
 class ADOClient:
     """Wrapper class around the ADO API.
 
-    :param str tenant: The ADO tenant to connect to
-    :param Tuple[str,str] credentials: The credentials to use for the API connection
-    :param Optional[str] user_agent: The user agent to set
-    :param Optional[Dict[str,str]] extra_headers: Any extra headers which should be sent with the API requests
-    :param Optional[logging.Logger] log: The logger to use for logging (a new one will be used if one is not supplied)
+    :param tenant: The ADO tenant to connect to
+    :param credentials: The credentials to use for the API connection
+    :param user_agent: The user agent to set
+    :param extra_headers: Any extra headers which should be sent with the API requests
+    :param log: The logger to use for logging (a new one will be used if one is not supplied)
     """
 
     # pylint: disable=too-many-instance-attributes
@@ -63,10 +63,10 @@ class ADOClient:
         self,
         *,
         tenant: str,
-        credentials: Tuple[str, str],
-        user_agent: Optional[str] = None,
-        extra_headers: Optional[Dict[str, str]] = None,
-        log: Optional[logging.Logger] = None,
+        credentials: tuple[str, str],
+        user_agent: str | None = None,
+        extra_headers: dict[str, str] | None = None,
+        log: logging.Logger | None = None,
     ) -> None:
         """Construct a new client object."""
 
@@ -123,19 +123,19 @@ class ADOClient:
         target_branch: str,
         project_id: str,
         repository_id: str,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-        reviewer_ids: Optional[List[str]] = None,
+        title: str | None = None,
+        description: str | None = None,
+        reviewer_ids: list[str] | None = None,
     ) -> ADOResponse:
         """Creates a pull request with the given information
 
-        :param str source_branch: The source branch of the pull request
-        :param str target_branch: The target branch of the pull request
+        :param source_branch: The source branch of the pull request
+        :param target_branch: The target branch of the pull request
         :param project_id: The ID of the project
-        :param str repository_id: The ID for the repository
-        :param Optional[str] title: The title of the pull request
-        :param Optional[str] description: The description of the pull request
-        :param Optional[List[str]] reviewer_ids: The reviewer IDs to be added to the pull request
+        :param repository_id: The ID for the repository
+        :param title: The title of the pull request
+        :param description: The description of the pull request
+        :param reviewer_ids: The reviewer IDs to be added to the pull request
 
         :returns: The ADO response with the data in it
 
@@ -146,7 +146,7 @@ class ADOClient:
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}"
         request_url += "/pullRequests?api-version=5.1"
 
-        body: Dict[str, Any] = {
+        body: dict[str, Any] = {
             "sourceRefName": _canonicalize_branch_name(source_branch),
             "targetRefName": _canonicalize_branch_name(target_branch),
         }
@@ -181,7 +181,7 @@ class ADOClient:
     def list_all_pull_requests(
         self,
         *,
-        branch_name: Optional[str] = None,
+        branch_name: str | None = None,
         project_id: str,
         repository_id: str,
         top: int | None = None,
@@ -189,10 +189,11 @@ class ADOClient:
     ) -> Iterator[Any]:
         """Get the pull requests for a branch from ADO.
 
-        :param Optional[str] branch_name: The name of the branch to fetch the pull requests for.
+        :param branch_name: The name of the branch to fetch the pull requests for.
         :param project_id: The ID of the project
-        :param str repository_id: The ID for the repository
+        :param repository_id: The ID for the repository
         :param top: How many PRs to retrieve
+        :param pr_status: Set to filter by only PRs with that status
 
         :returns: The ADO Response with the pull request data
         """
@@ -207,7 +208,7 @@ class ADOClient:
                 + f"/git/repositories/{repository_id}/pullRequests?"
             )
 
-            parameters = {"$skip": offset}
+            parameters: dict[str, Any] = {"$skip": offset}
 
             if top:
                 parameters["$top"] = top
@@ -240,11 +241,11 @@ class ADOClient:
         self,
         *,
         url_fragment: str,
-        parameters: Dict[str, Any],
+        parameters: dict[str, Any],
         is_default_collection: bool = True,
         is_internal: bool = False,
-        subdomain: Optional[str] = None,
-        project_id: Optional[str] = None,
+        subdomain: str | None = None,
+        project_id: str | None = None,
     ) -> ADOResponse:
         """Perform a custom GET REST request.
 
@@ -257,12 +258,12 @@ class ADOClient:
         exposed in a generic manner. For these cases, the requests should be
         built manually.
 
-        :param str url_fragment: The part of the URL that comes after `_apis/`
-        :param Dict[str,Any] parameters: The URL parameters to append
-        :param bool is_default_collection: Whether this URL should start with the path "/DefaultCollection"
-        :param bool is_internal: Whether this URL should use internal API endpoint "/_api"
-        :param Optional[str] subdomain: A subdomain that should be used (if any)
-        :param Optional[str] project_id: The project ID (if required)
+        :param url_fragment: The part of the URL that comes after `_apis/`
+        :param parameters: The URL parameters to append
+        :param is_default_collection: Whether this URL should start with the path "/DefaultCollection"
+        :param is_internal: Whether this URL should use internal API endpoint "/_api"
+        :param subdomain: A subdomain that should be used (if any)
+        :param project_id: The project ID (if required)
 
         :returns: The raw response
         """

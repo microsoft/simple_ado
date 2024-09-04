@@ -7,7 +7,7 @@
 
 import enum
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import deserialize
 import requests
@@ -23,7 +23,12 @@ from simple_ado.exceptions import ADOException
 from simple_ado.git import ADOGitStatusState
 from simple_ado.http_client import ADOHTTPClient, ADOResponse, ADOThread
 
-from simple_ado.models import PatchOperation, AddOperation, DeleteOperation, PropertyValue
+from simple_ado.models import (
+    PatchOperation,
+    AddOperation,
+    DeleteOperation,
+    PropertyValue,
+)
 
 
 class ADOPullRequestStatus(enum.Enum):
@@ -108,10 +113,10 @@ class ADOPullRequestClient(ADOBaseClient):
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
 
-    def get_threads(self, *, include_deleted: bool = False) -> List[ADOThread]:
+    def get_threads(self, *, include_deleted: bool = False) -> list[ADOThread]:
         """Get the comments on the PR from ADO.
 
-        :param bool include_deleted: Set to True if deleted threads should be included.
+        :param include_deleted: Set to True if deleted threads should be included.
 
         :returns: A list of ADOThreads that were found
         """
@@ -124,7 +129,7 @@ class ADOPullRequestClient(ADOBaseClient):
         )
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
-        comments: List[ADOThread] = self.http_client.extract_value(response_data)
+        comments: list[ADOThread] = self.http_client.extract_value(response_data)
 
         if include_deleted:
             return comments
@@ -135,16 +140,16 @@ class ADOPullRequestClient(ADOBaseClient):
         self,
         comment_text: str,
         *,
-        comment_location: Optional[ADOCommentLocation] = None,
-        status: Optional[ADOCommentStatus] = None,
-        comment_identifier: Optional[str] = None,
+        comment_location: ADOCommentLocation | None = None,
+        status: ADOCommentStatus | None = None,
+        comment_identifier: str | None = None,
     ) -> ADOResponse:
         """Create a thread using a single root comment.
 
-        :param str comment_text: The text to set in the comment.
-        :param Optional[ADOCommentLocation] comment_location: The location to place the comment.
-        :param Optional[ADOCommentStatus] status: The status of the comment
-        :param Optional[str] comment_identifier: A unique identifier for the comment that can be used for identification
+        :param comment_text: The text to set in the comment.
+        :param comment_location: The location to place the comment.
+        :param status: The status of the comment
+        :param comment_identifier: A unique identifier for the comment that can be used for identification
                                                  at a later date
 
         :returns: The ADO response with the data in it
@@ -162,14 +167,14 @@ class ADOPullRequestClient(ADOBaseClient):
         self,
         comment: ADOComment,
         *,
-        status: Optional[ADOCommentStatus] = None,
-        comment_identifier: Optional[str] = None,
+        status: ADOCommentStatus | None = None,
+        comment_identifier: str | None = None,
     ) -> ADOResponse:
         """Create a thread using a single root comment.
 
-        :param ADOComment comment: The comment to add.
-        :param Optional[ADOCommentStatus] status: The status of the comment
-        :param Optional[str] comment_identifier: A unique identifier for the comment that can be used for identification
+        :param comment: The comment to add.
+        :param status: The status of the comment
+        :param comment_identifier: A unique identifier for the comment that can be used for identification
                                                  at a later date
 
         :returns: The ADO response with the data in it
@@ -186,17 +191,17 @@ class ADOPullRequestClient(ADOBaseClient):
     def create_thread(
         self,
         *,
-        comments: List[Dict[str, Any]],
-        thread_location: Optional[ADOCommentLocation] = None,
-        status: Optional[ADOCommentStatus] = None,
-        comment_identifier: Optional[str] = None,
+        comments: list[dict[str, Any]],
+        thread_location: ADOCommentLocation | None = None,
+        status: ADOCommentStatus | None = None,
+        comment_identifier: str | None = None,
     ) -> ADOResponse:
         """Create a thread on a PR.
 
-        :param List[Dict[str,Any]] comments: The comments to add to the thread.
-        :param Optional[ADOCommentLocation] thread_location: The location the thread should be added
-        :param Optional[ADOCommentStatus] status: The status of the comment
-        :param Optional[str] comment_identifier: A unique identifier for the comment that can be used for identification
+        :param comments: The comments to add to the thread.
+        :param thread_location: The location the thread should be added
+        :param status: The status of the comment
+        :param comment_identifier: A unique identifier for the comment that can be used for identification
                                                  at a later date
 
         :returns: The ADO response with the data in it
@@ -222,7 +227,7 @@ class ADOPullRequestClient(ADOBaseClient):
         body = {
             "comments": comments,
             "properties": properties,
-            "status": status.value if status is not None else ADOCommentStatus.ACTIVE.value,
+            "status": (status.value if status is not None else ADOCommentStatus.ACTIVE.value),
         }
 
         if thread_location is not None:
@@ -257,13 +262,13 @@ class ADOPullRequestClient(ADOBaseClient):
     def create_thread_list(
         self,
         *,
-        threads: List[ADOComment],
-        comment_identifier: Optional[str] = None,
+        threads: list[ADOComment],
+        comment_identifier: str | None = None,
     ) -> None:
         """Create a list of threads
 
-        :param List[ADOComment] threads: The threads to create
-        :param Optional[str] comment_identifier: A unique identifier for the comments that can be used for
+        :param threads: The threads to create
+        :param comment_identifier: A unique identifier for the comments that can be used for
                                                  identification at a later date
 
         :raises ADOException: If a thread is not an ADO comment
@@ -304,17 +309,17 @@ class ADOPullRequestClient(ADOBaseClient):
         description: str,
         context: str,
         *,
-        iteration: Optional[int] = None,
-        target_url: Optional[str] = None,
+        iteration: int | None = None,
+        target_url: str | None = None,
     ) -> ADOResponse:
         """Set a status on a PR.
 
-        :param ADOGitStatusState state: The state to set the status to.
-        :param str identifier: A unique identifier for the status (so it can be changed later)
-        :param str description: The text to show in the status
-        :param str context: The context for the build status
-        :param Optional[int] iteration: The iteration of the PR to set the status on
-        :param Optional[str] target_url: An optional URL to set which is opened when the description is clicked.
+        :param state: The state to set the status to.
+        :param identifier: A unique identifier for the status (so it can be changed later)
+        :param description: The text to show in the status
+        :param context: The context for the build status
+        :param iteration: The iteration of the PR to set the status on
+        :param target_url: An optional URL to set which is opened when the description is clicked.
 
         :returns: The ADO response with the data in it
         """
@@ -329,7 +334,7 @@ class ADOPullRequestClient(ADOBaseClient):
             + f"/pullRequests/{self.pull_request_id}/statuses?api-version=4.0-preview"
         )
 
-        body: Dict[str, Any] = {
+        body: dict[str, Any] = {
             "state": state.value,
             "description": description,
             "context": {"name": context, "genre": identifier},
@@ -386,10 +391,10 @@ class ADOPullRequestClient(ADOBaseClient):
 
         return False
 
-    def threads_with_identifier(self, identifier: str) -> List[ADOThread]:
+    def threads_with_identifier(self, identifier: str) -> list[ADOThread]:
         """Get the threads on a PR which begin with the prefix specified.
 
-        :param str identifier: The identifier to look for threads with
+        :param identifier: The identifier to look for threads with
 
         :returns: The list of threads matching the identifier
 
@@ -413,7 +418,7 @@ class ADOPullRequestClient(ADOBaseClient):
     def delete_threads_with_identifier(self, identifier: str) -> None:
         """Delete the threads on a PR which begin with the prefix specified.
 
-        :param str identifier: The identifier property value to look for threads matching
+        :param identifier: The identifier property value to look for threads matching
         """
 
         self.log.debug(
@@ -424,7 +429,7 @@ class ADOPullRequestClient(ADOBaseClient):
             self.log.debug(f"Deleting thread: {thread}")
             self.delete_thread(thread=thread)
 
-    def get_properties(self) -> Dict[str, PropertyValue]:
+    def get_properties(self) -> dict[str, PropertyValue]:
         """Get the properties on the PR from ADO.
 
         :returns: The properties that were found
@@ -440,11 +445,11 @@ class ADOPullRequestClient(ADOBaseClient):
         response_data = self.http_client.decode_response(response)
         raw_properties = self.http_client.extract_value(response_data)
 
-        properties = deserialize.deserialize(Dict[str, PropertyValue], raw_properties)
+        properties = deserialize.deserialize(dict[str, PropertyValue], raw_properties)
 
         return properties
 
-    def patch_properties(self, operations: List[PatchOperation]) -> Dict[str, PropertyValue]:
+    def patch_properties(self, operations: list[PatchOperation]) -> dict[str, PropertyValue]:
         """Patch the properties on the PR.
 
         Usually add_property(), delete_property() and update_property() are
@@ -467,11 +472,11 @@ class ADOPullRequestClient(ADOBaseClient):
         response_data = self.http_client.decode_response(response)
         raw_properties = self.http_client.extract_value(response_data)
 
-        properties = deserialize.deserialize(Dict[str, PropertyValue], raw_properties)
+        properties = deserialize.deserialize(dict[str, PropertyValue], raw_properties)
 
         return properties
 
-    def add_property(self, name: str, value: str) -> Dict[str, PropertyValue]:
+    def add_property(self, name: str, value: str) -> dict[str, PropertyValue]:
         """Add a property to the PR.
 
         :param name: The name of the property to add
@@ -483,7 +488,7 @@ class ADOPullRequestClient(ADOBaseClient):
         operation = AddOperation("/" + name, value)
         return self.patch_properties([operation])
 
-    def delete_property(self, name: str) -> Dict[str, PropertyValue]:
+    def delete_property(self, name: str) -> dict[str, PropertyValue]:
         """Delete a property from the PR.
 
         :param name: The name of the property to delete
