@@ -12,6 +12,7 @@ import urllib.parse
 
 
 from simple_ado.base_client import ADOBaseClient
+from simple_ado.exceptions import ADOHTTPException
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 from simple_ado.types import TeamFoundationId
 from simple_ado.utilities import download_from_response_stream
@@ -47,9 +48,7 @@ class ADOBuildClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = (
-            f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds?api-version=4.1"
-        )
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds?api-version=4.1"
         variable_json = json.dumps(variables)
 
         self.log.debug(f"Queueing build ({definition_id}): {variable_json}")
@@ -96,7 +95,9 @@ class ADOBuildClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = self.http_client.api_endpoint(project_id=project_id) + "/build/builds/?"
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id) + "/build/builds/?"
+        )
 
         parameters = {
             "api-version": "4.1",
@@ -170,8 +171,51 @@ class ADOBuildClient(ADOBaseClient):
 
         self.log.debug(f"Fetching artifact {artifact_name} from build {build_id}...")
 
-        with self.http_client.get(request_url, stream=True) as response:
-            download_from_response_stream(response=response, output_path=output_path, log=self.log)
+        # This now redirects to a totally different domain. Since the domain is changing, requests will not keep the
+        # authentication headers. We need to handle the redirect ourselves to avoid this.
+        response = self.http_client.get(
+            request_url, stream=True, allow_redirects=False, set_accept_json=False
+        )
+
+        try:
+
+            while True:
+                if not response.is_redirect:
+                    break
+
+                location = response.headers.get("location")
+
+                if not location:
+                    raise ADOHTTPException(
+                        f"ADO returned a redirect status code without a location header, configuration={self}",
+                        response,
+                    )
+
+                location_components = urllib.parse.urlsplit(location)
+
+                if not location_components.hostname.endswith(".visualstudio.com"):
+                    raise ADOHTTPException(
+                        "ADO returned a redirect status code with a location header that is not on visualstudio.com, "
+                        + f"configuration={self}",
+                        response,
+                    )
+
+                response = self.http_client.get(
+                    location, stream=True, allow_redirects=False, set_accept_json=False
+                )
+
+            download_from_response_stream(
+                response=response, output_path=output_path, log=self.log
+            )
+
+        except Exception as ex:
+            try:
+                if response:
+                    response.close()
+            except Exception:
+                pass
+            finally:
+                raise ex
 
     def get_leases(self, *, project_id: str, build_id: int) -> ADOResponse:
         """Get the retention leases for a build.
