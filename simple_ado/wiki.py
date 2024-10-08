@@ -27,7 +27,7 @@ class ADOWikiClient(ADOBaseClient):
 
         :param page_id: Wiki page ID
         :param wiki_id: Wiki ID or Wiki name
-        :param str project_id: The ID of the project
+        :param project_id: The ID of the project
 
         :returns: The ADO response with the data in it
 
@@ -47,7 +47,12 @@ class ADOWikiClient(ADOBaseClient):
         return etag
 
     def update_page(
-        self, page_id: str, wiki_id: str, project_id: str, content: str, current_version_etag: str
+        self,
+        page_id: str,
+        wiki_id: str,
+        project_id: str,
+        content: str,
+        current_version_etag: str,
     ) -> ADOResponse:
         """Update a the contents of a wiki page.
 
@@ -55,9 +60,9 @@ class ADOWikiClient(ADOBaseClient):
 
         :param page_id: Wiki page ID
         :param wiki_id: Wiki ID or Wiki name
-        :param str project_id: The ID of the project
-        :param str content: Content of the wiki page.
-        :param str current_version_etag: The ETag of the current wiki page to verify the update.
+        :param project_id: The ID of the project
+        :param content: Content of the wiki page.
+        :param current_version_etag: The ETag of the current wiki page to verify the update.
 
         :returns: The ADO response with the data in it
         """

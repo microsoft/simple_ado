@@ -6,7 +6,7 @@
 """ADO service endpoints API wrapper."""
 
 import logging
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Iterator
 import urllib.parse
 
 
@@ -24,7 +24,7 @@ class ADOEndpointsClient(ADOBaseClient):
     def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
         super().__init__(http_client, log.getChild("endpoints"))
 
-    def get_endpoints(self, project_id: str, *, endpoint_type: Optional[str] = None) -> ADOResponse:
+    def get_endpoints(self, project_id: str, *, endpoint_type: str | None = None) -> ADOResponse:
         """Gets the service endpoints.
 
         :param project_id: The identifier for the project
@@ -48,8 +48,8 @@ class ADOEndpointsClient(ADOBaseClient):
         return self.http_client.extract_value(response_data)
 
     def get_usage_history(
-        self, *, project_id: str, endpoint_id: str, top: Optional[int] = None
-    ) -> Iterator[Dict[str, Any]]:
+        self, *, project_id: str, endpoint_id: str, top: int | None = None
+    ) -> Iterator[dict[str, Any]]:
         """Gets the usage history for an endpoint.
 
         :param project_id: The identifier for the project
@@ -63,7 +63,7 @@ class ADOEndpointsClient(ADOBaseClient):
             + f"/serviceendpoint/{endpoint_id}/executionhistory?"
         )
 
-        parameters: Dict[str, Any] = {"api-version": "6.0-preview.1"}
+        parameters: dict[str, Any] = {"api-version": "6.0-preview.1"}
 
         if not top or top < 50:
             parameters["top"] = top

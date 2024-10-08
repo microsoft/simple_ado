@@ -8,11 +8,12 @@
 import enum
 import json
 import logging
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, Iterator
 import urllib.parse
 
 
 from simple_ado.base_client import ADOBaseClient
+from simple_ado.exceptions import ADOHTTPException
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 from simple_ado.types import TeamFoundationId
 from simple_ado.utilities import download_from_response_stream
@@ -45,12 +46,12 @@ class ADOBuildClient(ADOBaseClient):
         project_id: str,
         definition_id: int,
         source_branch: str,
-        variables: Dict[str, str],
-        requesting_identity: Optional[TeamFoundationId] = None,
+        variables: dict[str, str],
+        requesting_identity: TeamFoundationId | None = None,
     ) -> ADOResponse:
         """Queue a new build.
 
-        :param str project_id: The ID of the project
+        :param project_id: The ID of the project
         :param definition_id: The identity of the build definition to queue (can be a string)
         :param source_branch: The source branch for the build
         :param variables: A dictionary of variables to pass to the definition
@@ -59,9 +60,7 @@ class ADOBuildClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = (
-            f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds?api-version=4.1"
-        )
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds?api-version=4.1"
         variable_json = json.dumps(variables)
 
         self.log.debug(f"Queueing build ({definition_id}): {variable_json}")
@@ -81,8 +80,8 @@ class ADOBuildClient(ADOBaseClient):
     def build_info(self, *, project_id: str, build_id: int) -> ADOResponse:
         """Get the info for a build.
 
-        :param str project_id: The ID of the project
-        :param int build_id: The identifier of the build to get the info for
+        :param project_id: The ID of the project
+        :param build_id: The identifier of the build to get the info for
 
         :returns: The ADO response with the data in it
         """
@@ -98,19 +97,21 @@ class ADOBuildClient(ADOBaseClient):
         self,
         *,
         project_id: str,
-        definitions: Optional[List[int]] = None,
+        definitions: list[int] | None = None,
         order: BuildQueryOrder | None = None,
-    ) -> Iterator[Dict[str, Any]]:
+    ) -> Iterator[dict[str, Any]]:
         """Get the info for a build.
 
-        :param str project_id: The ID of the project
-        :param int definitions: An optional list of build definition IDs to filter on
+        :param project_id: The ID of the project
+        :param definitions: An optional list of build definition IDs to filter on
         :param order: The order of the builds to return
 
         :returns: The ADO response with the data in it
         """
 
-        request_url = self.http_client.api_endpoint(project_id=project_id) + "/build/builds/?"
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id) + "/build/builds/?"
+        )
 
         parameters = {
             "api-version": "4.1",
@@ -145,7 +146,7 @@ class ADOBuildClient(ADOBaseClient):
     ) -> ADOResponse:
         """Fetch an artifacts details from a build.
 
-        :param str project_id: The ID of the project
+        :param project_id: The ID of the project
         :param build_id: The ID of the build
         :param artifact_name: The name of the artifact to fetch
 
@@ -170,10 +171,10 @@ class ADOBuildClient(ADOBaseClient):
     ) -> None:
         """Download an artifact from a build.
 
-        :param str project_id: The ID of the project
+        :param project_id: The ID of the project
         :param build_id: The ID of the build
         :param artifact_name: The name of the artifact to fetch
-        :param str output_path: The path to write the output to.
+        :param output_path: The path to write the output to.
         """
 
         parameters = {
@@ -187,13 +188,56 @@ class ADOBuildClient(ADOBaseClient):
 
         self.log.debug(f"Fetching artifact {artifact_name} from build {build_id}...")
 
-        with self.http_client.get(request_url, stream=True) as response:
-            download_from_response_stream(response=response, output_path=output_path, log=self.log)
+        # This now redirects to a totally different domain. Since the domain is changing, requests will not keep the
+        # authentication headers. We need to handle the redirect ourselves to avoid this.
+        response = self.http_client.get(
+            request_url, stream=True, allow_redirects=False, set_accept_json=False
+        )
+
+        try:
+
+            while True:
+                if not response.is_redirect:
+                    break
+
+                location = response.headers.get("location")
+
+                if not location:
+                    raise ADOHTTPException(
+                        f"ADO returned a redirect status code without a location header, configuration={self}",
+                        response,
+                    )
+
+                location_components = urllib.parse.urlsplit(location)
+
+                if not location_components.hostname.endswith(".visualstudio.com"):
+                    raise ADOHTTPException(
+                        "ADO returned a redirect status code with a location header that is not on visualstudio.com, "
+                        + f"configuration={self}",
+                        response,
+                    )
+
+                response = self.http_client.get(
+                    location, stream=True, allow_redirects=False, set_accept_json=False
+                )
+
+            download_from_response_stream(
+                response=response, output_path=output_path, log=self.log
+            )
+
+        except Exception as ex:
+            try:
+                if response:
+                    response.close()
+            except Exception:
+                pass
+            finally:
+                raise ex
 
     def get_leases(self, *, project_id: str, build_id: int) -> ADOResponse:
         """Get the retention leases for a build.
 
-        :param str project_id: The ID of the project
+        :param project_id: The ID of the project
         :param build_id: The ID of the build
 
         :returns: The ADO response with the data in it
@@ -210,10 +254,10 @@ class ADOBuildClient(ADOBaseClient):
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
 
-    def delete_leases(self, *, project_id: str, lease_ids: Union[int, List[int]]) -> None:
+    def delete_leases(self, *, project_id: str, lease_ids: int | list[int]) -> None:
         """Delete leases.
 
-        :param str project_id: The ID of the project
+        :param project_id: The ID of the project
         :param lease_ids: The IDs of the leases to delete
         """
 

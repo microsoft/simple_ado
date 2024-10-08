@@ -9,17 +9,23 @@ import datetime
 import logging
 import os
 import time
-from typing import Any, cast, Dict, List, Optional, Tuple
+from typing import Any, cast
 
 import requests
-from tenacity import retry, retry_if_exception, stop_after_attempt, wait_random_exponential
+from tenacity import (
+    retry,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_random_exponential,
+)
 
+from simple_ado.auth.ado_auth import ADOAuth
 from simple_ado.exceptions import ADOException, ADOHTTPException
 from simple_ado.models import PatchOperation
 
 
 # pylint: disable=invalid-name
-ADOThread = Dict[str, Any]
+ADOThread = dict[str, Any]
 ADOResponse = Any
 # pylint: enable=invalid-name
 
@@ -49,35 +55,35 @@ def _is_connection_failure(exception: Exception) -> bool:
 class ADOHTTPClient:
     """Base class that actually makes API calls to Azure DevOps.
 
-    :param str tenant: The name of the ADO tenant to connect to
-    :param Dict[str,str] extra_headers: Any extra headers which should be added to each request
-    :param str user_agent: The user agent to set
-    :param Tuple[str,str] credentials: The credentials which should be used for authentication
-    :param logging.Logger log: The logger to use for logging
+    :param tenant: The name of the ADO tenant to connect to
+    :param extra_headers: Any extra headers which should be added to each request
+    :param user_agent: The user agent to set
+    :param auth: The authentication details
+    :param log: The logger to use for logging
     """
 
     log: logging.Logger
     tenant: str
-    extra_headers: Dict[str, str]
-    credentials: Tuple[str, str]
-    _not_before: Optional[datetime.datetime]
+    extra_headers: dict[str, str]
+    auth: ADOAuth
+    _not_before: datetime.datetime | None
     _session: requests.Session
 
     def __init__(
         self,
         *,
         tenant: str,
-        credentials: Tuple[str, str],
+        auth: ADOAuth,
         user_agent: str,
         log: logging.Logger,
-        extra_headers: Optional[Dict[str, str]] = None,
+        extra_headers: dict[str, str] | None = None,
     ) -> None:
         """Construct a new client object."""
 
         self.log = log.getChild("http")
 
         self.tenant = tenant
-        self.credentials = credentials
+        self.auth = auth
         self._not_before = None
 
         self._session = requests.Session()
@@ -107,15 +113,15 @@ class ADOHTTPClient:
         *,
         is_default_collection: bool = True,
         is_internal: bool = False,
-        subdomain: Optional[str] = None,
-        project_id: Optional[str] = None,
+        subdomain: str | None = None,
+        project_id: str | None = None,
     ) -> str:
         """Generate the base url for all API calls (this varies depending on the API).
 
-        :param bool is_default_collection: Whether this URL should start with the path "/DefaultCollection"
-        :param bool is_internal: Whether this URL should use internal API endpoint "/_api"
-        :param Optional[str] subdomain: A subdomain that should be used (if any)
-        :param Optional[str] project_id: The project ID. This will be added if supplied
+        :param is_default_collection: Whether this URL should start with the path "/DefaultCollection"
+        :param is_internal: Whether this URL should use internal API endpoint "/_api"
+        :param subdomain: A subdomain that should be used (if any)
+        :param project_id: The project ID. This will be added if supplied
 
         :returns: The constructed base URL
         """
@@ -179,7 +185,7 @@ class ADOHTTPClient:
     @retry(
         retry=(
             retry_if_exception(_is_connection_failure)  # type: ignore
-            | retry_if_exception(_is_retryable_get_failure) # type: ignore
+            | retry_if_exception(_is_retryable_get_failure)  # type: ignore
         ),
         wait=wait_random_exponential(max=10),
         stop=stop_after_attempt(5),
@@ -188,22 +194,32 @@ class ADOHTTPClient:
         self,
         request_url: str,
         *,
-        additional_headers: Optional[Dict[str, str]] = None,
+        additional_headers: dict[str, str] | None = None,
         stream: bool = False,
+        allow_redirects: bool = True,
+        set_accept_json: bool = True,
     ) -> requests.Response:
-        """Issue a GET request with the correct credentials and headers.
+        """Issue a GET request with the correct headers.
 
-        :param str request_url: The URL to issue the request to
-        :param Optional[Dict[str,str]] additional_headers: Any additional headers to add to the request
-        :param bool stream: Set to True to stream the response back
+        :param request_url: The URL to issue the request to
+        :param additional_headers: Any additional headers to add to the request
+        :param stream: Set to True to stream the response back
+        :param allow_redirects: Set to False to disable redirects
+        :param set_accept_json: Set to False to disable setting the Accept header
 
         :returns: The raw response object from the API
         """
         self._wait()
 
-        headers = self.construct_headers(additional_headers=additional_headers)
+        headers = self.construct_headers(
+            additional_headers=additional_headers, set_accept_json=False
+        )
+
         response = self._session.get(
-            request_url, auth=self.credentials, headers=headers, stream=stream
+            request_url,
+            headers=headers,
+            stream=stream,
+            allow_redirects=allow_redirects,
         )
 
         self._track_rate_limit(response)
@@ -214,7 +230,7 @@ class ADOHTTPClient:
         return response
 
     @retry(
-        retry=retry_if_exception(_is_connection_failure),   # type: ignore
+        retry=retry_if_exception(_is_connection_failure),  # type: ignore
         wait=wait_random_exponential(max=10),
         stop=stop_after_attempt(5),
     )
@@ -222,21 +238,21 @@ class ADOHTTPClient:
         self,
         request_url: str,
         *,
-        operations: Optional[List[PatchOperation]] = None,
-        additional_headers: Optional[Dict[str, str]] = None,
-        json_data: Optional[Any] = None,
+        operations: list[PatchOperation] | None = None,
+        additional_headers: dict[str, str] | None = None,
+        json_data: Any | None = None,
         stream: bool = False,
     ) -> requests.Response:
-        """Issue a POST request with the correct credentials and headers.
+        """Issue a POST request with the correct  headers.
 
         Note: If `json_data` and `operations` are not None, the latter will take
         precedence.
 
-        :param str request_url: The URL to issue the request to
-        :param Optional[List[PatchOperation]] operations: The patch operations to send with the request
-        :param Optional[Dict[str,str]] additional_headers: Any additional headers to add to the request
-        :param Optional[Any] json_data: The JSON data to send with the request
-        :param bool stream: Set to True to stream the response back
+        :param request_url: The URL to issue the request to
+        :param operations: The patch operations to send with the request
+        :param additional_headers: Any additional headers to add to the request
+        :param json_data: The JSON data to send with the request
+        :param stream: Set to True to stream the response back
 
         :returns: The raw response object from the API
         """
@@ -250,11 +266,14 @@ class ADOHTTPClient:
 
         headers = self.construct_headers(additional_headers=additional_headers)
         return self._session.post(
-            request_url, auth=self.credentials, headers=headers, json=json_data, stream=stream
+            request_url,
+            headers=headers,
+            json=json_data,
+            stream=stream,
         )
 
     @retry(
-        retry=retry_if_exception(_is_connection_failure),   # type: ignore
+        retry=retry_if_exception(_is_connection_failure),  # type: ignore
         wait=wait_random_exponential(max=10),
         stop=stop_after_attempt(5),
     )
@@ -262,19 +281,19 @@ class ADOHTTPClient:
         self,
         request_url: str,
         *,
-        operations: Optional[List[PatchOperation]] = None,
-        json_data: Optional[Any] = None,
-        additional_headers: Optional[Dict[str, Any]] = None,
+        operations: list[PatchOperation] | None = None,
+        json_data: Any | None = None,
+        additional_headers: dict[str, Any] | None = None,
     ) -> requests.Response:
-        """Issue a PATCH request with the correct credentials and headers.
+        """Issue a PATCH request with the correct headers.
 
         Note: If `json_data` and `operations` are not None, the latter will take
         precedence.
 
-        :param str request_url: The URL to issue the request to
-        :param Optional[Dict[str,str]] additional_headers: Any additional headers to add to the request
-        :param Optional[Any] json_data: The JSON data to send with the request
-        :param Optional[List[PatchOperation]] operations: The patch operations to send with the request
+        :param request_url: The URL to issue the request to
+        :param additional_headers: Any additional headers to add to the request
+        :param json_data: The JSON data to send with the request
+        :param operations: The patch operations to send with the request
 
         :returns: The raw response object from the API
         """
@@ -287,55 +306,51 @@ class ADOHTTPClient:
                 additional_headers["Content-Type"] = "application/json-patch+json"
 
         headers = self.construct_headers(additional_headers=additional_headers)
-        return self._session.patch(
-            request_url, auth=self.credentials, headers=headers, json=json_data
-        )
+        return self._session.patch(request_url, headers=headers, json=json_data)
 
     @retry(
-        retry=retry_if_exception(_is_connection_failure),   # type: ignore
+        retry=retry_if_exception(_is_connection_failure),  # type: ignore
         wait=wait_random_exponential(max=10),
         stop=stop_after_attempt(5),
     )
     def put(
         self,
         request_url: str,
-        json_data: Optional[Any] = None,
+        json_data: Any | None = None,
         *,
-        additional_headers: Optional[Dict[str, Any]] = None,
+        additional_headers: dict[str, Any] | None = None,
     ) -> requests.Response:
-        """Issue a PUT request with the correct credentials and headers.
+        """Issue a PUT request with the correct headers.
 
-        :param str request_url: The URL to issue the request to
-        :param Optional[Dict[str,str]] additional_headers: Any additional headers to add to the request
-        :param Optional[Dict[str,Any]] json_data: The JSON data to send with the request
+        :param request_url: The URL to issue the request to
+        :param additional_headers: Any additional headers to add to the request
+        :param json_data: The JSON data to send with the request
 
         :returns: The raw response object from the API
         """
         headers = self.construct_headers(additional_headers=additional_headers)
-        return self._session.put(
-            request_url, auth=self.credentials, headers=headers, json=json_data
-        )
+        return self._session.put(request_url, headers=headers, json=json_data)
 
     @retry(
-        retry=retry_if_exception(_is_connection_failure),   # type: ignore
+        retry=retry_if_exception(_is_connection_failure),  # type: ignore
         wait=wait_random_exponential(max=10),
         stop=stop_after_attempt(5),
     )
     def delete(
-        self, request_url: str, *, additional_headers: Optional[Dict[str, Any]] = None
+        self, request_url: str, *, additional_headers: dict[str, Any] | None = None
     ) -> requests.Response:
-        """Issue a DELETE request with the correct credentials and headers.
+        """Issue a DELETE request with the correct headers.
 
-        :param str request_url: The URL to issue the request to
-        :param Optional[Dict[str,str]] additional_headers: Any additional headers to add to the request
+        :param request_url: The URL to issue the request to
+        :param additional_headers: Any additional headers to add to the request
 
         :returns: The raw response object from the API
         """
         headers = self.construct_headers(additional_headers=additional_headers)
-        return self._session.delete(request_url, auth=self.credentials, headers=headers)
+        return self._session.delete(request_url, headers=headers)
 
     @retry(
-        retry=retry_if_exception(_is_connection_failure),   # type: ignore
+        retry=retry_if_exception(_is_connection_failure),  # type: ignore
         wait=wait_random_exponential(max=10),
         stop=stop_after_attempt(5),
     )
@@ -344,13 +359,13 @@ class ADOHTTPClient:
         request_url: str,
         file_path: str,
         *,
-        additional_headers: Optional[Dict[str, Any]] = None,
+        additional_headers: dict[str, Any] | None = None,
     ) -> requests.Response:
         """POST a file to the URL with the given file name.
 
-        :param str request_url: The URL to issue the request to
-        :param str file_path: The path to the file to be posted
-        :param Optional[Dict[str,str]] additional_headers: Any additional headers to add to the request
+        :param request_url: The URL to issue the request to
+        :param file_path: The path to the file to be posted
+        :param additional_headers: Any additional headers to add to the request
 
         :returns: The raw response object from the API"""
 
@@ -360,7 +375,7 @@ class ADOHTTPClient:
         headers["Content-Length"] = str(file_size)
         headers["Content-Type"] = "application/json"
 
-        request = requests.Request("POST", request_url, headers=headers, auth=self.credentials)
+        request = requests.Request("POST", request_url, headers=headers)
         prepped = request.prepare()
 
         # Send the raw content, not with "Content-Disposition", etc.
@@ -425,19 +440,30 @@ class ADOHTTPClient:
             value: ADOResponse = response_data["value"]
             return value
         except Exception as ex:
-            raise ADOException("The response was invalid (did not contain a value).") from ex
+            raise ADOException(
+                "The response was invalid (did not contain a value)."
+            ) from ex
 
     def construct_headers(
-        self, *, additional_headers: Optional[Dict[str, str]] = None
-    ) -> Dict[str, str]:
+        self,
+        *,
+        additional_headers: dict[str, str] | None = None,
+        set_accept_json: bool = True,
+    ) -> dict[str, str]:
         """Contruct the headers used for a request, adding anything additional.
 
-        :param Optional[Dict[str,str]] additional_headers: A dictionary of the additional headers to add.
+        :param additional_headers: A dictionary of the additional headers to add.
+        :param set_accept_json: Set to False to disable setting the Accept header
 
         :returns: A dictionary of the headers for a request
         """
 
-        headers = {"Accept": "application/json"}
+        headers = {}
+
+        if set_accept_json:
+            headers["Accept"] = "application/json"
+
+        headers["Authorization"] = self.auth.get_authorization_header()
 
         for header_name, header_value in self.extra_headers.items():
             headers[header_name] = header_value

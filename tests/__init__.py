@@ -4,9 +4,12 @@
 """Base test cases."""
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import toml
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class TestDetails:

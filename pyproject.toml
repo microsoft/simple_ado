@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "simple_ado"
-version = "3.16.1"
+version = "4.0.0"
 description = "A simple wrapper around the Azure DevOps REST API"
 
 license = "MIT"
@@ -22,16 +22,16 @@ classifiers = [
     'Environment :: MacOS X',
     'Intended Audience :: Developers',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
     'Topic :: Software Development',
     'Topic :: Utilities'
 ]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.9"
 deserialize = "^2.0.1"
 requests = "^2.31.0"
 tenacity = "^8.2.2"
@@ -42,6 +42,7 @@ mypy = "^1.4.1"
 pylint = "^2.17.5"
 pytest = "^7.4.0"
 pytest-cov = "^4.1.0"
+python-dotenv = "^1.0.1"
 PyYAML = "^6.0.1"
 toml = "^0.10.2"
 types-PyYAML = "^6.0.12.11"

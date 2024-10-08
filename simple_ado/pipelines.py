@@ -6,7 +6,7 @@
 """ADO pipeline API wrapper."""
 
 import logging
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Iterator
 import urllib.parse
 
 
@@ -27,10 +27,10 @@ class ADOPipelineClient(ADOBaseClient):
     def get_pipelines(
         self,
         *,
-        top: Optional[int] = None,
-        order_by: Optional[str] = None,
+        top: int | None = None,
+        order_by: str | None = None,
         project_id: str,
-    ) -> Iterator[Dict[str, Any]]:
+    ) -> Iterator[dict[str, Any]]:
         """Get all the pipelines in the project.
 
         Note: This hasn't been tested with continuation tokens.
@@ -42,7 +42,7 @@ class ADOPipelineClient(ADOBaseClient):
         :returns: The pipelines in the project
         """
 
-        parameters: Dict[str, Any] = {"api-version": "7.1-preview.1"}
+        parameters: dict[str, Any] = {"api-version": "7.1-preview.1"}
 
         if top:
             parameters["$top"] = top
@@ -67,7 +67,11 @@ class ADOPipelineClient(ADOBaseClient):
             url = request_url + f"&continuationToken={continuation_token}"
 
     def get_pipeline(
-        self, *, project_id: str, pipeline_id: int, pipeline_version: Optional[int] = None
+        self,
+        *,
+        project_id: str,
+        pipeline_id: int,
+        pipeline_version: int | None = None,
     ) -> ADOResponse:
         """Get the info for a pipeline.
 
@@ -90,8 +94,12 @@ class ADOPipelineClient(ADOBaseClient):
         return self.http_client.decode_response(response)
 
     def preview(
-        self, *, project_id: str, pipeline_id: int, pipeline_version: Optional[int] = None
-    ) -> Optional[str]:
+        self,
+        *,
+        project_id: str,
+        pipeline_id: int,
+        pipeline_version: int | None = None,
+    ) -> str | None:
         """Queue a dry run of the pipeline to return the final yaml.
 
         :param project_id: The ID of the project
