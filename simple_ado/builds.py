@@ -5,6 +5,7 @@
 
 """ADO build API wrapper."""
 
+import enum
 import json
 import logging
 from typing import Any, Iterator
@@ -16,6 +17,17 @@ from simple_ado.exceptions import ADOHTTPException
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 from simple_ado.types import TeamFoundationId
 from simple_ado.utilities import download_from_response_stream
+
+
+class BuildQueryOrder(enum.Enum):
+    """The order for the build queries to be returned in."""
+
+    FINISH_TIME_ASCENDING = "finishTimeAscending"
+    FINISH_TIME_DESCENDING = "finishTimeDescending"
+    QUEUE_TIME_ASCENDING = "queueTimeAscending"
+    QUEUE_TIME_DESCENDING = "queueTimeDescending"
+    START_TIME_ASCENDING = "startTimeAscending"
+    START_TIME_DESCENDING = "startTimeDescending"
 
 
 class ADOBuildClient(ADOBaseClient):
@@ -86,11 +98,13 @@ class ADOBuildClient(ADOBaseClient):
         *,
         project_id: str,
         definitions: list[int] | None = None,
+        order: BuildQueryOrder | None = None,
     ) -> Iterator[dict[str, Any]]:
         """Get the info for a build.
 
         :param project_id: The ID of the project
         :param definitions: An optional list of build definition IDs to filter on
+        :param order: The order of the builds to return
 
         :returns: The ADO response with the data in it
         """
@@ -105,6 +119,9 @@ class ADOBuildClient(ADOBaseClient):
 
         if definitions:
             parameters["definitions"] = ",".join(map(str, definitions))
+
+        if order:
+            parameters["queryOrder"] = order.value
 
         request_url += urllib.parse.urlencode(parameters)
 
