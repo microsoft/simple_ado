@@ -8,7 +8,7 @@
 import enum
 import json
 import logging
-from typing import ClassVar, Dict, List, Optional
+from typing import ClassVar
 import urllib.parse
 
 
@@ -21,22 +21,22 @@ from simple_ado.types import TeamFoundationId
 class ADOBranchPermission(enum.IntEnum):
     """Possible types of git branch permissions."""
 
-    ADMINISTER: int = 2 ** 0
-    READ: int = 2 ** 1
-    CONTRIBUTE: int = 2 ** 2
-    FORCE_PUSH: int = 2 ** 3
-    CREATE_BRANCH: int = 2 ** 4
-    CREATE_TAG: int = 2 ** 5
-    MANAGE_NOTES: int = 2 ** 6
-    BYPASS_PUSH_POLICIES: int = 2 ** 7
-    CREATE_REPOSITORY: int = 2 ** 8
-    DELETE_REPOSITORY: int = 2 ** 9
-    RENAME_REPOSITORY: int = 2 ** 10
-    EDIT_POLICIES: int = 2 ** 11
-    REMOVE_OTHERS_LOCKS: int = 2 ** 12
-    MANAGE_PERMISSIONS: int = 2 ** 13
-    CONTRIBUTE_TO_PULL_REQUESTS: int = 2 ** 14
-    BYPASS_PULL_REQUEST_POLICIES: int = 2 ** 15
+    ADMINISTER: int = 2**0
+    READ: int = 2**1
+    CONTRIBUTE: int = 2**2
+    FORCE_PUSH: int = 2**3
+    CREATE_BRANCH: int = 2**4
+    CREATE_TAG: int = 2**5
+    MANAGE_NOTES: int = 2**6
+    BYPASS_PUSH_POLICIES: int = 2**7
+    CREATE_REPOSITORY: int = 2**8
+    DELETE_REPOSITORY: int = 2**9
+    RENAME_REPOSITORY: int = 2**10
+    EDIT_POLICIES: int = 2**11
+    REMOVE_OTHERS_LOCKS: int = 2**12
+    MANAGE_PERMISSIONS: int = 2**13
+    CONTRIBUTE_TO_PULL_REQUESTS: int = 2**14
+    BYPASS_PULL_REQUEST_POLICIES: int = 2**15
 
 
 class ADOBranchPermissionLevel(enum.IntEnum):
@@ -114,10 +114,10 @@ class ADOSecurityClient(ADOBaseClient):
         branch: str,
         is_blocking: bool = True,
         is_enabled: bool = True,
-        required_status_author_id: Optional[str] = None,
-        default_display_name: Optional[str] = None,
+        required_status_author_id: str | None = None,
+        default_display_name: str | None = None,
         invalidate_on_source_update: bool = True,
-        filename_filter: Optional[List[str]] = None,
+        filename_filter: list[str] | None = None,
         applicability: ADOPolicyApplicability = ADOPolicyApplicability.APPLY_BY_DEFAULT,
         status_name: str,
         status_genre: str,
@@ -126,20 +126,20 @@ class ADOSecurityClient(ADOBaseClient):
     ) -> ADOResponse:
         """Adds a new status check policy for a given branch.
 
-        :param str branch: The git branch to set the policy for
-        :param bool is_blocking: Whether the status blocks PR completion or not.
-        :param bool is_enabled: Whether the status is enabled or not.
-        :param Optional[str] required_status_author_id: The ID of a required author (None if anyone)
-        :param Optional[str] default_display_name: The default display name for the policy
-        :param bool invalidate_on_source_update: Set to True to invalid the status when an update to
+        :param branch: The git branch to set the policy for
+        :param is_blocking: Whether the status blocks PR completion or not.
+        :param is_enabled: Whether the status is enabled or not.
+        :param required_status_author_id: The ID of a required author (None if anyone)
+        :param default_display_name: The default display name for the policy
+        :param invalidate_on_source_update: Set to True to invalid the status when an update to
                                                  the PR happens, False otherwise
-        :param Optional[List[str]] filename_filter: A list of file name filters this policy should
+        :param filename_filter: A list of file name filters this policy should
                                                     only apply to
-        :param ADOPolicyApplicability applicability: Set to apply always or just if the status is posted
-        :param str status_name: The name of the status
-        :param str status_genre: The genre of the status
-        :param str project_id: The identifier for the project
-        :param str repository_id: The ID for the repository
+        :param applicability: Set to apply always or just if the status is posted
+        :param status_name: The name of the status
+        :param status_genre: The genre of the status
+        :param project_id: The identifier for the project
+        :param repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
@@ -187,18 +187,18 @@ class ADOSecurityClient(ADOBaseClient):
         *,
         branch: str,
         build_definition_id: int,
-        build_expiration: Optional[int] = None,
+        build_expiration: int | None = None,
         project_id: str,
         repository_id: str,
     ) -> ADOResponse:
         """Adds a new build policy for a given branch.
 
-        :param str branch: The git branch to set the build policy for
-        :param int build_definition_id: The build definition to use when creating the build policy
-        :param int build_expiration: How long in minutes before the build expires. Set to None for
+        :param branch: The git branch to set the build policy for
+        :param build_definition_id: The build definition to use when creating the build policy
+        :param build_expiration: How long in minutes before the build expires. Set to None for
                                      immediately on changes to source branch.
-        :param str project_id: The identifier for the project
-        :param str repository_id: The ID for the repository
+        :param project_id: The identifier for the project
+        :param repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
@@ -219,7 +219,7 @@ class ADOSecurityClient(ADOBaseClient):
                 "displayName": None,
                 "queueOnSourceUpdateOnly": build_expiration is not None,
                 "manualQueueOnly": False,
-                "validDuration": build_expiration if build_expiration is not None else 0,
+                "validDuration": (build_expiration if build_expiration is not None else 0),
                 "scope": [
                     {
                         "refName": f"refs/heads/{branch}",
@@ -237,17 +237,17 @@ class ADOSecurityClient(ADOBaseClient):
         self,
         *,
         branch: str,
-        identities: List[str],
+        identities: list[str],
         project_id: str,
         repository_id: str,
     ) -> ADOResponse:
         """Adds required reviewers when opening PRs against a given branch.
 
-        :param str branch: The git branch to set required reviewers for
-        :param List[str] identities: A list of identities to become required
+        :param branch: The git branch to set required reviewers for
+        :param identities: A list of identities to become required
                                      reviewers (should be team foundation IDs)
-        :param str project_id: The identifier for the project
-        :param str repository_id: The ID for the repository
+        :param project_id: The identifier for the project
+        :param repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
@@ -294,12 +294,12 @@ class ADOSecurityClient(ADOBaseClient):
     ) -> ADOResponse:
         """Set minimum number of reviewers for a branch.
 
-        :param str branch: The git branch to set minimum number of reviewers on
-        :param int minimum_approver_count: The minimum number of approvals required
-        :param bool creator_vote_counts: Allow users to approve their own changes
-        :param bool reset_on_source_push: Reset reviewer votes when there are new changes
-        :param str project_id: The identifier for the project
-        :param str repository_id: The ID for the repository
+        :param branch: The git branch to set minimum number of reviewers on
+        :param minimum_approver_count: The minimum number of approvals required
+        :param creator_vote_counts: Allow users to approve their own changes
+        :param reset_on_source_push: Reset reviewer votes when there are new changes
+        :param project_id: The identifier for the project
+        :param repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
@@ -342,10 +342,10 @@ class ADOSecurityClient(ADOBaseClient):
     ) -> ADOResponse:
         """Set the work item policy for a branch.
 
-        :param str branch: The git branch to set the work item policy on
-        :param bool required: Whether or not linked work items should be mandatory
-        :param str project_id: The identifier for the project
-        :param str repository_id: The ID for the repository
+        :param branch: The git branch to set the work item policy on
+        :param required: Whether or not linked work items should be mandatory
+        :param project_id: The identifier for the project
+        :param repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
@@ -380,17 +380,17 @@ class ADOSecurityClient(ADOBaseClient):
         *,
         branch: str,
         identity: TeamFoundationId,
-        permissions: Dict[ADOBranchPermission, ADOBranchPermissionLevel],
+        permissions: dict[ADOBranchPermission, ADOBranchPermissionLevel],
         project_id: str,
         repository_id: str,
     ) -> ADOResponse:
         """Set permissions for an identity on a branch.
 
-        :param str branch: The git branch to set permissions on
-        :param TeamFoundationId identity: The identity to set permissions for (should be team foundation ID)
-        :param Dict[ADOBranchPermission,ADOBranchPermissionLevel] permissions: A dictionary of permissions to set
-        :param str project_id: The identifier for the project
-        :param str repository_id: The ID for the repository
+        :param branch: The git branch to set permissions on
+        :param identity: The identity to set permissions for (should be team foundation ID)
+        :param permissions: A dictionary of permissions to set
+        :param project_id: The identifier for the project
+        :param repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
@@ -413,7 +413,9 @@ class ADOSecurityClient(ADOBaseClient):
                     "PermissionBit": permission,
                     "NamespaceId": ADOSecurityClient.GIT_PERMISSIONS_NAMESPACE,
                     "Token": self.generate_updates_token(
-                        branch_name=branch, project_id=project_id, repository_id=repository_id
+                        branch_name=branch,
+                        project_id=project_id,
+                        repository_id=repository_id,
                     ),
                 }
             )
@@ -444,13 +446,13 @@ class ADOSecurityClient(ADOBaseClient):
         team_foundation_id: TeamFoundationId,
         project_id: str,
         repository_id: str,
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """Fetch the descriptor identity information for a given identity.
 
-        :param str branch: The git branch of interest
-        :param TeamFoundationId team_foundation_id: the unique Team Foundation GUID for the identity
+        :param branch: The git branch of interest
+        :param team_foundation_id: the unique Team Foundation GUID for the identity
         :param project_id: The identifier for the project
-        :param str repository_id: The ID for the repository
+        :param repository_id: The ID for the repository
 
         :returns: The raw descriptor info
 
@@ -495,9 +497,9 @@ class ADOSecurityClient(ADOBaseClient):
     ) -> str:
         """Generate the token required for reading identity details and writing permissions.
 
-        :param str branch: The git branch of interest
-        :param str project_id: The ID for the project
-        :param str repository_id: The ID for the repository
+        :param branch: The git branch of interest
+        :param project_id: The ID for the project
+        :param repository_id: The ID for the repository
 
         :returns: The permission token
         """
@@ -509,8 +511,8 @@ class ADOSecurityClient(ADOBaseClient):
         self,
         *,
         project_id: str,
-        repository_id: Optional[str] = None,
-        branch_name: Optional[str] = None,
+        repository_id: str | None = None,
+        branch_name: str | None = None,
     ) -> str:
         """Generate the token required for updating permissions.
 
@@ -544,9 +546,7 @@ class ADOSecurityClient(ADOBaseClient):
 
         return token + f"refs/heads/{encoded_branch}/"
 
-    def query_namespaces(
-        self, *, namespace_id: str, local_only: Optional[bool] = None
-    ) -> ADOResponse:
+    def query_namespaces(self, *, namespace_id: str, local_only: bool | None = None) -> ADOResponse:
         """Query a namespace
 
         :param namespace_id: The identifier for the namespace
@@ -570,8 +570,8 @@ class ADOSecurityClient(ADOBaseClient):
         self,
         *,
         namespace_id: str,
-        descriptors: Optional[List[str]] = None,
-        token: Optional[str] = None,
+        descriptors: list[str] | None = None,
+        token: str | None = None,
     ) -> ADOResponse:
         """Query a namespace
 
@@ -586,9 +586,11 @@ class ADOSecurityClient(ADOBaseClient):
             descriptors = []
 
         descriptors = [
-            "Microsoft.TeamFoundation.Identity;" + descriptor
-            if not descriptor.startswith("Microsoft.TeamFoundation.Identity;")
-            else descriptor
+            (
+                "Microsoft.TeamFoundation.Identity;" + descriptor
+                if not descriptor.startswith("Microsoft.TeamFoundation.Identity;")
+                else descriptor
+            )
             for descriptor in descriptors
         ]
 
@@ -614,13 +616,13 @@ class ADOSecurityClient(ADOBaseClient):
         team_foundation_id: TeamFoundationId,
         project_id: str,
         repository_id: str,
-    ) -> Dict[str, str]:
+    ) -> dict[str, str]:
         """Get the permissions for a branch
 
-        :param str branch: The name of the branch to get the permissions for
-        :param TeamFoundationId team_foundation_id: the unique Team Foundation GUID for the identity
+        :param branch: The name of the branch to get the permissions for
+        :param team_foundation_id: the unique Team Foundation GUID for the identity
         :param project_id: The identifier for the project
-        :param str repository_id: The ID for the repository
+        :param repository_id: The ID for the repository
 
         :returns: The raw descriptor info
 

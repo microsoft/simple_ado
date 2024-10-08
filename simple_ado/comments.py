@@ -6,7 +6,7 @@
 """ADO comment utilities"""
 
 import enum
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 
 class ADOCommentStatus(enum.Enum):
@@ -30,7 +30,7 @@ class ADOCommentProperty:
     COMMENT_IDENTIFIER = "3533F9EC-9336-4290-85F7-6A6A51AD1861"
 
     @staticmethod
-    def create_value(type_name: str, value: Union[int, str]) -> Dict[str, Any]:
+    def create_value(type_name: str, value: int | str) -> dict[str, Any]:
         """Create a new property value.
 
         :param type_name: The type of property
@@ -41,7 +41,7 @@ class ADOCommentProperty:
         return {"type": type_name, "value": value}
 
     @staticmethod
-    def create_string(value: str) -> Dict[str, Any]:
+    def create_string(value: str) -> dict[str, Any]:
         """Create a new string value.
 
         :param value: The value of the property
@@ -51,7 +51,7 @@ class ADOCommentProperty:
         return ADOCommentProperty.create_value("System.String", value)
 
     @staticmethod
-    def create_int(value: int) -> Dict[str, Any]:
+    def create_int(value: int) -> dict[str, Any]:
         """Create a new integer value.
 
         :param value: The value of the property
@@ -61,7 +61,7 @@ class ADOCommentProperty:
         return ADOCommentProperty.create_value("System.Int32", value)
 
     @staticmethod
-    def create_bool(value: bool) -> Dict[str, Any]:
+    def create_bool(value: bool) -> dict[str, Any]:
         """Create a new boolean value.
 
         :param value: The value of the property
@@ -74,17 +74,17 @@ class ADOCommentProperty:
 class ADOCommentLocation:
     """Represents the location of a comment in a PR.
 
-    :param str file_path: The location of the file, relative to the repository.
-    :param int line: The line the comment should start on.
+    :param file_path: The location of the file, relative to the repository.
+    :param line: The line the comment should start on.
     :param start_index: The location on the line that the comment should start
     :type start_index: int or None
     """
 
     file_path: str
     line: int
-    start_index: Optional[int]
+    start_index: int | None
 
-    def __init__(self, file_path: str, line: int, start_index: Optional[int] = None) -> None:
+    def __init__(self, file_path: str, line: int, start_index: int | None = None) -> None:
         """Construct a new comment location."""
 
         self.file_path = file_path
@@ -94,7 +94,7 @@ class ADOCommentLocation:
         if not self.file_path.startswith("/"):  # On some machines this is missing, some it's there
             self.file_path = "/" + self.file_path
 
-    def generate_representation(self) -> Dict[str, Any]:
+    def generate_representation(self) -> dict[str, Any]:
         """Generate the ADO API representation of a comment location.
 
         :returns: A dictionary containing the raw API data
@@ -119,24 +119,27 @@ class ADOComment:
     """Represents a ADO comment."""
 
     content: str
-    location: Optional[ADOCommentLocation]
+    location: ADOCommentLocation | None
     parent_id: int
 
     def __init__(
-        self, content: str, location: Optional[ADOCommentLocation] = None, parent_id: int = 0
+        self,
+        content: str,
+        location: ADOCommentLocation | None = None,
+        parent_id: int = 0,
     ) -> None:
         """Construct a new comment.
 
-        :param str content: The message which should be on the comment
-        :param ADOCommentLocation location: The location to place the comment
-        :param int parent_id: The ID of the parent comment (0 if a root comment)
+        :param content: The message which should be on the comment
+        :param location: The location to place the comment
+        :param parent_id: The ID of the parent comment (0 if a root comment)
         """
 
         self.content = content
         self.parent_id = parent_id
         self.location = location
 
-    def generate_representation(self) -> Dict[str, Any]:
+    def generate_representation(self) -> dict[str, Any]:
         """Generate the ADO API representation of this comment.
 
         :returns: A dictionary containing the raw API data

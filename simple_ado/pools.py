@@ -7,7 +7,7 @@
 
 import enum
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 import urllib.parse
 
 
@@ -36,13 +36,13 @@ class ADOPoolsClient(ADOBaseClient):
     def get_pools(
         self,
         *,
-        pool_name: Optional[str] = None,
-        action_filter: Optional[TaskAgentPoolActionFilter] = None,
+        pool_name: str | None = None,
+        action_filter: TaskAgentPoolActionFilter | None = None,
     ) -> ADOResponse:
         """Gets the agent details.
 
-        :param Optional[str] pool_name: The name of the pool to match on
-        :param Optional[TaskAgentPoolActionFilter] action_filter: Set to filter on the type of pools
+        :param pool_name: The name of the pool to match on
+        :param action_filter: Set to filter on the type of pools
 
         :returns: The ADO response with the data in it
         """
@@ -68,18 +68,18 @@ class ADOPoolsClient(ADOBaseClient):
         self,
         *,
         pool_id: int,
-        agent_name: Optional[str] = None,
+        agent_name: str | None = None,
         include_capabilities: bool = True,
         include_assigned_request: bool = True,
         include_last_completed_request: bool = True,
     ) -> ADOResponse:
         """Gets the agents details.
 
-        :param int pool_id: The ID of the pool the agents are in
-        :param Optional[str] agent_name: The name of the agent to match on
-        :param bool include_capabilities: Set to False to not include capabilities
-        :param bool include_assigned_request: Set to False to not include the current assigned request
-        :param bool include_last_completed_request: Set to False to not include the last completed request
+        :param pool_id: The ID of the pool the agents are in
+        :param agent_name: The name of the agent to match on
+        :param include_capabilities: Set to False to not include capabilities
+        :param include_assigned_request: Set to False to not include the current assigned request
+        :param include_last_completed_request: Set to False to not include the last completed request
 
         :returns: The ADO response with the data in it
         """
@@ -106,8 +106,8 @@ class ADOPoolsClient(ADOBaseClient):
     def get_agent(self, *, pool_id: int, agent_id: int) -> ADOResponse:
         """Gets the agent details.
 
-        :param int pool_id: The ID of the pool the agent is in
-        :param int agent_id: The ID of the agent to get
+        :param pool_id: The ID of the pool the agent is in
+        :param agent_id: The ID of the agent to get
 
         :returns: The ADO response with the data in it
         """
@@ -119,13 +119,13 @@ class ADOPoolsClient(ADOBaseClient):
         return self.http_client.decode_response(response)
 
     def update_agent(
-        self, *, pool_id: int, agent_id: int, agent_data: Dict[str, Any]
+        self, *, pool_id: int, agent_id: int, agent_data: dict[str, Any]
     ) -> ADOResponse:
         """Adds required reviewers when opening PRs against a given branch.
 
-        :param int pool_id: The ID of the pool the agent is in
-        :param int agent_id: The ID of the agent to disable
-        :param Dict[str,Any] agent_data: The data to set on the agent
+        :param pool_id: The ID of the pool the agent is in
+        :param agent_id: The ID of the agent to disable
+        :param agent_data: The data to set on the agent
 
         :returns: The ADO response with the data in it
         """
@@ -139,9 +139,9 @@ class ADOPoolsClient(ADOBaseClient):
     def set_agent_state(self, *, pool_id: int, agent_id: int, enabled: bool) -> ADOResponse:
         """Set the enabled/disabled state of an agent.
 
-        :param int pool_id: The ID of the pool the agent is in
-        :param int agent_id: The ID of the agent to disable
-        :param bool enabled: Set to True to enable an agent, False to disable it
+        :param pool_id: The ID of the pool the agent is in
+        :param agent_id: The ID of the agent to disable
+        :param enabled: Set to True to enable an agent, False to disable it
 
         :returns: The ADO response with the data in it
         """
@@ -151,13 +151,13 @@ class ADOPoolsClient(ADOBaseClient):
         return self.update_agent(pool_id=pool_id, agent_id=agent_id, agent_data=agent_details)
 
     def update_agent_capabilities(
-        self, *, pool_id: int, agent_id: int, capabilities: Dict[str, str]
+        self, *, pool_id: int, agent_id: int, capabilities: dict[str, str]
     ) -> ADOResponse:
         """Set the enabled/disabled state of an agent.
 
-        :param int pool_id: The ID of the pool the agent is in
-        :param int agent_id: The ID of the agent to disable
-        :param Dict[str,str] capabilities: The new capabilities to set
+        :param pool_id: The ID of the pool the agent is in
+        :param agent_id: The ID of the agent to disable
+        :param capabilities: The new capabilities to set
 
         :returns: The ADO response with the data in it
         """

@@ -7,7 +7,7 @@
 
 import json
 import logging
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, Iterator
 import urllib.parse
 
 
@@ -33,12 +33,12 @@ class ADOBuildClient(ADOBaseClient):
         project_id: str,
         definition_id: int,
         source_branch: str,
-        variables: Dict[str, str],
-        requesting_identity: Optional[TeamFoundationId] = None,
+        variables: dict[str, str],
+        requesting_identity: TeamFoundationId | None = None,
     ) -> ADOResponse:
         """Queue a new build.
 
-        :param str project_id: The ID of the project
+        :param project_id: The ID of the project
         :param definition_id: The identity of the build definition to queue (can be a string)
         :param source_branch: The source branch for the build
         :param variables: A dictionary of variables to pass to the definition
@@ -69,8 +69,8 @@ class ADOBuildClient(ADOBaseClient):
     def build_info(self, *, project_id: str, build_id: int) -> ADOResponse:
         """Get the info for a build.
 
-        :param str project_id: The ID of the project
-        :param int build_id: The identifier of the build to get the info for
+        :param project_id: The ID of the project
+        :param build_id: The identifier of the build to get the info for
 
         :returns: The ADO response with the data in it
         """
@@ -86,12 +86,12 @@ class ADOBuildClient(ADOBaseClient):
         self,
         *,
         project_id: str,
-        definitions: Optional[List[int]] = None,
-    ) -> Iterator[Dict[str, Any]]:
+        definitions: list[int] | None = None,
+    ) -> Iterator[dict[str, Any]]:
         """Get the info for a build.
 
-        :param str project_id: The ID of the project
-        :param int definitions: An optional list of build definition IDs to filter on
+        :param project_id: The ID of the project
+        :param definitions: An optional list of build definition IDs to filter on
 
         :returns: The ADO response with the data in it
         """
@@ -128,7 +128,7 @@ class ADOBuildClient(ADOBaseClient):
     ) -> ADOResponse:
         """Fetch an artifacts details from a build.
 
-        :param str project_id: The ID of the project
+        :param project_id: The ID of the project
         :param build_id: The ID of the build
         :param artifact_name: The name of the artifact to fetch
 
@@ -153,10 +153,10 @@ class ADOBuildClient(ADOBaseClient):
     ) -> None:
         """Download an artifact from a build.
 
-        :param str project_id: The ID of the project
+        :param project_id: The ID of the project
         :param build_id: The ID of the build
         :param artifact_name: The name of the artifact to fetch
-        :param str output_path: The path to write the output to.
+        :param output_path: The path to write the output to.
         """
 
         parameters = {
@@ -176,7 +176,7 @@ class ADOBuildClient(ADOBaseClient):
     def get_leases(self, *, project_id: str, build_id: int) -> ADOResponse:
         """Get the retention leases for a build.
 
-        :param str project_id: The ID of the project
+        :param project_id: The ID of the project
         :param build_id: The ID of the build
 
         :returns: The ADO response with the data in it
@@ -193,10 +193,10 @@ class ADOBuildClient(ADOBaseClient):
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
 
-    def delete_leases(self, *, project_id: str, lease_ids: Union[int, List[int]]) -> None:
+    def delete_leases(self, *, project_id: str, lease_ids: int | list[int]) -> None:
         """Delete leases.
 
-        :param str project_id: The ID of the project
+        :param project_id: The ID of the project
         :param lease_ids: The IDs of the leases to delete
         """
 

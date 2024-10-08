@@ -1,7 +1,7 @@
 """Property handling."""
 
 import datetime
-from typing import Any, Dict
+from typing import Any
 
 import deserialize
 
@@ -18,7 +18,7 @@ class PropertyValue:
         self.property_type = property_type
         self.value = None
 
-    def serialize(self) -> Dict[str, Any]:
+    def serialize(self) -> dict[str, Any]:
         """Serialize to an ADO compatible format.
 
         :returns: A dictionary to be sent to ADO
@@ -47,7 +47,7 @@ class StringPropertyValue(PropertyValue):
         super().__init__("System.String")
         self.value = value
 
-    def serialize(self) -> Dict[str, Any]:
+    def serialize(self) -> dict[str, Any]:
         """Serialize to an ADO compatible format.
 
         :returns: A dictionary to be sent to ADO
@@ -70,7 +70,7 @@ class IntPropertyValue(PropertyValue):
         super().__init__("System.Int32")
         self.value = value
 
-    def serialize(self) -> Dict[str, Any]:
+    def serialize(self) -> dict[str, Any]:
         """Serialize to an ADO compatible format.
 
         :returns: A dictionary to be sent to ADO
@@ -93,7 +93,7 @@ class DateTimePropertyValue(PropertyValue):
         super().__init__("System.DateTime")
         self.value = value
 
-    def serialize(self) -> Dict[str, Any]:
+    def serialize(self) -> dict[str, Any]:
         """Serialize to an ADO compatible format.
 
         :returns: A dictionary to be sent to ADO

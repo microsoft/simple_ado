@@ -4,7 +4,7 @@
 """ADO graph API wrapper."""
 
 import logging
-from typing import Any, Iterator, List, Optional
+from typing import Any, Iterator
 
 
 from simple_ado.base_client import ADOBaseClient
@@ -47,7 +47,7 @@ class ADOGraphClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
-    def lookup_subjects(self, subject_descriptors: List[str]) -> List[Any]:
+    def lookup_subjects(self, subject_descriptors: list[str]) -> list[Any]:
         """Lookup the various subject descriptors.
 
         :param subject_descriptors: Descriptors of the subjects to resolve
@@ -64,7 +64,7 @@ class ADOGraphClient(ADOBaseClient):
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
 
-    def list_groups(self, *, scope_descriptor: Optional[str] = None) -> List[Any]:
+    def list_groups(self, *, scope_descriptor: str | None = None) -> list[Any]:
         """Get the groups in the organization.
 
         :param scope_descriptor: Specify a non-default scope (collection, project) to search for groups.
@@ -77,7 +77,7 @@ class ADOGraphClient(ADOBaseClient):
         if scope_descriptor:
             request_url += f"&scopeDescriptor={scope_descriptor}"
 
-        groups: List[Any] = []
+        groups: list[Any] = []
         continuation_token = None
 
         while True:

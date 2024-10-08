@@ -7,7 +7,7 @@
 
 import datetime
 import logging
-from typing import Any, Dict, Iterator, List, Optional
+from typing import Any, Iterator
 import urllib.parse
 
 import deserialize
@@ -27,7 +27,7 @@ class ADOAuditClient(ADOBaseClient):
     def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
         super().__init__(http_client, log.getChild("audit"))
 
-    def get_actions(self, area_name: Optional[str] = None) -> List[AuditActionInfo]:
+    def get_actions(self, area_name: str | None = None) -> list[AuditActionInfo]:
         """Get the list of audit actions.
 
         :param area_name: The optional area name to scope down to
@@ -48,14 +48,14 @@ class ADOAuditClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
         raw_actions = self.http_client.extract_value(response_data)
-        return deserialize.deserialize(List[AuditActionInfo], raw_actions)
+        return deserialize.deserialize(list[AuditActionInfo], raw_actions)
 
     def query(
         self,
-        start_time: Optional[datetime.datetime] = None,
-        end_time: Optional[datetime.datetime] = None,
-        skip_aggregation: Optional[bool] = None,
-    ) -> Iterator[Dict[str, Any]]:
+        start_time: datetime.datetime | None = None,
+        end_time: datetime.datetime | None = None,
+        skip_aggregation: bool | None = None,
+    ) -> Iterator[dict[str, Any]]:
         """Query the audit log.
 
         :param start_time: The earliest point to query (rounds down to the nearest second)

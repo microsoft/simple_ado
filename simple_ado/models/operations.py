@@ -1,7 +1,7 @@
 """ADO Operations."""
 
 import enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class OperationType(enum.Enum):
@@ -20,15 +20,15 @@ class PatchOperation:
 
     operation: OperationType
     path: str
-    value: Optional[Any]
-    from_path: Optional[str]
+    value: Any | None
+    from_path: str | None
 
     def __init__(
         self,
         operation: OperationType,
         path: str,
-        value: Optional[Any],
-        from_path: Optional[str] = None,
+        value: Any | None,
+        from_path: str | None = None,
     ):
         """Create a new PatchOperation.
 
@@ -42,7 +42,7 @@ class PatchOperation:
         self.value = value
         self.from_path = from_path
 
-    def serialize(self) -> Dict[str, Any]:
+    def serialize(self) -> dict[str, Any]:
         """Serialize for sending to ADO.
 
         :returns: A dictionary.

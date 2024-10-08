@@ -61,9 +61,10 @@ class LibraryTests(unittest.TestCase):
     def test_git_diff(self):
         """Test git diff."""
         all_prs = self.client.list_all_pull_requests(
-            project_id=self.test_config.project_id, repository_id=self.test_config.repository_id
+            project_id=self.test_config.project_id,
+            repository_id=self.test_config.repository_id,
         )
-        details = all_prs[0]
+        details = next(all_prs)
         diff = self.client.git.diff_between_commits(
             base_commit=details["lastMergeTargetCommit"]["commitId"],
             target_commit=details["lastMergeSourceCommit"]["commitId"],
@@ -75,9 +76,10 @@ class LibraryTests(unittest.TestCase):
     def test_properties(self):
         """Test get properties."""
         all_prs = self.client.list_all_pull_requests(
-            project_id=self.test_config.project_id, repository_id=self.test_config.repository_id
+            project_id=self.test_config.project_id,
+            repository_id=self.test_config.repository_id,
         )
-        latest_pr = all_prs[0]
+        latest_pr = next(all_prs)
         pr_id = latest_pr["pullRequestId"]
         pr_id = 441259
         base_properties = self.client.pull_request(
@@ -120,14 +122,16 @@ class LibraryTests(unittest.TestCase):
     def test_list_refs(self):
         """Test list refs."""
         refs = self.client.git.get_refs(
-            project_id=self.test_config.project_id, repository_id=self.test_config.repository_id
+            project_id=self.test_config.project_id,
+            repository_id=self.test_config.repository_id,
         )
         self.assertTrue(len(refs) > 0, "Failed to find any refs")
 
     def test_get_commit(self):
         """Test get commit."""
         refs = self.client.git.get_refs(
-            project_id=self.test_config.project_id, repository_id=self.test_config.repository_id
+            project_id=self.test_config.project_id,
+            repository_id=self.test_config.repository_id,
         )
         ref = refs[0]
         commit_id = ref["objectId"]
@@ -148,7 +152,8 @@ class LibraryTests(unittest.TestCase):
     def test_get_pull_requests(self):
         """Test get pull requests."""
         refs = self.client.list_all_pull_requests(
-            project_id=self.test_config.project_id, repository_id=self.test_config.repository_id
+            project_id=self.test_config.project_id,
+            repository_id=self.test_config.repository_id,
         )
         self.assertTrue(len(refs) > 0)
 
@@ -172,9 +177,10 @@ class LibraryTests(unittest.TestCase):
     def test_get_pr_statuses(self):
         """Test get properties."""
         all_prs = self.client.list_all_pull_requests(
-            project_id=self.test_config.project_id, repository_id=self.test_config.repository_id
+            project_id=self.test_config.project_id,
+            repository_id=self.test_config.repository_id,
         )
-        latest_pr = all_prs[0]
+        latest_pr = next(all_prs)
         pr_id = latest_pr["pullRequestId"]
         statuses = self.client.pull_request(
             pr_id,
@@ -305,7 +311,9 @@ class LibraryTests(unittest.TestCase):
 
         for endpoint in endpoints:
             for item in self.client.endpoints.get_usage_history(
-                project_id=self.test_config.project_id, endpoint_id=endpoint["id"], top=75
+                project_id=self.test_config.project_id,
+                endpoint_id=endpoint["id"],
+                top=75,
             ):
                 assert item is not None
 
@@ -347,12 +355,14 @@ class LibraryTests(unittest.TestCase):
         """Test list PRs diff."""
         count = 0
         one_month_ago = datetime.datetime.now() - datetime.timedelta(days=28)
-        for pr in self.client.list_all_pull_requests(
+        for pull_request in self.client.list_all_pull_requests(
             project_id=self.test_config.project_id,
             repository_id=self.test_config.repository_id,
             pr_status=simple_ado.pull_requests.ADOPullRequestStatus.COMPLETED,
         ):
-            closed_date = datetime.datetime.strptime(pr["closedDate"][:-2], "%Y-%m-%dT%H:%M:%S.%f")
+            closed_date = datetime.datetime.strptime(
+                pull_request["closedDate"][:-2], "%Y-%m-%dT%H:%M:%S.%f"
+            )
             if closed_date < one_month_ago:
                 break
             count += 1

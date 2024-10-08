@@ -8,7 +8,7 @@
 import enum
 import logging
 import os
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 import urllib.parse
 
 from simple_ado.base_client import ADOBaseClient
@@ -40,9 +40,7 @@ class ADOReferenceUpdate:
     old_object_id: str
     new_object_id: str
 
-    def __init__(
-        self, name: str, old_object_id: Optional[str], new_object_id: Optional[str]
-    ) -> None:
+    def __init__(self, name: str, old_object_id: str | None, new_object_id: str | None) -> None:
         self.name = name
 
         if old_object_id:
@@ -55,7 +53,7 @@ class ADOReferenceUpdate:
         else:
             self.new_object_id = "0000000000000000000000000000000000000000"
 
-    def json_data(self) -> Dict[str, str]:
+    def json_data(self) -> dict[str, str]:
         """Return the JSON representation for sending to ADO.
 
         :returns: The JSON representation
@@ -81,7 +79,7 @@ class ADOGitClient(ADOBaseClient):
     def all_repositories(self, project_id: str) -> ADOResponse:
         """Get a list of repositories in the project.
 
-        :param str project_id: The ID of the project
+        :param project_id: The ID of the project
 
         :returns: The ADO response with the data in it
         """
@@ -94,8 +92,8 @@ class ADOGitClient(ADOBaseClient):
     def get_repository(self, *, project_id: str, repository_id: str) -> ADOResponse:
         """Get a repository from the project.
 
-        :param str project_id: The ID of the project
-        :param str repository_id: The ID of the repository
+        :param project_id: The ID of the project
+        :param repository_id: The ID of the repository
 
         :returns: The ADO response with the data in it
         """
@@ -110,9 +108,9 @@ class ADOGitClient(ADOBaseClient):
     def get_status(self, *, sha: str, project_id: str, repository_id: str) -> ADOResponse:
         """Set a status on a PR.
 
-        :param str sha: The SHA of the commit to add the status to.
-        :param str project_id: The ID of the project
-        :param str repository_id: The ID for the repository
+        :param sha: The SHA of the commit to add the status to.
+        :param project_id: The ID of the project
+        :param repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
 
@@ -143,18 +141,18 @@ class ADOGitClient(ADOBaseClient):
         project_id: str,
         repository_id: str,
         context: str,
-        target_url: Optional[str] = None,
+        target_url: str | None = None,
     ) -> ADOResponse:
         """Set a status on a PR.
 
-        :param str sha: The SHA of the commit to add the status to.
-        :param ADOGitStatusState state: The state to set the status to.
-        :param str identifier: A unique identifier for the status (so it can be changed later)
-        :param str description: The text to show in the status
-        :param str project_id: The ID of the project
-        :param str repository_id: The ID for the repository
-        :param str context: The context to use for build status notifications
-        :param Optional[str] target_url: An optional URL to set which is opened when the description is clicked.
+        :param sha: The SHA of the commit to add the status to.
+        :param state: The state to set the status to.
+        :param identifier: A unique identifier for the status (so it can be changed later)
+        :param description: The text to show in the status
+        :param project_id: The ID of the project
+        :param repository_id: The ID for the repository
+        :param context: The context to use for build status notifications
+        :param target_url: An optional URL to set which is opened when the description is clicked.
 
         :returns: The ADO response with the data in it
 
@@ -197,10 +195,10 @@ class ADOGitClient(ADOBaseClient):
     ) -> ADOResponse:
         """Get the diff between two commits.
 
-        :param str base_commit: The full hash of the base commit to perform the diff against.
-        :param str target_commit: The full hash of the commit to perform the diff of.
-        :param str project_id: The ID of the project
-        :param str repository_id: The ID for the repository
+        :param base_commit: The full hash of the base commit to perform the diff against.
+        :param target_commit: The full hash of the commit to perform the diff of.
+        :param project_id: The ID of the project
+        :param repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
@@ -216,7 +214,6 @@ class ADOGitClient(ADOBaseClient):
         skip = 0
 
         while True:
-
             parameters = {
                 "api-version": "5.1",
                 "baseVersionType": "commit",
@@ -247,14 +244,14 @@ class ADOGitClient(ADOBaseClient):
         output_path: str,
         project_id: str,
         repository_id: str,
-        callback: Optional[Callable[[int, int], None]] = None
+        callback: Callable[[int, int], None] | None = None,
     ) -> None:
         """Download the zip of the branch specified.
 
-        :param str branch: The name of the branch to download.
-        :param str output_path: The path to write the output to.
-        :param str project_id: The ID of the project
-        :param str repository_id: The ID for the repository
+        :param branch: The name of the branch to download.
+        :param output_path: The path to write the output to.
+        :param project_id: The ID of the project
+        :param repository_id: The ID for the repository
         :param callback: The callback for download progress updates. First
                          parameter is bytes downloaded, second is total bytes.
                          The latter will be 0 if the content length is unknown.
@@ -286,7 +283,7 @@ class ADOGitClient(ADOBaseClient):
                 response=response,
                 output_path=output_path,
                 log=self.log,
-                callback=callback
+                callback=callback,
             )
 
     # pylint: disable=too-many-locals
@@ -295,48 +292,48 @@ class ADOGitClient(ADOBaseClient):
         *,
         project_id: str,
         repository_id: str,
-        filter_startswith: Optional[str] = None,
-        filter_contains: Optional[str] = None,
-        include_links: Optional[bool] = None,
-        include_statuses: Optional[bool] = None,
-        include_my_branches: Optional[bool] = None,
-        latest_statuses_only: Optional[bool] = None,
-        peel_tags: Optional[bool] = None,
-        top: Optional[int] = None,
-        continuation_token: Optional[str] = None,
+        filter_startswith: str | None = None,
+        filter_contains: str | None = None,
+        include_links: bool | None = None,
+        include_statuses: bool | None = None,
+        include_my_branches: bool | None = None,
+        latest_statuses_only: bool | None = None,
+        peel_tags: bool | None = None,
+        top: int | None = None,
+        continuation_token: str | None = None,
     ) -> ADOResponse:
         """Set a status on a PR.
 
         All non-specified options use the ADO default.
 
-        :param str project_id: The ID of the project
-        :param str repository_id: The ID for the repository
-        :param Optional[str] filter_startswith: A filter to apply to the refs
+        :param project_id: The ID of the project
+        :param repository_id: The ID for the repository
+        :param filter_startswith: A filter to apply to the refs
                                                 (starts with)
-        :param Optional[str] filter_contains: A filter to apply to the refs
+        :param filter_contains: A filter to apply to the refs
                                               (contains)
-        :param Optional[bool] include_links: Specifies if referenceLinks should
+        :param include_links: Specifies if referenceLinks should
                                              be included in the result
-        :param Optional[bool] include_statuses: Includes up to the first 1000
+        :param include_statuses: Includes up to the first 1000
                                                 commit statuses for each ref
-        :param Optional[bool] include_my_branches: Includes only branches that
+        :param include_my_branches: Includes only branches that
                                                    the user owns, the branches
                                                    the user favorites, and the
                                                    default branch. Cannot be
                                                    combined with the filter
                                                    parameter.
-        :param Optional[bool] latest_statuses_only: True to include only the tip
+        :param latest_statuses_only: True to include only the tip
                                                     commit status for each ref.
                                                     This requires
                                                     `include_statuses` to be set
                                                     to `True`.
-        :param Optional[bool] peel_tags: Annotated tags will populate the
+        :param peel_tags: Annotated tags will populate the
                                          `PeeledObjectId` property.
-        :param Optional[int] top: Maximum number of refs to return. It cannot be
+        :param top: Maximum number of refs to return. It cannot be
                                   bigger than 1000. If it is not provided, but
                                   `continuation_token` is, top will default to
                                   100.
-        :param Optional[str] continuation_token: The continuation token used for
+        :param continuation_token: The continuation token used for
                                                  pagination
 
         :returns: The ADO response with the data in it
@@ -348,7 +345,7 @@ class ADOGitClient(ADOBaseClient):
 
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}/refs?"
 
-        parameters: Dict[str, Any] = {}
+        parameters: dict[str, Any] = {}
 
         if filter_startswith:
             parameters["filter"] = filter_startswith
@@ -397,9 +394,9 @@ class ADOGitClient(ADOBaseClient):
     ) -> ADOResponse:
         """Get the stats for a branch.
 
-        :param str project_id: The ID of the project
-        :param str repository_id: The ID for the repository
-        :param str branch_name: The name of the branch to get the stats for
+        :param project_id: The ID of the project
+        :param repository_id: The ID for the repository
+        :param branch_name: The name of the branch to get the stats for
 
         :returns: The ADO response with the data in it
         """
@@ -418,16 +415,16 @@ class ADOGitClient(ADOBaseClient):
         commit_id: str,
         project_id: str,
         repository_id: str,
-        change_count: Optional[int] = None,
+        change_count: int | None = None,
     ) -> ADOResponse:
         """Set a status on a PR.
 
         All non-specified options use the ADO default.
 
-        :param str commit_id: The id of the commit
-        :param str project_id: The ID of the project
-        :param str repository_id: The ID for the repository
-        :param Optional[int] change_count: The number of changes to include in
+        :param commit_id: The id of the commit
+        :param project_id: The ID of the project
+        :param repository_id: The ID for the repository
+        :param change_count: The number of changes to include in
                                            the result
 
         :returns: The ADO response with the data in it
@@ -447,15 +444,15 @@ class ADOGitClient(ADOBaseClient):
     def update_refs(
         self,
         *,
-        updates: List[ADOReferenceUpdate],
+        updates: list[ADOReferenceUpdate],
         project_id: str,
         repository_id: str,
     ) -> ADOResponse:
         """Update a list of references.
 
-        :param List[ADOReferenceUpdate] updates: The list of updates to make
-        :param str project_id: The ID of the project
-        :param str repository_id: The ID for the repository
+        :param updates: The list of updates to make
+        :param project_id: The ID of the project
+        :param repository_id: The ID for the repository
 
         :returns: The ADO response with the data in it
         """
@@ -478,8 +475,8 @@ class ADOGitClient(ADOBaseClient):
 
         :param branch_name: The full name of the branch. e.g. refs/heads/my_branch
         :param object_id: The ID of the object the branch currently points to
-        :param str project_id: The ID of the project
-        :param str repository_id: The ID for the repository
+        :param project_id: The ID of the project
+        :param repository_id: The ID for the repository
 
         :returns: The ADO response
         """
@@ -518,32 +515,32 @@ class ADOGitClient(ADOBaseClient):
         path: str,
         project_id: str,
         repository_id: str,
-        scope_path: Optional[str] = None,
-        recursion_level: Optional[VersionControlRecursionType] = None,
-        include_content_metadata: Optional[bool] = None,
-        latest_processed_changes: Optional[bool] = None,
-        version_options: Optional[GitVersionOptions] = None,
-        version: Optional[str] = None,
-        version_type: Optional[GitVersionType] = None,
-        include_content: Optional[bool] = None,
-        resolve_lfs: Optional[bool] = None,
+        scope_path: str | None = None,
+        recursion_level: VersionControlRecursionType | None = None,
+        include_content_metadata: bool | None = None,
+        latest_processed_changes: bool | None = None,
+        version_options: GitVersionOptions | None = None,
+        version: str | None = None,
+        version_type: GitVersionType | None = None,
+        include_content: bool | None = None,
+        resolve_lfs: bool | None = None,
     ) -> ADOResponse:
         """Get a git item.
 
         All non-specified options use the ADO default.
 
-        :param str path: The item path,
-        :param str project_id: The ID of the project
-        :param str repository_id: The ID for the repository
-        :param Optional[str] scope_path: The path scope
-        :param Optional[VersionControlRecursionType] recursion_level: The recursion level
-        :param Optional[bool] include_content_metadata: Set to include content metadata
-        :param Optional[bool] latest_processed_changes: Set to include the latest changes
-        :param Optional[GitVersionOptions] version_options: Specify additional modifiers to version
-        :param Optional[str] version: Version string identifier (name of tag/branch, SHA1 of commit)
-        :param Optional[GitVersionType] version_type: Version type (branch, tag or commit).
-        :param Optional[bool] include_content: Set to true to include item content when requesting JSON
-        :param Optional[bool] resolve_lfs: Set to true to resolve LFS pointer files to resolve actual content
+        :param path: The item path,
+        :param project_id: The ID of the project
+        :param repository_id: The ID for the repository
+        :param scope_path: The path scope
+        :param recursion_level: The recursion level
+        :param include_content_metadata: Set to include content metadata
+        :param latest_processed_changes: Set to include the latest changes
+        :param version_options: Specify additional modifiers to version
+        :param version: Version string identifier (name of tag/branch, SHA1 of commit)
+        :param version_type: Version type (branch, tag or commit).
+        :param include_content: Set to true to include item content when requesting JSON
+        :param resolve_lfs: Set to true to resolve LFS pointer files to resolve actual content
 
         :returns: The ADO response with the data in it
         """
@@ -552,7 +549,7 @@ class ADOGitClient(ADOBaseClient):
 
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}/items?"
 
-        parameters: Dict[str, Any] = {"path": path, "api-version": "5.1"}
+        parameters: dict[str, Any] = {"path": path, "api-version": "5.1"}
 
         if scope_path is not None:
             parameters["scopePath"] = scope_path
@@ -586,53 +583,53 @@ class ADOGitClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
-    # pylint: disable=line-too-long
+    # pylint: disable=too-many-locals,line-too-long,too-complex,too-many-branches
     def get_commits(
         self,
         *,
         project_id: str,
         repository_id: str,
-        skip: Optional[int] = None,
-        top: Optional[int] = None,
-        from_date: Optional[str] = None,
-        to_date: Optional[str] = None,
-        from_commit_id: Optional[str] = None,
-        to_commit_id: Optional[str] = None,
-        author: Optional[str] = None,
-        user: Optional[str] = None,
-        exclude_deletes: Optional[bool] = None,
-        inlcude_links: Optional[bool] = None,
-        include_push_data: Optional[bool] = None,
-        include_user_image_url: Optional[bool] = None,
-        include_work_items: Optional[bool] = None,
-        item_path: Optional[str] = None,
-        item_version: Optional[str] = None,
-        item_version_options: Optional[GitVersionOptions] = None,
-        item_version_type: Optional[GitVersionType] = None,
+        skip: int | None = None,
+        top: int | None = None,
+        from_date: str | None = None,
+        to_date: str | None = None,
+        from_commit_id: str | None = None,
+        to_commit_id: str | None = None,
+        author: str | None = None,
+        user: str | None = None,
+        exclude_deletes: bool | None = None,
+        inlcude_links: bool | None = None,
+        include_push_data: bool | None = None,
+        include_user_image_url: bool | None = None,
+        include_work_items: bool | None = None,
+        item_path: str | None = None,
+        item_version: str | None = None,
+        item_version_options: GitVersionOptions | None = None,
+        item_version_type: GitVersionType | None = None,
     ) -> ADOResponse:
         """Retrieve git commits for a project
 
         All non-specified options use the ADO default.
 
-        :param str project_id: The ID of the project
-        :param str repository_id: The ID for the repository
-        :param Optional[int] skip: Number of entries to skip
-        :param Optional[int] top: Maximum number of entries to retrieve
-        :param Optional[str] from_date: If provided, only include history entries created after this date
-        :param Optional[str] to_date: If provided, only include history entries created before this date
-        :param Optional[str] from_commit_id: If provided, a lower bound for filtering commits alphabetically
-        :param Optional[str] to_commit_id: If provided, an upper bound for filtering commits alphabetically
-        :param Optional[str] author: Alias or display name of the author
-        :param Optional[str] user: Alias or display name of the committer
-        :param Optional[bool] exclude_deletes: If itemPath is specified, determines whether to exclude delete entries of the specified path.
-        :param Optional[bool] inlcude_links: Whether to include the _links field on the shallow references
-        :param Optional[bool] include_push_data: Whether to include the push information
-        :param Optional[bool] include_user_image_url: Whether to include the image Url for committers and authors
-        :param Optional[bool] include_work_items: Whether to include linked work items
-        :param Optional[str] item_path: Path of item to search under
-        :param Optional[str] item_version: Version string identifier (name of tag/branch, SHA1 of commit)
-        :param Optional[GitVersionOptions] item_version_options: Version options - Specify additional modifiers to version (e.g Previous)
-        :param Optional[GitVersionType] item_version_type: Version type (branch, tag, or commit). Determines how Id is interpreted
+        :param project_id: The ID of the project
+        :param repository_id: The ID for the repository
+        :param skip: Number of entries to skip
+        :param top: Maximum number of entries to retrieve
+        :param from_date: If provided, only include history entries created after this date
+        :param to_date: If provided, only include history entries created before this date
+        :param from_commit_id: If provided, a lower bound for filtering commits alphabetically
+        :param to_commit_id: If provided, an upper bound for filtering commits alphabetically
+        :param author: Alias or display name of the author
+        :param user: Alias or display name of the committer
+        :param exclude_deletes: If itemPath is specified, determines whether to exclude delete entries of the specified path.
+        :param inlcude_links: Whether to include the _links field on the shallow references
+        :param include_push_data: Whether to include the push information
+        :param include_user_image_url: Whether to include the image Url for committers and authors
+        :param include_work_items: Whether to include linked work items
+        :param item_path: Path of item to search under
+        :param item_version: Version string identifier (name of tag/branch, SHA1 of commit)
+        :param item_version_options: Version options - Specify additional modifiers to version (e.g Previous)
+        :param item_version_type: Version type (branch, tag, or commit). Determines how Id is interpreted
 
         :returns: The ADO response with the data in it
         """
@@ -640,7 +637,7 @@ class ADOGitClient(ADOBaseClient):
 
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}/commits?"
 
-        parameters: Dict[str, Any] = {"api-version": "7.2-preview.2"}
+        parameters: dict[str, Any] = {"api-version": "7.2-preview.2"}
 
         if skip is not None:
             parameters["$skip"] = skip
@@ -698,7 +695,7 @@ class ADOGitClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
-    # pylint: enable=too-many-locals, line-too-long
+    # pylint: disable=too-many-locals,line-too-long,too-complex,too-many-branches
 
     class BlobFormat(enum.Enum):
         """The type of format to get a blob in."""
@@ -714,22 +711,22 @@ class ADOGitClient(ADOBaseClient):
         blob_id: str,
         project_id: str,
         repository_id: str,
-        blob_format: Optional[BlobFormat] = None,
-        download: Optional[bool] = None,
-        file_name: Optional[str] = None,
-        resolve_lfs: Optional[bool] = None,
+        blob_format: BlobFormat | None = None,
+        download: bool | None = None,
+        file_name: str | None = None,
+        resolve_lfs: bool | None = None,
     ) -> Any:
         """Get a git item.
 
         All non-specified options use the ADO default.
 
-        :param str blob_id: The SHA1 of the blob
-        :param str project_id: The ID for the project
-        :param str repository_id: The ID for the repository
-        :param Optional[BlobFormat] blob_format: The format to get the blob in
-        :param Optional[bool] download: Set to True to download rather than get a response
-        :param Optional[str] file_name: The file name to use for the download if download is set to True
-        :param Optional[bool] resolve_lfs: Set to true to resolve LFS pointer files to resolve actual content
+        :param blob_id: The SHA1 of the blob
+        :param project_id: The ID for the project
+        :param repository_id: The ID for the repository
+        :param blob_format: The format to get the blob in
+        :param download: Set to True to download rather than get a response
+        :param file_name: The file name to use for the download if download is set to True
+        :param resolve_lfs: Set to true to resolve LFS pointer files to resolve actual content
 
         :returns: The data returned and the return type depends on what you set blob_format to
         """
@@ -741,7 +738,7 @@ class ADOGitClient(ADOBaseClient):
         )
         request_url += f"/git/repositories/{repository_id}/blobs/{blob_id}?"
 
-        parameters: Dict[str, Any] = {
+        parameters: dict[str, Any] = {
             "api-version": "5.1",
         }
 
@@ -774,7 +771,7 @@ class ADOGitClient(ADOBaseClient):
     def get_blobs(
         self,
         *,
-        blob_ids: List[str],
+        blob_ids: list[str],
         output_path: str,
         project_id: str,
         repository_id: str,
@@ -783,10 +780,10 @@ class ADOGitClient(ADOBaseClient):
 
         All non-specified options use the ADO default.
 
-        :param List[str] blob_ids: The SHA1s of the blobs
-        :param str output_path: The location to write out the zip to
-        :param str project_id: The ID for the project
-        :param str repository_id: The ID for the repository
+        :param blob_ids: The SHA1s of the blobs
+        :param output_path: The location to write out the zip to
+        :param project_id: The ID for the project
+        :param repository_id: The ID for the repository
 
         :raises FileExistsError: If the output path already exists
         """
