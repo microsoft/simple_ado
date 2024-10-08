@@ -11,6 +11,7 @@ import urllib.parse
 
 import requests
 
+from simple_ado.auth.ado_auth import ADOAuth
 from simple_ado.audit import ADOAuditClient
 from simple_ado.builds import ADOBuildClient
 from simple_ado.endpoints import ADOEndpointsClient
@@ -33,7 +34,7 @@ class ADOClient:
     """Wrapper class around the ADO API.
 
     :param tenant: The ADO tenant to connect to
-    :param credentials: The credentials to use for the API connection
+    :param auth: The auth details to use for the API connection
     :param user_agent: The user agent to set
     :param extra_headers: Any extra headers which should be sent with the API requests
     :param log: The logger to use for logging (a new one will be used if one is not supplied)
@@ -63,7 +64,7 @@ class ADOClient:
         self,
         *,
         tenant: str,
-        credentials: tuple[str, str],
+        auth: ADOAuth,
         user_agent: str | None = None,
         extra_headers: dict[str, str] | None = None,
         log: logging.Logger | None = None,
@@ -77,7 +78,7 @@ class ADOClient:
 
         self.http_client = ADOHTTPClient(
             tenant=tenant,
-            credentials=credentials,
+            auth=auth,
             user_agent=user_agent if user_agent is not None else tenant,
             log=self.log,
             extra_headers=extra_headers,

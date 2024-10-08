@@ -255,7 +255,6 @@ class ADOPullRequestClient(ADOBaseClient):
             request_url += f"/comments/{comment_id}?api-version=3.0-preview"
             requests.delete(
                 request_url,
-                auth=self.http_client.credentials,
                 headers=self.http_client.construct_headers(),
             )
 

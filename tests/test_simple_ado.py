@@ -27,10 +27,9 @@ class LibraryTests(unittest.TestCase):
     def setUp(self) -> None:
         """Set up method."""
         self.test_config = TestDetails()
-        self.client = simple_ado.ADOClient(
-            tenant=self.test_config.tenant,
-            credentials=(self.test_config.username, self.test_config.token),
-        )
+        # Generate the token using `azureauth ado token --output token`
+        auth = simple_ado.auth.ado_token_auth.ADOTokenAuth(self.test_config.token)
+        self.client = simple_ado.ADOClient(tenant=self.test_config.tenant, auth=auth)
 
     def test_access(self):
         """Test access."""
