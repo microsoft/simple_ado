@@ -1,7 +1,7 @@
 """Utilities for dealing with the ADO REST API."""
 
 import logging
-from typing import Callable, Optional
+from typing import Callable
 
 import requests
 
@@ -23,13 +23,13 @@ def download_from_response_stream(
     response: requests.Response,
     output_path: str,
     log: logging.Logger,
-    callback: Optional[Callable[[int, int], None]] = None
+    callback: Callable[[int, int], None] | None = None,
 ) -> None:
     """Downloads a file from an already open response stream.
 
-    :param requests.Response response: The response to download from
-    :param str output_path: The path to write the file out to
-    :param logging.Logger log: The log to use for progress updates
+    :param response: The response to download from
+    :param output_path: The path to write the file out to
+    :param log: The log to use for progress updates
     :param callback: If supplied, this will be called on every new chunk to update progress to the caller
 
     :raises ADOHTTPException: If we fail to fetch the file for any reason
@@ -42,7 +42,6 @@ def download_from_response_stream(
         raise ADOHTTPException("Failed to fetch file", response)
 
     with open(output_path, "wb") as output_file:
-
         content_length_string = response.headers.get("content-length", "0")
 
         total_size = int(content_length_string)
