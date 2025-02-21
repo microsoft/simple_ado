@@ -160,3 +160,52 @@ class ADOPipelineClient(ADOBaseClient):
 
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
+
+    def run_pipeline(
+        self,
+        *,
+        project_id: str,
+        pipeline_id: int,
+        pipeline_version: int | None = None,
+        resources: dict[str, Any] | None = None,
+        stages_to_skip: list[str] | None = None,
+        template_parameters: dict[str, Any] | None = None,
+        variables: dict[str, Any] | None = None,
+    ) -> ADOResponse:
+        """Run a pipeline.
+
+        :param project_id: The ID of the project
+        :param pipeline_id: The identifier of the pipeline to run
+        :param pipeline_version: The version of the pipeline to run (leave unset to run latest)
+        :param resources: The resources to use for the run. See https://learn.microsoft.com/en-us/rest/api/azure/devops/pipelines/runs/run-pipeline?view=azure-devops-rest-6.1#runresourcesparameters
+        :param stages_to_skip: A list of stages to skip if any
+        :param template_parameters: The template parameters to use for the run. A map of keys to values.
+        :param variables: The variables to use for the run. A map of strings to `Variable`. See: https://learn.microsoft.com/en-us/rest/api/azure/devops/pipelines/runs/run-pipeline?view=azure-devops-rest-6.1#variable
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/pipelines/{pipeline_id}/runs?api-version=6.1-preview.1"
+        )
+
+        if pipeline_version:
+            request_url += f"pipelineVersion={pipeline_version}"
+
+        body = {"previewRun": False}
+
+        if resources:
+            body["resources"] = resources
+
+        if stages_to_skip:
+            body["stagesToSkip"] = stages_to_skip
+
+        if template_parameters:
+            body["templateParameters"] = template_parameters
+
+        if variables:
+            body["variables"] = variables
+
+        response = self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
