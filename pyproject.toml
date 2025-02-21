@@ -5,9 +5,7 @@ description = "A simple wrapper around the Azure DevOps REST API"
 
 license = "MIT"
 
-authors = [
-    "Dale Myers <dalemy@microsoft.com>"
-]
+authors = ["Dale Myers <dalemy@microsoft.com>"]
 
 readme = 'README.md'
 
@@ -27,7 +25,7 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
     'Topic :: Software Development',
-    'Topic :: Utilities'
+    'Topic :: Utilities',
 ]
 
 [tool.poetry.dependencies]
@@ -50,9 +48,7 @@ types-requests = "^2.31.0.2"
 types-toml = "^0.10.8.7"
 
 [[tool.mypy.overrides]]
-module = [
-    "deserialize"
-]
+module = ["deserialize"]
 ignore_missing_imports = true
 
 [build-system]
