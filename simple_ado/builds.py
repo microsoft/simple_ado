@@ -30,6 +30,13 @@ class BuildQueryOrder(enum.Enum):
     START_TIME_DESCENDING = "startTimeDescending"
 
 
+class StageUpdateType(enum.Enum):
+    """The type of update to perform on a stage."""
+
+    RETRY = "retry"
+    CANCEL = "cancel"
+
+
 class ADOBuildClient(ADOBaseClient):
     """Wrapper class around the ADO Build APIs.
 
@@ -326,3 +333,47 @@ class ADOBuildClient(ADOBaseClient):
 
         response = self.http_client.delete(request_url)
         self.http_client.validate_response(response)
+
+    def patch_stage(
+        self,
+        *,
+        project_id: str,
+        build_id: int,
+        stage_name: str,
+        force_retry_all_jobs: bool,
+        state: StageUpdateType,
+    ) -> None:
+        """Re-run the failed jobs on a build.
+
+        :param project_id: The ID of the project
+        :param build_id: The identifier of the build to re-run the jobs on
+        :param stage_name: The name (identifier) of the stage to re-run.
+        """
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/build/builds/{build_id}/stages/{stage_name}?api-version=7.1"
+        )
+
+        body = {"forceRetryAllJobs": force_retry_all_jobs, "state": state.value}
+
+        response = self.http_client.patch(request_url, json_data=body)
+        self.http_client.validate_response(response)
+
+    def rerun_failed_jobs(
+        self, *, project_id: str, build_id: int, stage_name: str
+    ) -> None:
+        """Re-run the failed jobs on a build.
+
+        :param project_id: The ID of the project
+        :param build_id: The identifier of the build to re-run the jobs on
+        :param stage_name: The name (identifier) of the stage to re-run.
+        """
+
+        self.patch_stage(
+            project_id=project_id,
+            build_id=build_id,
+            stage_name=stage_name,
+            force_retry_all_jobs=False,
+            state=StageUpdateType.RETRY,
+        )
