@@ -224,9 +224,6 @@ class ADOHTTPClient:
 
         self._track_rate_limit(response)
 
-        if response.status_code == 429:
-            print()
-
         return response
 
     @retry(

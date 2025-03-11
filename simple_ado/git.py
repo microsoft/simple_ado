@@ -549,7 +549,7 @@ class ADOGitClient(ADOBaseClient):
 
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}/items?"
 
-        parameters: dict[str, Any] = {"path": path, "api-version": "5.1"}
+        parameters: dict[str, Any] = {"path": path, "api-version": "5.1", "$format": "json"}
 
         if scope_path is not None:
             parameters["scopePath"] = scope_path
