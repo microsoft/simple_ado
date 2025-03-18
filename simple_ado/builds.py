@@ -148,6 +148,24 @@ class ADOBuildClient(ADOBaseClient):
 
             url = request_url + f"&continuationToken={continuation_token}"
 
+    def list_artifacts(self, *, project_id: str, build_id: int) -> ADOResponse:
+        """List the artifacts for a build.
+
+        :param project_id: The ID of the project
+        :param build_id: The ID of the build
+        :returns: The ADO response with the data in it
+        """
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/build/builds/{build_id}/artifacts?api-version=7.2-preview.5"
+        )
+
+        self.log.debug(f"Fetching artifacts for build {build_id}...")
+
+        response = self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
+
     def get_artifact_info(
         self, *, project_id: str, build_id: int, artifact_name: str
     ) -> ADOResponse:
@@ -232,6 +250,89 @@ class ADOBuildClient(ADOBaseClient):
                 response=response, output_path=output_path, log=self.log
             )
 
+        except Exception as ex:
+            try:
+                if response:
+                    response.close()
+            except Exception:
+                pass
+            finally:
+                raise ex
+
+    def get_file_manifest(
+        self,
+        *,
+        project_id: str,
+        build_id: int,
+        artifact_name: str,
+        artifact_id: str,
+    ) -> None:
+        """Download an artifact from a build.
+
+        :param project_id: The ID of the project
+        :param build_id: The ID of the build
+        :param artifact_name: The name of the artifact to fetch
+        :param artifact_id: The ID of the artifact to download (artifact.resource.data)
+        """
+
+        parameters = {
+            "artifactName": artifact_name,
+            "fileId": artifact_id,
+            "fileName": "",
+            "api-version": "7.2-preview.5",
+        }
+
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds/{build_id}/artifacts?"
+        request_url += urllib.parse.urlencode(parameters)
+
+        self.log.debug(
+            f"Fetching file manifest from artifact {artifact_name} from build {build_id}..."
+        )
+
+        response = self.http_client.get(request_url)
+
+        return self.http_client.decode_response(response)
+
+    def download_file(
+        self,
+        *,
+        project_id: str,
+        build_id: int,
+        artifact_name: str,
+        file_id: str,
+        file_name: str,
+        output_path: str,
+    ) -> None:
+        """Download an artifact from a build.
+
+        :param project_id: The ID of the project
+        :param build_id: The ID of the build
+        :param artifact_name: The name of the artifact to fetch
+        :param file_id: The ID of the file to download
+        :param file_name: The name of the file to download
+        :param output_path: The path to write the output to.
+        """
+
+        parameters = {
+            "artifactName": artifact_name,
+            "fileId": file_id,
+            "fileName": file_name,
+            "api-version": "7.2-preview.5",
+        }
+
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds/{build_id}/artifacts?"
+        request_url += urllib.parse.urlencode(parameters)
+
+        self.log.debug(
+            f"Fetching file {file_name} from artifact {artifact_name} from build {build_id}..."
+        )
+
+        response = self.http_client.get(request_url, stream=True)
+
+        try:
+            download_from_response_stream(
+                response=response, output_path=output_path, log=self.log
+            )
         except Exception as ex:
             try:
                 if response:

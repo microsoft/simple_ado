@@ -512,9 +512,9 @@ class ADOGitClient(ADOBaseClient):
     def get_item(
         self,
         *,
-        path: str,
         project_id: str,
         repository_id: str,
+        path: str | None = None,
         scope_path: str | None = None,
         recursion_level: VersionControlRecursionType | None = None,
         include_content_metadata: bool | None = None,
@@ -529,10 +529,10 @@ class ADOGitClient(ADOBaseClient):
 
         All non-specified options use the ADO default.
 
-        :param path: The item path,
         :param project_id: The ID of the project
         :param repository_id: The ID for the repository
-        :param scope_path: The path scope
+        :param path: The item path. Either this or scope_path must be set.
+        :param scope_path: The path scope. Either this or path must be set.
         :param recursion_level: The recursion level
         :param include_content_metadata: Set to include content metadata
         :param latest_processed_changes: Set to include the latest changes
@@ -549,7 +549,16 @@ class ADOGitClient(ADOBaseClient):
 
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}/items?"
 
-        parameters: dict[str, Any] = {"path": path, "api-version": "5.1", "$format": "json"}
+        parameters: dict[str, Any] = {"api-version": "5.1", "$format": "json"}
+
+        if not scope_path and not path:
+            raise ADOException("Either path or scope_path must be set")
+
+        if scope_path and path:
+            raise ADOException("Either path or scope_path must be set, not both")
+
+        if path is not None:
+            parameters["path"] = path
 
         if scope_path is not None:
             parameters["scopePath"] = scope_path
