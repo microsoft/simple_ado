@@ -224,7 +224,9 @@ class ADOClient:
             request_url += encoded_parameters
 
             if branch_name is not None:
-                request_url += f"&sourceRefName={_canonicalize_branch_name(branch_name)}"
+                request_url += (
+                    f"&searchCriteria.sourceRefName={_canonicalize_branch_name(branch_name)}"
+                )
 
             request_url += "&api-version=3.0-preview"
 
