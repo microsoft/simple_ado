@@ -167,6 +167,7 @@ class ADOPipelineClient(ADOBaseClient):
         project_id: str,
         pipeline_id: int,
         pipeline_version: int | None = None,
+        preview_run: bool = False,
         resources: dict[str, Any] | None = None,
         stages_to_skip: list[str] | None = None,
         template_parameters: dict[str, Any] | None = None,
@@ -177,6 +178,7 @@ class ADOPipelineClient(ADOBaseClient):
         :param project_id: The ID of the project
         :param pipeline_id: The identifier of the pipeline to run
         :param pipeline_version: The version of the pipeline to run (leave unset to run latest)
+        :param preview_run: If True, this will run a dry run of the pipeline to return the final yaml
         :param resources: The resources to use for the run. See https://learn.microsoft.com/en-us/rest/api/azure/devops/pipelines/runs/run-pipeline?view=azure-devops-rest-6.1#runresourcesparameters
         :param stages_to_skip: A list of stages to skip if any
         :param template_parameters: The template parameters to use for the run. A map of keys to values.
@@ -193,7 +195,7 @@ class ADOPipelineClient(ADOBaseClient):
         if pipeline_version:
             request_url += f"pipelineVersion={pipeline_version}"
 
-        body = {"previewRun": False}
+        body = {"previewRun": preview_run}
 
         if resources:
             body["resources"] = resources
