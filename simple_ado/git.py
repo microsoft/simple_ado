@@ -241,6 +241,7 @@ class ADOGitClient(ADOBaseClient):
         self,
         *,
         branch: str,
+        path: str = "/",
         output_path: str,
         project_id: str,
         repository_id: str,
@@ -249,6 +250,7 @@ class ADOGitClient(ADOBaseClient):
         """Download the zip of the branch specified.
 
         :param branch: The name of the branch to download.
+        :param path: The path in the repository to download.
         :param output_path: The path to write the output to.
         :param project_id: The ID of the project
         :param repository_id: The ID for the repository
@@ -264,7 +266,7 @@ class ADOGitClient(ADOBaseClient):
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}/Items?"
 
         parameters = {
-            "path": "/",
+            "path": path,
             "versionDescriptor[versionOptions]": "0",
             "versionDescriptor[versionType]": "0",
             "versionDescriptor[version]": branch,
