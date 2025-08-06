@@ -67,7 +67,9 @@ class ADOBuildClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds?api-version=4.1"
+        request_url = (
+            f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds?api-version=4.1"
+        )
         variable_json = json.dumps(variables)
 
         self.log.debug(f"Queueing build ({definition_id}): {variable_json}")
@@ -116,9 +118,7 @@ class ADOBuildClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = (
-            self.http_client.api_endpoint(project_id=project_id) + "/build/builds/?"
-        )
+        request_url = self.http_client.api_endpoint(project_id=project_id) + "/build/builds/?"
 
         parameters = {
             "api-version": "4.1",
@@ -246,9 +246,7 @@ class ADOBuildClient(ADOBaseClient):
                     location, stream=True, allow_redirects=False, set_accept_json=False
                 )
 
-            download_from_response_stream(
-                response=response, output_path=output_path, log=self.log
-            )
+            download_from_response_stream(response=response, output_path=output_path, log=self.log)
 
         except Exception as ex:
             try:
@@ -302,6 +300,7 @@ class ADOBuildClient(ADOBaseClient):
         file_id: str,
         file_name: str,
         output_path: str,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> None:
         """Download an artifact from a build.
 
@@ -311,6 +310,7 @@ class ADOBuildClient(ADOBaseClient):
         :param file_id: The ID of the file to download
         :param file_name: The name of the file to download
         :param output_path: The path to write the output to.
+        :param progress_callback: An optional callback to call with the number of bytes downloaded and total size
         """
 
         parameters = {
@@ -331,7 +331,7 @@ class ADOBuildClient(ADOBaseClient):
 
         try:
             download_from_response_stream(
-                response=response, output_path=output_path, log=self.log
+                response=response, output_path=output_path, log=self.log, callback=progress_callback
             )
         except Exception as ex:
             try:
@@ -461,9 +461,7 @@ class ADOBuildClient(ADOBaseClient):
         response = self.http_client.patch(request_url, json_data=body)
         self.http_client.validate_response(response)
 
-    def rerun_failed_jobs(
-        self, *, project_id: str, build_id: int, stage_name: str
-    ) -> None:
+    def rerun_failed_jobs(self, *, project_id: str, build_id: int, stage_name: str) -> None:
         """Re-run the failed jobs on a build.
 
         :param project_id: The ID of the project
