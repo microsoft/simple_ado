@@ -8,7 +8,7 @@
 import enum
 import json
 import logging
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator
 import urllib.parse
 
 
