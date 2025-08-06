@@ -192,7 +192,13 @@ class ADOBuildClient(ADOBaseClient):
         return self.http_client.decode_response(response)
 
     def download_artifact(
-        self, *, project_id: str, build_id: int, artifact_name: str, output_path: str
+        self,
+        *,
+        project_id: str,
+        build_id: int,
+        artifact_name: str,
+        output_path: str,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> None:
         """Download an artifact from a build.
 
@@ -200,6 +206,7 @@ class ADOBuildClient(ADOBaseClient):
         :param build_id: The ID of the build
         :param artifact_name: The name of the artifact to fetch
         :param output_path: The path to write the output to.
+        :param progress_callback: An optional callback to call with the number of bytes downloaded and total size
         """
 
         parameters = {
@@ -246,7 +253,9 @@ class ADOBuildClient(ADOBaseClient):
                     location, stream=True, allow_redirects=False, set_accept_json=False
                 )
 
-            download_from_response_stream(response=response, output_path=output_path, log=self.log)
+            download_from_response_stream(
+                response=response, output_path=output_path, log=self.log, callback=progress_callback
+            )
 
         except Exception as ex:
             try:
