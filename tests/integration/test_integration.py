@@ -17,20 +17,20 @@ import yaml
 import simple_ado
 
 
-@pytest.fixture
-def client(integration_client):
+@pytest.fixture(name="client")
+def fixture_client(integration_client):
     """Return the integration client."""
     return integration_client
 
 
-@pytest.fixture
-def project_id(integration_project_id):
+@pytest.fixture(name="project_id")
+def fixture_project_id(integration_project_id):
     """Return the integration project ID."""
     return integration_project_id
 
 
-@pytest.fixture
-def repository_id(integration_repo_id):
+@pytest.fixture(name="repository_id")
+def fixture_repository_id(integration_repo_id):
     """Return the integration repository ID."""
     return integration_repo_id
 
@@ -42,6 +42,7 @@ def test_access(client):
 
 
 @pytest.mark.integration
+@pytest.mark.destructive
 def test_get_blobs(client, project_id, repository_id):
     """Test get blobs."""
     client.git.get_blobs(
@@ -118,7 +119,6 @@ def test_properties(client, project_id, repository_id):
 
 
 @pytest.mark.integration
-@pytest.mark.destructive
 def test_list_repos(client, project_id):
     """Test list repos."""
     repos = client.git.all_repositories(project_id=project_id)

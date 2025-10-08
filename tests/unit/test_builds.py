@@ -1,8 +1,9 @@
 """Unit tests for the Builds client."""
 
-import pytest
 import responses
-from simple_ado.builds import ADOBuildClient, BuildQueryOrder
+from simple_ado.builds import BuildQueryOrder
+
+# pylint: disable=line-too-long
 
 
 @responses.activate
@@ -39,7 +40,7 @@ def test_get_builds_with_definition_filter(mock_client, mock_project_id):
 
     builds = list(mock_client.builds.get_builds(project_id=mock_project_id, definitions=[100, 101]))
 
-    assert builds == []
+    assert not builds
 
 
 @responses.activate
@@ -63,7 +64,7 @@ def test_get_builds_with_order(mock_client, mock_project_id):
         )
     )
 
-    assert builds == []
+    assert not builds
 
 
 @responses.activate
