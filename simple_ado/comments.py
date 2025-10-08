@@ -12,12 +12,12 @@ from typing import Any
 class ADOCommentStatus(enum.Enum):
     """Possible values of comment statuses."""
 
-    ACTIVE: int = 1
-    FIXED: int = 2
-    WONT_FIX: int = 3
-    CLOSED: int = 4
-    BY_DESIGN: int = 5
-    PENDING: int = 6
+    ACTIVE = 1
+    FIXED = 2
+    WONT_FIX = 3
+    CLOSED = 4
+    BY_DESIGN = 5
+    PENDING = 6
 
 
 class ADOCommentProperty:

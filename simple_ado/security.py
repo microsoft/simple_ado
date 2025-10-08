@@ -21,43 +21,43 @@ from simple_ado.types import TeamFoundationId
 class ADOBranchPermission(enum.IntEnum):
     """Possible types of git branch permissions."""
 
-    ADMINISTER: int = 2**0
-    READ: int = 2**1
-    CONTRIBUTE: int = 2**2
-    FORCE_PUSH: int = 2**3
-    CREATE_BRANCH: int = 2**4
-    CREATE_TAG: int = 2**5
-    MANAGE_NOTES: int = 2**6
-    BYPASS_PUSH_POLICIES: int = 2**7
-    CREATE_REPOSITORY: int = 2**8
-    DELETE_REPOSITORY: int = 2**9
-    RENAME_REPOSITORY: int = 2**10
-    EDIT_POLICIES: int = 2**11
-    REMOVE_OTHERS_LOCKS: int = 2**12
-    MANAGE_PERMISSIONS: int = 2**13
-    CONTRIBUTE_TO_PULL_REQUESTS: int = 2**14
-    BYPASS_PULL_REQUEST_POLICIES: int = 2**15
+    ADMINISTER = 2**0
+    READ = 2**1
+    CONTRIBUTE = 2**2
+    FORCE_PUSH = 2**3
+    CREATE_BRANCH = 2**4
+    CREATE_TAG = 2**5
+    MANAGE_NOTES = 2**6
+    BYPASS_PUSH_POLICIES = 2**7
+    CREATE_REPOSITORY = 2**8
+    DELETE_REPOSITORY = 2**9
+    RENAME_REPOSITORY = 2**10
+    EDIT_POLICIES = 2**11
+    REMOVE_OTHERS_LOCKS = 2**12
+    MANAGE_PERMISSIONS = 2**13
+    CONTRIBUTE_TO_PULL_REQUESTS = 2**14
+    BYPASS_PULL_REQUEST_POLICIES = 2**15
 
 
 class ADOBranchPermissionLevel(enum.IntEnum):
     """Possible values of git branch permissions."""
 
-    NOT_SET: int = 0
-    ALLOW: int = 1
-    DENY: int = 2
+    NOT_SET = 0
+    ALLOW = 1
+    DENY = 2
 
 
 class ADOBranchPolicy(enum.Enum):
     """Possible types of git branch protections."""
 
-    APPROVAL_COUNT: str = "fa4e907d-c16b-4a4c-9dfa-4906e5d171dd"
-    BUILD: str = "0609b952-1397-4640-95ec-e00a01b2c241"
-    CASE_ENFORCEMENT: str = "7ed39669-655c-494e-b4a0-a08b4da0fcce"
-    MAXIMUM_BLOB_SIZE: str = "2e26e725-8201-4edd-8bf5-978563c34a80"
-    MERGE_STRATEGY: str = "fa4e907d-c16b-4a4c-9dfa-4916e5d171ab"
-    REQUIRED_REVIEWERS: str = "fd2167ab-b0be-447a-8ec8-39368250530e"
-    STATUS_CHECK: str = "cbdc66da-9728-4af8-aada-9a5a32e4a226"
-    WORK_ITEM: str = "40e92b44-2fe1-4dd6-b3d8-74a9c21d0c6e"
+    APPROVAL_COUNT = "fa4e907d-c16b-4a4c-9dfa-4906e5d171dd"
+    BUILD = "0609b952-1397-4640-95ec-e00a01b2c241"
+    CASE_ENFORCEMENT = "7ed39669-655c-494e-b4a0-a08b4da0fcce"
+    MAXIMUM_BLOB_SIZE = "2e26e725-8201-4edd-8bf5-978563c34a80"
+    MERGE_STRATEGY = "fa4e907d-c16b-4a4c-9dfa-4916e5d171ab"
+    REQUIRED_REVIEWERS = "fd2167ab-b0be-447a-8ec8-39368250530e"
+    STATUS_CHECK = "cbdc66da-9728-4af8-aada-9a5a32e4a226"
+    WORK_ITEM = "40e92b44-2fe1-4dd6-b3d8-74a9c21d0c6e"
 
 
 class ADOPolicyApplicability(enum.Enum):

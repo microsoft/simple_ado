@@ -212,7 +212,7 @@ class ADOHTTPClient:
         self._wait()
 
         headers = self.construct_headers(
-            additional_headers=additional_headers, set_accept_json=False
+            additional_headers=additional_headers, set_accept_json=set_accept_json
         )
 
         response = self._session.get(
@@ -437,9 +437,7 @@ class ADOHTTPClient:
             value: ADOResponse = response_data["value"]
             return value
         except Exception as ex:
-            raise ADOException(
-                "The response was invalid (did not contain a value)."
-            ) from ex
+            raise ADOException("The response was invalid (did not contain a value).") from ex
 
     def construct_headers(
         self,
