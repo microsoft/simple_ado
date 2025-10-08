@@ -1,0 +1,45 @@
+{
+  "count": 2,
+  "value": [
+    {
+      "id": 12345,
+      "name": "Build Pipeline 1",
+      "url": "https://dev.azure.com/test-tenant/test-project/_apis/build/Builds/12345",
+      "buildNumber": "20231001.1",
+      "status": "completed",
+      "result": "succeeded",
+      "queueTime": "2023-10-01T10:00:00.000Z",
+      "startTime": "2023-10-01T10:01:00.000Z",
+      "finishTime": "2023-10-01T10:15:00.000Z",
+      "definition": {
+        "id": 100,
+        "name": "CI Pipeline"
+      },
+      "project": {
+        "id": "test-project-123",
+        "name": "Test Project"
+      },
+      "sourceBranch": "refs/heads/main",
+      "sourceVersion": "abc123def456"
+    },
+    {
+      "id": 12346,
+      "name": "Build Pipeline 2",
+      "url": "https://dev.azure.com/test-tenant/test-project/_apis/build/Builds/12346",
+      "buildNumber": "20231001.2",
+      "status": "inProgress",
+      "queueTime": "2023-10-01T11:00:00.000Z",
+      "startTime": "2023-10-01T11:01:00.000Z",
+      "definition": {
+        "id": 101,
+        "name": "Release Pipeline"
+      },
+      "project": {
+        "id": "test-project-123",
+        "name": "Test Project"
+      },
+      "sourceBranch": "refs/heads/develop",
+      "sourceVersion": "def789ghi012"
+    }
+  ]
+}
