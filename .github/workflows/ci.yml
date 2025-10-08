@@ -1,0 +1,171 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+      
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+      
+      - name: Install project
+        run: poetry install --no-interaction
+      
+      - name: Run black check
+        run: poetry run black --check --line-length 100 simple_ado tests
+      
+      - name: Run pylint
+        run: |
+          poetry run pylint --rcfile=pylintrc simple_ado
+          poetry run pylint --rcfile=pylintrc tests
+      
+      - name: Run mypy
+        run: |
+          poetry run mypy --ignore-missing-imports simple_ado/
+          poetry run mypy --ignore-missing-imports tests/
+      
+      - name: Run unit tests
+        run: poetry run pytest tests/unit/ --cov=simple_ado --cov-report=xml --cov-report=html --junitxml=junit/test-results.xml
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: matrix.python-version == '3.12'
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+      
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.python-version }}
+          path: junit/test-results.xml
+      
+      - name: Upload coverage HTML report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-html-${{ matrix.python-version }}
+          path: htmlcov/
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  deploy-coverage:
+    name: Deploy Coverage to GitHub Pages
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    
+    permissions:
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Download all coverage HTML reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-html-*
+          path: coverage-artifacts
+      
+      - name: Select latest Python version coverage
+        run: |
+          # Find the coverage report from the highest Python version
+          LATEST_DIR=$(ls -d coverage-artifacts/coverage-html-* | sort -V | tail -1)
+          echo "Using coverage from: $LATEST_DIR"
+          mv "$LATEST_DIR" htmlcov
+      
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: htmlcov
+      
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    # Only run if ADO credentials are available
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      
+      - name: Install dependencies
+        run: poetry install --no-interaction
+      
+      - name: Run integration tests
+        run: poetry run pytest tests/ --integration --junitxml=junit/integration-results.xml
+        env:
+          SIMPLE_ADO_BASE_TOKEN: ${{ secrets.SIMPLE_ADO_BASE_TOKEN }}
+          SIMPLE_ADO_TENANT: ${{ secrets.SIMPLE_ADO_TENANT }}
+          SIMPLE_ADO_PROJECT_ID: ${{ secrets.SIMPLE_ADO_PROJECT_ID }}
+          SIMPLE_ADO_REPO_ID: ${{ secrets.SIMPLE_ADO_REPO_ID }}
+      
+      - name: Upload integration test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: junit/integration-results.xml

@@ -1,9 +1,10 @@
 """Unit tests for the main ADOClient class."""
 
-import pytest
 import responses
 from simple_ado import ADOClient
 from simple_ado.auth import ADOTokenAuth
+
+# pylint: disable=line-too-long
 
 
 def test_client_initialization(mock_tenant, mock_auth):
