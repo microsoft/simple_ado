@@ -34,11 +34,11 @@ from simple_ado.models import (
 class ADOPullRequestStatus(enum.Enum):
     """Possible values of pull request states."""
 
-    ABANDONED: str = "abandoned"
-    ACTIVE: str = "active"
-    ALL: str = "all"
-    COMPLETED: str = "completed"
-    NOT_SET: str = "notSet"
+    ABANDONED = "abandoned"
+    ACTIVE = "active"
+    ALL = "all"
+    COMPLETED = "completed"
+    NOT_SET = "notSet"
 
 
 class ADOPullRequestClient(ADOBaseClient):

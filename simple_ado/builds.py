@@ -227,7 +227,6 @@ class ADOBuildClient(ADOBaseClient):
         )
 
         try:
-
             while True:
                 if not response.is_redirect:
                     break
@@ -242,7 +241,9 @@ class ADOBuildClient(ADOBaseClient):
 
                 location_components = urllib.parse.urlsplit(location)
 
-                if not location_components.hostname.endswith(".visualstudio.com"):
+                if location_components.hostname and not location_components.hostname.endswith(
+                    ".visualstudio.com"
+                ):
                     raise ADOHTTPException(
                         "ADO returned a redirect status code with a location header that is not on visualstudio.com, "
                         + f"configuration={self}",
@@ -458,6 +459,8 @@ class ADOBuildClient(ADOBaseClient):
         :param project_id: The ID of the project
         :param build_id: The identifier of the build to re-run the jobs on
         :param stage_name: The name (identifier) of the stage to re-run.
+        :param force_retry_all_jobs: Whether to force retry all jobs in the stage, even if they succeeded
+        :param state: The type of update to perform on the stage
         """
 
         request_url = (

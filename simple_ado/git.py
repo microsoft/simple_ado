@@ -20,12 +20,12 @@ from simple_ado.utilities import download_from_response_stream
 class ADOGitStatusState(enum.Enum):
     """Possible values of git status states."""
 
-    NOT_SET: str = "notSet"
-    NOT_APPLICABLE: str = "notApplicable"
-    PENDING: str = "pending"
-    SUCCEEDED: str = "succeeded"
-    FAILED: str = "failed"
-    ERROR: str = "error"
+    NOT_SET = "notSet"
+    NOT_APPLICABLE = "notApplicable"
+    PENDING = "pending"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    ERROR = "error"
 
 
 class ADOReferenceUpdate:
@@ -510,7 +510,7 @@ class ADOGitClient(ADOBaseClient):
         COMMIT = "commit"
         TAG = "tag"
 
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals,too-complex
     def get_item(
         self,
         *,
@@ -593,6 +593,8 @@ class ADOGitClient(ADOBaseClient):
 
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
+
+    # pylint: enable=too-many-locals,too-complex
 
     # pylint: disable=too-many-locals,line-too-long,too-complex,too-many-branches
     def get_commits(
