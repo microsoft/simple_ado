@@ -1,0 +1,23 @@
+{
+  "count": 2,
+  "value": [
+    {
+      "objectId": "abc123def456ghi789",
+      "name": "refs/heads/main",
+      "creator": {
+        "displayName": "Test User",
+        "uniqueName": "test@example.com"
+      },
+      "url": "https://dev.azure.com/test-tenant/test-project/_apis/git/repositories/test-repo/refs/heads/main"
+    },
+    {
+      "objectId": "def789ghi012jkl345",
+      "name": "refs/heads/develop",
+      "creator": {
+        "displayName": "Test User",
+        "uniqueName": "test@example.com"
+      },
+      "url": "https://dev.azure.com/test-tenant/test-project/_apis/git/repositories/test-repo/refs/heads/develop"
+    }
+  ]
+}
