@@ -5,6 +5,7 @@
 
 """ADO API wrapper."""
 
+import datetime
 import logging
 from typing import Any, Iterator
 import urllib.parse
@@ -23,6 +24,7 @@ from simple_ado.git import ADOGitClient
 from simple_ado.graph import ADOGraphClient
 from simple_ado.governance import ADOGovernanceClient
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
+from simple_ado.models.pull_requests import ADOPullRequestTimeRangeType
 from simple_ado.pipelines import ADOPipelineClient
 from simple_ado.pools import ADOPoolsClient
 from simple_ado.pull_requests import ADOPullRequestClient, ADOPullRequestStatus
@@ -181,24 +183,46 @@ class ADOClient:
             self.http_client, self.log, pull_request_id, project_id, repository_id
         )
 
+    # pylint: disable=too-many-locals,too-complex,too-many-branches
     def list_all_pull_requests(
         self,
         *,
-        branch_name: str | None = None,
         project_id: str,
-        repository_id: str,
         top: int | None = None,
+        creator_id: str | None = None,
+        include_links: bool | None = None,
+        max_time: datetime.datetime | None = None,
+        min_time: datetime.datetime | None = None,
+        query_time_range_type: ADOPullRequestTimeRangeType | None = None,
+        repository_id: str | None = None,
+        reviewer_id: str | None = None,
+        branch_name: str | None = None,  # TODO: Rename to source_ref_name
+        source_repo_id: str | None = None,
         pr_status: ADOPullRequestStatus | None = None,
+        target_ref_name: str | None = None,
+        title: str | None = None,
     ) -> Iterator[Any]:
-        """Get the pull requests for a branch from ADO.
+        """Get the pull requests matching the specified criteria from ADO.
 
-        :param branch_name: The name of the branch to fetch the pull requests for.
-        :param project_id: The ID of the project
-        :param repository_id: The ID for the repository
-        :param top: How many PRs to retrieve
-        :param pr_status: Set to filter by only PRs with that status
+        :param project_id: The ID of the project.
+        :param top: The number of pull requests to retrieve per page.
+        :param creator_id: If set, search for pull requests that were created by this identity (Team Foundation ID).
+        :param include_links: Whether to include the _links field on the shallow references.
+        :param max_time: If specified, filters pull requests that were created/closed before this date based on the
+                         queryTimeRangeType specified.
+        :param min_time: If specified, filters pull requests that were created/closed after this date based on the
+                         queryTimeRangeType specified.
+        :param query_time_range_type: The type of time range to use for min_time and max_time filtering. Defaults to
+                                      Created if unset.
+        :param repository_id: If set, search for pull requests whose target branch is in this repository.
+        :param reviewer_id: If set, search for pull requests that have this identity as a reviewer (Team Foundation ID).
+        :param branch_name: If set, search for pull requests from this source branch.
+        :param source_repo_id: If set, search for pull requests whose source branch is in this repository.
+        :param pr_status: If set, search for pull requests that are in this state. Defaults to Active if unset.
+        :param target_ref_name: If set, search for pull requests into this target branch.
+        :param title: If set, filters pull requests that contain the specified text in the title.
 
-        :returns: The ADO Response with the pull request data
+        :returns: An iterator yielding pull request data dictionaries.
         """
 
         self.log.debug("Fetching PRs")
@@ -207,28 +231,59 @@ class ADOClient:
 
         while True:
             request_url = (
-                self.http_client.api_endpoint(project_id=project_id)
-                + f"/git/repositories/{repository_id}/pullRequests?"
+                self.http_client.api_endpoint(project_id=project_id) + "/git/pullrequests?"
             )
 
-            parameters: dict[str, Any] = {"$skip": offset}
+            parameters: dict[str, Any] = {"$skip": offset, "api-version": "7.2-preview.2"}
 
             if top:
                 parameters["$top"] = top
 
+            if creator_id:
+                parameters["searchCriteria.creatorId"] = creator_id
+
+            if include_links is not None:
+                parameters["searchCriteria.includeLinks"] = str(include_links).lower()
+
+            if max_time:
+                parameters["searchCriteria.maxTime"] = max_time.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
+            if min_time:
+                parameters["searchCriteria.minTime"] = min_time.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
+            if query_time_range_type:
+                parameters["searchCriteria.queryTimeRangeType"] = query_time_range_type.value
+
+            if repository_id:
+                parameters["searchCriteria.repositoryId"] = repository_id
+
+            if reviewer_id:
+                parameters["searchCriteria.reviewerId"] = reviewer_id
+
+            if source_repo_id:
+                parameters["searchCriteria.sourceRepositoryId"] = source_repo_id
+
             if pr_status:
                 parameters["searchCriteria.status"] = pr_status.value
+
+            if title:
+                parameters["searchCriteria.title"] = title
 
             encoded_parameters = urllib.parse.urlencode(parameters)
 
             request_url += encoded_parameters
+
+            # ADO doesn't like it if the `/` in branch references are encoded, so we just append them manually
 
             if branch_name is not None:
                 request_url += (
                     f"&searchCriteria.sourceRefName={_canonicalize_branch_name(branch_name)}"
                 )
 
-            request_url += "&api-version=3.0-preview"
+            if target_ref_name is not None:
+                request_url += (
+                    f"&searchCriteria.targetRefName={_canonicalize_branch_name(target_ref_name)}"
+                )
 
             response = self.http_client.get(request_url)
             response_data = self.http_client.decode_response(response)
@@ -241,6 +296,8 @@ class ADOClient:
             yield from extracted
 
             offset += len(extracted)
+
+    # pylint: enable=too-many-locals,too-complex,too-many-branches
 
     def custom_get(
         self,
