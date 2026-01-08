@@ -106,7 +106,7 @@ class ADOCommentLocation:
             "leftFileEnd": None,
             "rightFileStart": {
                 "line": self.line,
-                "offset": 0 if self.start_index is None else self.start_index,
+                "offset": max(1, 1 if self.start_index is None else self.start_index),
             },
             "rightFileEnd": {
                 "line": self.line,
