@@ -102,7 +102,7 @@ def fixture_integration_tenant() -> str:
     """Get tenant from environment for integration tests."""
     tenant = os.getenv("SIMPLE_ADO_TENANT")
     if not tenant:
-        pytest.skip("SIMPLE_ADO_TENANT environment variable not set")
+        raise ValueError("SIMPLE_ADO_TENANT environment variable not set")
     return tenant
 
 
@@ -111,7 +111,7 @@ def fixture_integration_token() -> str:
     """Get token from environment for integration tests."""
     token = os.getenv("SIMPLE_ADO_BASE_TOKEN")
     if not token:
-        pytest.skip("SIMPLE_ADO_BASE_TOKEN environment variable not set")
+        raise ValueError("SIMPLE_ADO_BASE_TOKEN environment variable not set")
     return token
 
 
@@ -120,7 +120,7 @@ def fixture_integration_project_id() -> str:
     """Get project ID from environment for integration tests."""
     project_id = os.getenv("SIMPLE_ADO_PROJECT_ID")
     if not project_id:
-        pytest.skip("SIMPLE_ADO_PROJECT_ID environment variable not set")
+        raise ValueError("SIMPLE_ADO_PROJECT_ID environment variable not set")
     return project_id
 
 
@@ -129,7 +129,7 @@ def fixture_integration_repo_id() -> str:
     """Get repository ID from environment for integration tests."""
     repo_id = os.getenv("SIMPLE_ADO_REPO_ID")
     if not repo_id:
-        pytest.skip("SIMPLE_ADO_REPO_ID environment variable not set")
+        raise ValueError("SIMPLE_ADO_REPO_ID environment variable not set")
     return repo_id
 
 

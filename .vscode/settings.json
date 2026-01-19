@@ -38,6 +38,9 @@
     "python.testing.unittestEnabled": false,
     "python.testing.nosetestsEnabled": false,
     "python.testing.pytestEnabled": true,
+    "python.testing.cwd": "${workspaceFolder}",
+    "python.testing.autoTestDiscoverOnSaveEnabled": true,
+    "python.envFile": "${workspaceFolder}/.env",
     "python.languageServer": "Jedi",
     "black-formatter.args": [
         "--line-length",
