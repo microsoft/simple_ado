@@ -3,6 +3,8 @@
 import enum
 from typing import Any
 
+from .work_item_built_in_fields import ADOWorkItemBuiltInFields
+
 
 class OperationType(enum.Enum):
     """An ADO operation."""
@@ -26,7 +28,7 @@ class PatchOperation:
     def __init__(
         self,
         operation: OperationType,
-        path: str,
+        path: str | ADOWorkItemBuiltInFields,
         value: Any | None,
         from_path: str | None = None,
     ) -> None:
@@ -38,7 +40,10 @@ class PatchOperation:
         :param from_path: The old path (if applicable)
         """
         self.operation = operation
-        self.path = path
+        if isinstance(path, ADOWorkItemBuiltInFields):
+            self.path = f"/fields/{path.value}"
+        else:
+            self.path = path
         self.value = value
         self.from_path = from_path
 
@@ -64,12 +69,12 @@ class PatchOperation:
 class AddOperation(PatchOperation):
     """Represents an add PATCH operation."""
 
-    def __init__(self, field: str, value: Any) -> None:
+    def __init__(self, field: str | ADOWorkItemBuiltInFields, value: Any) -> None:
         super().__init__(OperationType.ADD, field, value)
 
 
 class DeleteOperation(PatchOperation):
     """Represents a delete PATCH operation."""
 
-    def __init__(self, field: str) -> None:
+    def __init__(self, field: str | ADOWorkItemBuiltInFields) -> None:
         super().__init__(OperationType.REMOVE, field, None)

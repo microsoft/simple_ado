@@ -5,7 +5,6 @@
 
 """ADO work items API wrapper."""
 
-import enum
 import logging
 import os
 import typing
@@ -16,7 +15,12 @@ from simple_ado.exceptions import ADOException, ADOHTTPException
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 from simple_ado.utilities import boolstr
 
-from simple_ado.models import PatchOperation, AddOperation
+from simple_ado.models import (
+    PatchOperation,
+    AddOperation,
+    WorkItemRelationType,
+    ADOWorkItemBuiltInFields,
+)
 
 
 class BatchRequest:
@@ -59,43 +63,6 @@ class DeleteBatchRequest(BatchRequest):
             headers["Content-Type"] = "application/json-patch+json"
 
         super().__init__("DELETE", uri, headers)
-
-
-class WorkItemRelationType(enum.Enum):
-    """Defines the various relationship types between work items."""
-
-    PRODUCES_FOR = "System.LinkTypes.Remote.Dependency-Forward"
-    CONSUMES_FROM = "System.LinkTypes.Remote.Dependency-Reverse"
-
-    DUPLICATE = "System.LinkTypes.Duplicate-Forward"
-    DUPLICATE_OF = "System.LinkTypes.Duplicate-Reverse"
-
-    BLOCKED_BY = "Microsoft.VSTS.BlockingLink-Forward"
-    BLOCKING = "Microsoft.VSTS.BlockingLink-Reverse"
-
-    REFERENCED_BY = "Microsoft.VSTS.TestCase.SharedParameterReferencedBy-Forward"
-    REFERENCES = "Microsoft.VSTS.TestCase.SharedParameterReferencedBy-Reverse"
-
-    TESTED_BY = "Microsoft.VSTS.Common.TestedBy-Forward"
-    TESTS = "Microsoft.VSTS.Common.TestedBy-Reverse"
-
-    TEST_CASE = "Microsoft.VSTS.TestCase.SharedStepReferencedBy-Forward"
-    SHARED_STEPS = "Microsoft.VSTS.TestCase.SharedStepReferencedBy-Reverse"
-
-    SUCCESSOR = "System.LinkTypes.Dependency-Forward"
-    PREDECESSOR = "System.LinkTypes.Dependency-Reverse"
-
-    CHILD = "System.LinkTypes.Hierarchy-Forward"
-    PARENT = "System.LinkTypes.Hierarchy-Reverse"
-
-    REMOTE_RELATED = "System.LinkTypes.Remote.Related"
-    RELATED = "System.LinkTypes.Related"
-
-    ATTACHED_FILE = "AttachedFile"
-
-    HYPERLINK = "Hyperlink"
-
-    ARTIFACT_LINK = "ArtifactLink"
 
 
 class ADOWorkItemsClient(ADOBaseClient):
@@ -196,7 +163,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         self,
         *,
         identifier: str,
-        field: str,
+        field: str | ADOWorkItemBuiltInFields,
         value: str,
         project_id: str,
         bypass_rules: bool = False,
@@ -205,7 +172,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         """Add a property value to a work item.
 
         :param identifier: The identifier of the work item
-        :param field: The field to add
+        :param field: The field to add (either a string or ADOWorkItemBuiltInFields enum)
         :param value: The value to set the field to
         :param project_id: The ID of the project
         :param bypass_rules: Set to True if we should bypass validation
@@ -217,9 +184,16 @@ class ADOWorkItemsClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        self.log.debug(f"Add field '{field}' to ticket {identifier}")
+        # Convert enum to string value if needed
+        field_str = field.value if isinstance(field, ADOWorkItemBuiltInFields) else field
 
-        operation = AddOperation(field, value)
+        # Add /fields/ prefix if not already present (and not a special path like /relations/)
+        if not field_str.startswith("/"):
+            field_str = f"/fields/{field_str}"
+
+        self.log.debug(f"Add field '{field_str}' to ticket {identifier}")
+
+        operation = AddOperation(field_str, value)
 
         request_url = (
             f"{self.http_client.api_endpoint(project_id=project_id)}/wit/workitems/{identifier}"
