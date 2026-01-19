@@ -9,7 +9,7 @@ import datetime
 import logging
 import os
 import time
-from typing import Any, cast
+from typing import Any, TypeAlias
 
 import requests
 from tenacity import (
@@ -26,7 +26,7 @@ from simple_ado.models import PatchOperation
 
 # pylint: disable=invalid-name
 ADOThread = dict[str, Any]
-ADOResponse = Any
+ADOResponse: TypeAlias = Any
 # pylint: enable=invalid-name
 
 
@@ -34,7 +34,7 @@ def _is_retryable_get_failure(exception: Exception) -> bool:
     if not isinstance(exception, ADOHTTPException):
         return False
 
-    return cast(ADOHTTPException, exception).response.status_code in range(400, 500)
+    return exception.response.status_code in range(400, 500)
 
 
 def _is_connection_failure(exception: Exception) -> bool:
@@ -146,7 +146,7 @@ class ADOHTTPClient:
 
         return url
 
-    def _wait(self):
+    def _wait(self) -> None:
         """Wait as long as we need for rate limiting purposes."""
         if not self._not_before:
             return
@@ -453,7 +453,7 @@ class ADOHTTPClient:
         :returns: A dictionary of the headers for a request
         """
 
-        headers = {}
+        headers: dict[str, str] = {}
 
         if set_accept_json:
             headers["Accept"] = "application/json"

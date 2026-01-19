@@ -40,7 +40,7 @@ class ADOIdentitiesClient(ADOBaseClient):
 
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
-        return self.http_client.extract_value(response_data)
+        return cast(list[dict[str, Any]], self.http_client.extract_value(response_data))
 
     def get_team_foundation_id(self, identity: str) -> TeamFoundationId:
         """Fetch the unique Team Foundation GUID for a given identity.

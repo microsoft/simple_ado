@@ -224,7 +224,7 @@ class ADOPullRequestClient(ADOBaseClient):
                 comment_identifier
             )
 
-        body = {
+        body: dict[str, Any] = {
             "comments": comments,
             "properties": properties,
             "status": (status.value if status is not None else ADOCommentStatus.ACTIVE.value),
@@ -277,7 +277,7 @@ class ADOPullRequestClient(ADOBaseClient):
 
         # Check the type of the input
         for thread in threads:
-            if not isinstance(thread, ADOComment):
+            if not isinstance(thread, ADOComment):  # pyright: ignore[reportUnnecessaryIsInstance]
                 raise ADOException("Thread was not an ADOComment: " + str(thread))
 
         for thread in threads:
@@ -404,7 +404,7 @@ class ADOPullRequestClient(ADOBaseClient):
             f'Fetching threads with identifier "{identifier}" on PR {self.pull_request_id}'
         )
 
-        matching_threads = []
+        matching_threads: list[ADOThread] = []
 
         for thread in self.get_threads():
             self.log.debug("Handling thread...")

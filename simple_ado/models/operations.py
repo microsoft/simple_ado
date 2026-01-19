@@ -29,7 +29,7 @@ class PatchOperation:
         path: str,
         value: Any | None,
         from_path: str | None = None,
-    ):
+    ) -> None:
         """Create a new PatchOperation.
 
         :param operation: The raw operation to do
@@ -48,7 +48,7 @@ class PatchOperation:
         :returns: A dictionary.
         """
 
-        raw_dict = {
+        raw_dict: dict[str, Any] = {
             "op": self.operation.value,
             "value": self.value,
             "from": self.from_path,
@@ -57,19 +57,19 @@ class PatchOperation:
 
         return raw_dict
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.serialize())
 
 
 class AddOperation(PatchOperation):
     """Represents an add PATCH operation."""
 
-    def __init__(self, field: str, value: Any):
+    def __init__(self, field: str, value: Any) -> None:
         super().__init__(OperationType.ADD, field, value)
 
 
 class DeleteOperation(PatchOperation):
     """Represents a delete PATCH operation."""
 
-    def __init__(self, field: str):
+    def __init__(self, field: str) -> None:
         super().__init__(OperationType.REMOVE, field, None)

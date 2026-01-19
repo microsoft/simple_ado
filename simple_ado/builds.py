@@ -74,7 +74,7 @@ class ADOBuildClient(ADOBaseClient):
 
         self.log.debug(f"Queueing build ({definition_id}): {variable_json}")
 
-        body = {
+        body: dict[str, Any] = {
             "parameters": variable_json,
             "definition": {"id": definition_id},
             "sourceBranch": source_branch,
@@ -274,7 +274,7 @@ class ADOBuildClient(ADOBaseClient):
         build_id: int,
         artifact_name: str,
         artifact_id: str,
-    ) -> None:
+    ) -> ADOResponse:
         """Download an artifact from a build.
 
         :param project_id: The ID of the project
@@ -468,7 +468,7 @@ class ADOBuildClient(ADOBaseClient):
             + f"/build/builds/{build_id}/stages/{stage_name}?api-version=7.1"
         )
 
-        body = {"forceRetryAllJobs": force_retry_all_jobs, "state": state.value}
+        body: dict[str, Any] = {"forceRetryAllJobs": force_retry_all_jobs, "state": state.value}
 
         response = self.http_client.patch(request_url, json_data=body)
         self.http_client.validate_response(response)

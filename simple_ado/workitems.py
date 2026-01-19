@@ -6,11 +6,10 @@
 """ADO work items API wrapper."""
 
 import enum
-import itertools
 import logging
 import os
 import typing
-from typing import Any, cast, Iterator, List
+from typing import Any, cast, Iterator, List, TypeVar
 
 from simple_ado.base_client import ADOBaseClient
 from simple_ado.exceptions import ADOException, ADOHTTPException
@@ -155,7 +154,21 @@ class ADOWorkItemsClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        for id_chunk in itertools.batched(identifiers, 200):
+        T = TypeVar("T")
+
+        # batched is only available in Python 3.12+
+        def batched(sequence: List[T], n: int) -> Iterator[List[T]]:
+            """Batch data into lists of length n.
+
+            :param sequence: The iterable to batch
+            :param n: The batch size
+
+            :returns: An iterator of lists of size n
+            """
+            for i in range(0, len(sequence), n):
+                yield sequence[i : i + n]
+
+        for id_chunk in batched(identifiers, 200):
 
             ids = ",".join(map(str, id_chunk))
 
@@ -167,8 +180,7 @@ class ADOWorkItemsClient(ADOBaseClient):
             response = self.http_client.get(request_url)
             data = self.http_client.decode_response(response)
 
-            for item in data.get("value", []):
-                yield item
+            yield from data.get("value", [])
 
     def get_work_item_types(self, project_id: str) -> ADOResponse:
         """Get the types of work items supported by the project.
@@ -584,7 +596,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug("Running batch operation")
 
-        full_body = []
+        full_body: list[dict[str, Any]] = []
         for operation in operations:
             full_body.append(operation.body())
 

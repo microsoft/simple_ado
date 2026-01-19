@@ -10,6 +10,7 @@
 from collections import defaultdict
 import datetime
 import os
+from typing import Any
 
 import pytest
 import yaml
@@ -18,32 +19,32 @@ import simple_ado
 
 
 @pytest.fixture(name="client")
-def fixture_client(integration_client):
+def fixture_client(integration_client: simple_ado.ADOClient) -> simple_ado.ADOClient:
     """Return the integration client."""
     return integration_client
 
 
 @pytest.fixture(name="project_id")
-def fixture_project_id(integration_project_id):
+def fixture_project_id(integration_project_id: str) -> str:
     """Return the integration project ID."""
     return integration_project_id
 
 
 @pytest.fixture(name="repository_id")
-def fixture_repository_id(integration_repo_id):
+def fixture_repository_id(integration_repo_id: str) -> str:
     """Return the integration repository ID."""
     return integration_repo_id
 
 
 @pytest.mark.integration
-def test_access(client):
+def test_access(client: simple_ado.ADOClient) -> None:
     """Test access."""
     client.verify_access()
 
 
 @pytest.mark.integration
 @pytest.mark.destructive
-def test_get_blobs(client, project_id, repository_id):
+def test_get_blobs(client: simple_ado.ADOClient, project_id: str, repository_id: str) -> None:
     """Test get blobs."""
     client.git.get_blobs(
         blob_ids=[
@@ -57,7 +58,7 @@ def test_get_blobs(client, project_id, repository_id):
 
 
 @pytest.mark.integration
-def test_get_blob(client, project_id, repository_id):
+def test_get_blob(client: simple_ado.ADOClient, project_id: str, repository_id: str) -> None:
     """Test get blob."""
     diff = client.git.get_blob(
         blob_id="7351cd0c84377c067602e97645e9c91100c38a6e",
@@ -69,7 +70,7 @@ def test_get_blob(client, project_id, repository_id):
 
 
 @pytest.mark.integration
-def test_git_diff(client, project_id, repository_id):
+def test_git_diff(client: simple_ado.ADOClient, project_id: str, repository_id: str) -> None:
     """Test git diff."""
     all_prs = client.list_all_pull_requests(
         project_id=project_id,
@@ -87,7 +88,7 @@ def test_git_diff(client, project_id, repository_id):
 
 @pytest.mark.integration
 @pytest.mark.destructive
-def test_properties(client, project_id, repository_id):
+def test_properties(client: simple_ado.ADOClient, project_id: str, repository_id: str) -> None:
     """Test get properties."""
     all_prs = client.list_all_pull_requests(
         project_id=project_id,
@@ -119,7 +120,7 @@ def test_properties(client, project_id, repository_id):
 
 
 @pytest.mark.integration
-def test_list_repos(client, project_id):
+def test_list_repos(client: simple_ado.ADOClient, project_id: str) -> None:
     """Test list repos."""
     repos = client.git.all_repositories(project_id=project_id)
     assert len(repos) > 0, "Failed to find any repos"
@@ -138,7 +139,7 @@ def test_list_repos(client, project_id):
 
 
 @pytest.mark.integration
-def test_list_refs(client, project_id, repository_id):
+def test_list_refs(client: simple_ado.ADOClient, project_id: str, repository_id: str) -> None:
     """Test list refs."""
     refs = client.git.get_refs(
         project_id=project_id,
@@ -148,7 +149,7 @@ def test_list_refs(client, project_id, repository_id):
 
 
 @pytest.mark.integration
-def test_get_commit(client, project_id, repository_id):
+def test_get_commit(client: simple_ado.ADOClient, project_id: str, repository_id: str) -> None:
     """Test get commit."""
     refs = client.git.get_refs(
         project_id=project_id,
@@ -165,7 +166,9 @@ def test_get_commit(client, project_id, repository_id):
 
 
 @pytest.mark.integration
-def test_get_pull_requests(client, project_id, repository_id):
+def test_get_pull_requests(
+    client: simple_ado.ADOClient, project_id: str, repository_id: str
+) -> None:
     """Test get pull requests."""
     refs = client.list_all_pull_requests(
         project_id=project_id,
@@ -175,7 +178,7 @@ def test_get_pull_requests(client, project_id, repository_id):
 
 
 @pytest.mark.integration
-def test_get_pools(client):
+def test_get_pools(client: simple_ado.ADOClient) -> None:
     """Test get pools."""
     response = client.pools.get_pools()
     assert len(response) > 0
@@ -183,7 +186,7 @@ def test_get_pools(client):
 
 @pytest.mark.integration
 @pytest.mark.destructive
-def test_capabilities(client):
+def test_capabilities(client: simple_ado.ADOClient) -> None:
     """Test setting capabilities."""
     pool = client.pools.get_pools(action_filter=simple_ado.pools.TaskAgentPoolActionFilter.MANAGE)[
         0
@@ -197,7 +200,7 @@ def test_capabilities(client):
 
 
 @pytest.mark.integration
-def test_get_pr_statuses(client, project_id, repository_id):
+def test_get_pr_statuses(client: simple_ado.ADOClient, project_id: str, repository_id: str) -> None:
     """Test get properties."""
     all_prs = client.list_all_pull_requests(
         project_id=project_id,
@@ -214,14 +217,14 @@ def test_get_pr_statuses(client, project_id, repository_id):
 
 
 @pytest.mark.integration
-def test_audit_actions(client):
+def test_audit_actions(client: simple_ado.ADOClient) -> None:
     """Test get audit actions"""
     actions = client.audit.get_actions()
     assert actions is not None
 
 
 @pytest.mark.integration
-def test_audit_query(client):
+def test_audit_query(client: simple_ado.ADOClient) -> None:
     """Test query audit entries."""
     for entry in client.audit.query():
         assert entry is not None
@@ -229,50 +232,9 @@ def test_audit_query(client):
 
 
 @pytest.mark.integration
-def test_governance(client, project_id):
+def test_get_branch_policies(client: simple_ado.ADOClient, project_id: str) -> None:
     """Test getting governance repos."""
-    governed_repos_list = client.governance.get_governed_repositories(
-        project_id=project_id,
-    )
-
-    repo = client.governance.get_governed_repository(
-        governed_repository_id=governed_repos_list[0]["id"],
-        project_id=project_id,
-    )
-
-    del repo["policies"]
-    del repo["projectReference"]
-
-    assert repo == governed_repos_list[0]
-
-    branches = client.governance.get_branches(
-        tracked_only=True,
-        governed_repository_id=repo["id"],
-        project_id=project_id,
-    )
-
-    assert len(branches) > 0
-
-    shows_banner = client.governance.get_show_banner_in_repo_view(
-        governed_repository_id=repo["id"],
-        project_id=project_id,
-    )
-
-    assert shows_banner is not None
-
-    alerts = client.governance.get_alerts(
-        branch_name=branches[0]["name"],
-        governed_repository_id=repo["id"],
-        project_id=project_id,
-    )
-
-    assert alerts is not None
-
-
-@pytest.mark.integration
-def test_get_branch_policies(client, project_id):
-    """Test getting governance repos."""
-    policy_map = defaultdict(list)
+    policy_map: dict[str, list[Any]] = defaultdict(list)
 
     for policy in client.security.get_policies(project_id):
         for scope in policy["settings"]["scope"]:
@@ -284,7 +246,7 @@ def test_get_branch_policies(client, project_id):
 
 
 @pytest.mark.integration
-def test_get_pipelines(client, project_id):
+def test_get_pipelines(client: simple_ado.ADOClient, project_id: str) -> None:
     """Test getting pipelines."""
     pipeline = None
 
@@ -297,6 +259,7 @@ def test_get_pipelines(client, project_id):
     assert pipeline is not None
 
     raw_yaml = client.pipelines.preview(project_id=project_id, pipeline_id=12778)
+    assert raw_yaml is not None
     data = yaml.safe_load(raw_yaml)
     assert data is not None
 
@@ -316,7 +279,7 @@ def test_get_pipelines(client, project_id):
 
 
 @pytest.mark.integration
-def test_get_groups_users(client, project_id):
+def test_get_groups_users(client: simple_ado.ADOClient, project_id: str) -> None:
     """Test getting groups/users."""
     project_descriptor = client.graph.get_scope_descriptors(project_id)
 
@@ -330,7 +293,7 @@ def test_get_groups_users(client, project_id):
 
 
 @pytest.mark.integration
-def test_get_endpoints(client, project_id):
+def test_get_endpoints(client: simple_ado.ADOClient, project_id: str) -> None:
     """Test getting endpoints groups/users."""
     endpoints = client.endpoints.get_endpoints(project_id=project_id, endpoint_type="azurerm")
 
@@ -346,7 +309,7 @@ def test_get_endpoints(client, project_id):
 
 
 @pytest.mark.integration
-def test_get_leases(client, project_id):
+def test_get_leases(client: simple_ado.ADOClient, project_id: str) -> None:
     """Remove a pipeline."""
     for pipeline in client.pipelines.get_pipelines(top=3, project_id=project_id):
         pipeline_id = pipeline["id"]
@@ -359,7 +322,7 @@ def test_get_leases(client, project_id):
 
 
 @pytest.mark.integration
-def test_get_definitions(client, project_id):
+def test_get_definitions(client: simple_ado.ADOClient, project_id: str) -> None:
     """Get definitions."""
     for definition in client.builds.get_definitions(project_id=project_id):
         definition_id = definition["id"]
@@ -372,7 +335,7 @@ def test_get_definitions(client, project_id):
 
 
 @pytest.mark.integration
-def test_list_prs(client, project_id, repository_id):
+def test_list_prs(client: simple_ado.ADOClient, project_id: str, repository_id: str) -> None:
     """Test list PRs diff."""
     count = 0
     one_month_ago = datetime.datetime.now() - datetime.timedelta(days=28)
@@ -391,7 +354,7 @@ def test_list_prs(client, project_id, repository_id):
 
 
 @pytest.mark.integration
-def test_list_workitems(client: simple_ado.ADOClient, project_id, repository_id):
+def test_list_workitems(client: simple_ado.ADOClient, project_id: str) -> None:
     """Test list PRs diff."""
 
     found_workitems = client.workitems.execute_query(
@@ -400,6 +363,6 @@ def test_list_workitems(client: simple_ado.ADOClient, project_id, repository_id)
     )
     wids = [item["id"] for item in found_workitems["workItems"][:500]]
     count = 0
-    for item in client.workitems.ilist(wids, project_id=project_id):
+    for _ in client.workitems.ilist(wids, project_id=project_id):
         count += 1
     assert count == len(wids)

@@ -56,8 +56,13 @@ jobs:
       
       - name: Run mypy
         run: |
-          poetry run mypy --ignore-missing-imports simple_ado/
-          poetry run mypy --ignore-missing-imports tests/
+          poetry run mypy --strict --ignore-missing-imports simple_ado/
+          poetry run mypy --strict --ignore-missing-imports tests/
+
+      - name: Run pyright
+        run: |
+          poetry run pyright simple_ado/
+          poetry run pyright tests/
       
       - name: Run unit tests
         run: poetry run pytest tests/unit/ --cov=simple_ado --cov-report=xml --cov-report=html --junitxml=junit/test-results.xml

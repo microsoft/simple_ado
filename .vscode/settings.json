@@ -9,39 +9,16 @@
         "**/.pytest_cache/**": true,
         "**/.mypy_cache/**": true
     },
-    "python.pythonPath": "venv/bin/python",
-    "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
-    "python.linting.pylintPath": "${workspaceFolder}/venv/bin/pylint",
-    "python.linting.pylintArgs": [
-        "--rcfile=${workspaceFolder}/pylintrc",
-        "--extension-pkg-whitelist=mypy",
-        "--init-hook",
-        "import sys; sys.path.insert(0, '${workspaceFolder}/simple_ado')"
-    ],
-    "python.linting.mypyEnabled": true,
-    "python.linting.mypyPath": "${workspaceFolder}/venv/bin/mypy",
-    "python.linting.mypyArgs": [
-        "--config-file=${workspaceFolder}/mypy.ini"
-    ],
-    "python.jediEnabled": true,
     "editor.formatOnSave": true,
-    "python.formatting.provider": "black",
-    "python.formatting.blackPath": "${workspaceFolder}/venv/bin/black",
-    "python.formatting.blackArgs": [
-        "--line-length",
-        "100"
-    ],
     "python.testing.pytestArgs": [
         "tests"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.nosetestsEnabled": false,
     "python.testing.pytestEnabled": true,
     "python.testing.cwd": "${workspaceFolder}",
     "python.testing.autoTestDiscoverOnSaveEnabled": true,
     "python.envFile": "${workspaceFolder}/.env",
-    "python.languageServer": "Jedi",
+    "python.languageServer": "Pylance",
     "black-formatter.args": [
         "--line-length",
         "100"

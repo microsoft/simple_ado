@@ -4,7 +4,7 @@
 """ADO graph API wrapper."""
 
 import logging
-from typing import Any, Iterator
+from typing import Any, Iterator, cast
 
 
 from simple_ado.base_client import ADOBaseClient
@@ -62,7 +62,7 @@ class ADOGraphClient(ADOBaseClient):
 
         response = self.http_client.post(request_url, json_data=data)
         response_data = self.http_client.decode_response(response)
-        return self.http_client.extract_value(response_data)
+        return cast(list[Any], self.http_client.extract_value(response_data))
 
     def list_groups(self, *, scope_descriptor: str | None = None) -> list[Any]:
         """Get the groups in the organization.

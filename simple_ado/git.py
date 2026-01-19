@@ -8,7 +8,7 @@
 import enum
 import logging
 import os
-from typing import Any, Callable
+from typing import Any, Callable, cast
 import urllib.parse
 
 from simple_ado.base_client import ADOBaseClient
@@ -210,7 +210,7 @@ class ADOGitClient(ADOBaseClient):
             + f"/git/repositories/{repository_id}/diffs/commits?"
         )
 
-        changes = []
+        changes: list[dict[str, Any]] = []
         skip = 0
 
         while True:
@@ -227,7 +227,7 @@ class ADOGitClient(ADOBaseClient):
             request_url = base_url + urllib.parse.urlencode(parameters)
 
             response = self.http_client.get(request_url)
-            data = self.http_client.decode_response(response)
+            data = cast(dict[str, Any], self.http_client.decode_response(response))
 
             changes.extend(data["changes"])
 

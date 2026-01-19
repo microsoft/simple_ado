@@ -7,7 +7,7 @@
 
 import enum
 import logging
-from typing import Any
+from typing import Any, cast
 import urllib.parse
 
 
@@ -32,7 +32,7 @@ class ADOGovernanceClient(ADOBaseClient):
         CRITICAL = 3
 
         @classmethod
-        def _missing_(cls, value):
+        def _missing_(cls, value: Any) -> "ADOGovernanceClient.AlertSeverity":
             if value == "low":
                 return cls(0)
 
@@ -45,7 +45,7 @@ class ADOGovernanceClient(ADOBaseClient):
             if value == "critical":
                 return cls(3)
 
-            return super()._missing_(value)
+            return cast("ADOGovernanceClient.AlertSeverity", super()._missing_(value))
 
     def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
         super().__init__(http_client, log.getChild("governance"))
@@ -65,7 +65,7 @@ class ADOGovernanceClient(ADOBaseClient):
 
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
-        return self.http_client.extract_value(response_data)
+        return cast(dict[str, Any], self.http_client.extract_value(response_data))
 
     def get_governed_repository(
         self, *, governed_repository_id: str | int, project_id: str
@@ -84,7 +84,7 @@ class ADOGovernanceClient(ADOBaseClient):
         request_url += f"/ComponentGovernance/GovernedRepositories/{governed_repository_id}?api-version=6.1-preview.1"
 
         response = self.http_client.get(request_url)
-        return self.http_client.decode_response(response)
+        return cast(dict[str, Any], self.http_client.decode_response(response))
 
     def delete_governed_repository(
         self, *, governed_repository_id: str | int, project_id: str
@@ -184,7 +184,7 @@ class ADOGovernanceClient(ADOBaseClient):
         request_url += "?api-version=5.0-preview.2"
 
         response = self.http_client.get(request_url)
-        return self.http_client.decode_response(response)
+        return cast(dict[str, Any], self.http_client.decode_response(response))
 
     def get_show_banner_in_repo_view(
         self, *, governed_repository_id: str | int, project_id: str
@@ -201,7 +201,7 @@ class ADOGovernanceClient(ADOBaseClient):
             governed_repository_id=governed_repository_id, project_id=project_id
         )
 
-        return current_settings["showRepositoryWarningBanner"]
+        return cast(bool, current_settings["showRepositoryWarningBanner"])
 
     def set_show_banner_in_repo_view(
         self,
@@ -348,13 +348,13 @@ class ADOGovernanceClient(ADOBaseClient):
             f"/ComponentGovernance/GovernedRepositories/{governed_repository_id}/Branches?"
         )
 
-        parameters = {"top": 99999, "isTracked": tracked_only}
+        parameters: dict[str, Any] = {"top": 99999, "isTracked": tracked_only}
 
         request_url += urllib.parse.urlencode(parameters)
 
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
-        return self.http_client.extract_value(response_data)
+        return cast(dict[str, Any], self.http_client.extract_value(response_data))
 
     def get_alerts(
         self,
@@ -394,4 +394,4 @@ class ADOGovernanceClient(ADOBaseClient):
 
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
-        return self.http_client.extract_value(response_data)
+        return cast(dict[str, Any], self.http_client.extract_value(response_data))

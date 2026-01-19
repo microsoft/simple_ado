@@ -6,7 +6,7 @@
 """ADO pipeline API wrapper."""
 
 import logging
-from typing import Any, Iterator
+from typing import Any, cast, Iterator
 import urllib.parse
 
 
@@ -123,7 +123,7 @@ class ADOPipelineClient(ADOBaseClient):
 
         response = self.http_client.post(request_url, json_data=body)
         data = self.http_client.decode_response(response)
-        return data.get("finalYaml")
+        return cast(str | None, data.get("finalYaml"))
 
     def get_top_ten_thousand_runs(self, *, project_id: str, pipeline_id: int) -> ADOResponse:
         """Get the top 10,000 runs for a pipeline.

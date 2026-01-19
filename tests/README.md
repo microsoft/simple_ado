@@ -95,7 +95,7 @@ import responses
 from simple_ado import ADOClient
 
 @responses.activate
-def test_something(mock_client, mock_project_id):
+def test_something(mock_client, mock_project_id) -> None:
     # Mock the HTTP response
     responses.add(
         responses.GET,

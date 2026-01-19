@@ -30,7 +30,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-deserialize = "^2.0.1"
+deserialize = "^2.2.0"
 requests = "^2.31.0"
 tenacity = "^8.2.2"
 
@@ -49,9 +49,33 @@ types-PyYAML = "^6.0.12.11"
 types-requests = "^2.31.0.2"
 types-toml = "^0.10.8.7"
 
+[tool.poetry.group.dev.dependencies]
+pyright = "^1.1.408"
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
 [[tool.mypy.overrides]]
 module = ["deserialize"]
 ignore_missing_imports = true
+
+[tool.pyright]
+typeCheckingMode = "strict"
+reportUnknownParameterType = "error"
+reportMissingParameterType = "error"
+reportUnknownArgumentType = "error"
+reportUnknownMemberType = "error"
+reportUnknownVariableType = "error"
+reportUntypedFunctionDecorator = "error"
+reportUntypedClassDecorator = "error"
+reportUntypedBaseClass = "error"
+reportMissingTypeStubs = false
+pythonVersion = "3.10"
+pythonPlatform = "All"
 
 [build-system]
 requires = ["poetry-core"]

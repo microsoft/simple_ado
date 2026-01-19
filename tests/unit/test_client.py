@@ -2,12 +2,12 @@
 
 import responses
 from simple_ado import ADOClient
-from simple_ado.auth import ADOTokenAuth
+from simple_ado.auth import ADOAuth, ADOTokenAuth
 
 # pylint: disable=line-too-long
 
 
-def test_client_initialization(mock_tenant, mock_auth):
+def test_client_initialization(mock_tenant: str, mock_auth: ADOAuth) -> None:
     """Test that client initializes correctly."""
     client = ADOClient(tenant=mock_tenant, auth=mock_auth)
 
@@ -18,7 +18,7 @@ def test_client_initialization(mock_tenant, mock_auth):
     assert hasattr(client, "workitems")
 
 
-def test_client_has_all_sub_clients(mock_client):
+def test_client_has_all_sub_clients(mock_client: ADOClient) -> None:
     """Test that client has all expected sub-clients."""
     expected_clients = [
         "audit",
@@ -41,7 +41,7 @@ def test_client_has_all_sub_clients(mock_client):
 
 
 @responses.activate
-def test_verify_access_success(mock_client):
+def test_verify_access_success(mock_client: ADOClient) -> None:
     """Test verify_access with successful response."""
     responses.add(
         responses.GET,
@@ -55,7 +55,7 @@ def test_verify_access_success(mock_client):
 
 
 @responses.activate
-def test_verify_access_failure(mock_client):
+def test_verify_access_failure(mock_client: ADOClient) -> None:
     """Test verify_access with failed response."""
     responses.add(
         responses.GET,
@@ -67,7 +67,7 @@ def test_verify_access_failure(mock_client):
     assert result is False
 
 
-def test_auth_types():
+def test_auth_types() -> None:
     """Test different authentication types."""
     # Token auth
     token_auth = ADOTokenAuth("test-token")
@@ -78,7 +78,7 @@ def test_auth_types():
 
 
 @responses.activate
-def test_custom_get(mock_client, mock_project_id):
+def test_custom_get(mock_client: ADOClient, mock_project_id: str) -> None:
     """Test custom_get method."""
     responses.add(
         responses.GET,

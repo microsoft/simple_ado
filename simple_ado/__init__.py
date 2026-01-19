@@ -10,15 +10,34 @@ import logging
 from typing import Any, Iterator
 import urllib.parse
 
-import requests
-
+from simple_ado import (
+    audit,
+    auth as auth_module,
+    builds,
+    comments,
+    endpoints,
+    exceptions,
+    git,
+    governance,
+    graph,
+    http_client,
+    identities,
+    models,
+    pipelines,
+    pools,
+    pull_requests,
+    security,
+    types,
+    user,
+    wiki,
+)
 from simple_ado.auth.ado_auth import ADOAuth
 from simple_ado.auth.ado_basic_auth import ADOBasicAuth
 from simple_ado.auth.ado_token_auth import ADOTokenAuth
 from simple_ado.audit import ADOAuditClient
 from simple_ado.builds import ADOBuildClient
 from simple_ado.endpoints import ADOEndpointsClient
-from simple_ado.exceptions import ADOException
+from simple_ado.exceptions import ADOException, ADOHTTPException
 from simple_ado.identities import ADOIdentitiesClient
 from simple_ado.git import ADOGitClient
 from simple_ado.graph import ADOGraphClient
@@ -32,6 +51,55 @@ from simple_ado.security import ADOSecurityClient
 from simple_ado.user import ADOUserClient
 from simple_ado.wiki import ADOWikiClient
 from simple_ado.workitems import ADOWorkItemsClient
+
+# Re-export auth_module as auth to maintain public API
+auth = auth_module
+
+__all__ = [
+    "ADOAuditClient",
+    "ADOAuth",
+    "ADOBasicAuth",
+    "ADOBuildClient",
+    "ADOEndpointsClient",
+    "ADOException",
+    "ADOGitClient",
+    "ADOGovernanceClient",
+    "ADOGraphClient",
+    "ADOHTTPClient",
+    "ADOHTTPException",
+    "ADOIdentitiesClient",
+    "ADOPipelineClient",
+    "ADOPoolsClient",
+    "ADOPullRequestClient",
+    "ADOPullRequestStatus",
+    "ADOPullRequestTimeRangeType",
+    "ADOResponse",
+    "ADOSecurityClient",
+    "ADOTokenAuth",
+    "ADOUserClient",
+    "ADOWikiClient",
+    "ADOWorkItemsClient",
+    # Submodules
+    "audit",
+    "auth",
+    "builds",
+    "comments",
+    "endpoints",
+    "exceptions",
+    "git",
+    "governance",
+    "graph",
+    "http_client",
+    "identities",
+    "models",
+    "pipelines",
+    "pools",
+    "pull_requests",
+    "security",
+    "types",
+    "user",
+    "wiki",
+]
 
 
 class ADOClient:
@@ -68,7 +136,7 @@ class ADOClient:
         self,
         *,
         tenant: str,
-        auth: ADOAuth,
+        auth: ADOAuth,  # pylint: disable=redefined-outer-name
         user_agent: str | None = None,
         extra_headers: dict[str, str] | None = None,
         log: logging.Logger | None = None,

@@ -1,13 +1,18 @@
 """Unit tests for the Builds client."""
 
+from typing import Any, Callable
+
 import responses
+from simple_ado import ADOClient
 from simple_ado.builds import BuildQueryOrder
 
 # pylint: disable=line-too-long
 
 
-@responses.activate
-def test_get_builds(mock_client, mock_project_id, load_fixture):
+@responses.activate  # pyright: ignore[reportUnknownArgumentType]
+def test_get_builds(
+    mock_client: ADOClient, mock_project_id: str, load_fixture: Callable[[str], dict[str, Any]]
+) -> None:
     """Test getting builds."""
     builds_data = load_fixture("builds_list.json")
 
@@ -26,7 +31,7 @@ def test_get_builds(mock_client, mock_project_id, load_fixture):
 
 
 @responses.activate
-def test_get_builds_with_definition_filter(mock_client, mock_project_id):
+def test_get_builds_with_definition_filter(mock_client: ADOClient, mock_project_id: str) -> None:
     """Test getting builds filtered by definition."""
     responses.add(
         responses.GET,
@@ -44,7 +49,7 @@ def test_get_builds_with_definition_filter(mock_client, mock_project_id):
 
 
 @responses.activate
-def test_get_builds_with_order(mock_client, mock_project_id):
+def test_get_builds_with_order(mock_client: ADOClient, mock_project_id: str) -> None:
     """Test getting builds with specific order."""
     responses.add(
         responses.GET,
@@ -68,10 +73,10 @@ def test_get_builds_with_order(mock_client, mock_project_id):
 
 
 @responses.activate
-def test_build_info(mock_client, mock_project_id):
+def test_build_info(mock_client: ADOClient, mock_project_id: str) -> None:
     """Test getting build info."""
     build_id = 12345
-    build_data = {
+    build_data: dict[str, Any] = {
         "id": build_id,
         "buildNumber": "20231001.1",
         "status": "completed",
@@ -92,13 +97,13 @@ def test_build_info(mock_client, mock_project_id):
 
 
 @responses.activate
-def test_queue_build(mock_client, mock_project_id):
+def test_queue_build(mock_client: ADOClient, mock_project_id: str) -> None:
     """Test queueing a new build."""
     definition_id = 100
     source_branch = "refs/heads/main"
     variables = {"myVar": "myValue"}
 
-    queued_build = {"id": 99999, "buildNumber": "queued", "status": "notStarted"}
+    queued_build: dict[str, Any] = {"id": 99999, "buildNumber": "queued", "status": "notStarted"}
 
     responses.add(
         responses.POST,
@@ -119,10 +124,10 @@ def test_queue_build(mock_client, mock_project_id):
 
 
 @responses.activate
-def test_list_artifacts(mock_client, mock_project_id):
+def test_list_artifacts(mock_client: ADOClient, mock_project_id: str) -> None:
     """Test listing build artifacts."""
     build_id = 12345
-    artifacts_data = {
+    artifacts_data: dict[str, Any] = {
         "value": [
             {"id": 1, "name": "drop", "resource": {"type": "Container"}},
             {"id": 2, "name": "logs", "resource": {"type": "Container"}},
@@ -143,9 +148,9 @@ def test_list_artifacts(mock_client, mock_project_id):
 
 
 @responses.activate
-def test_get_definitions(mock_client, mock_project_id):
+def test_get_definitions(mock_client: ADOClient, mock_project_id: str) -> None:
     """Test getting build definitions."""
-    definitions_data = {
+    definitions_data: dict[str, Any] = {
         "value": [{"id": 100, "name": "CI Pipeline"}, {"id": 101, "name": "Release Pipeline"}]
     }
 
@@ -163,10 +168,10 @@ def test_get_definitions(mock_client, mock_project_id):
 
 
 @responses.activate
-def test_get_definition(mock_client, mock_project_id):
+def test_get_definition(mock_client: ADOClient, mock_project_id: str) -> None:
     """Test getting a specific build definition."""
     definition_id = 100
-    definition_data = {
+    definition_data: dict[str, Any] = {
         "id": definition_id,
         "name": "CI Pipeline",
         "type": "build",
@@ -189,7 +194,7 @@ def test_get_definition(mock_client, mock_project_id):
 
 
 @responses.activate
-def test_delete_definition(mock_client, mock_project_id):
+def test_delete_definition(mock_client: ADOClient, mock_project_id: str) -> None:
     """Test deleting a build definition."""
     definition_id = 100
 
@@ -203,4 +208,4 @@ def test_delete_definition(mock_client, mock_project_id):
     mock_client.builds.delete_definition(project_id=mock_project_id, definition_id=definition_id)
 
     assert len(responses.calls) == 1
-    assert responses.calls[0].request.method == "DELETE"
+    assert responses.calls[0].request.method == "DELETE"  # pyright: ignore[reportUnknownMemberType]

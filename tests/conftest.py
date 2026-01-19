@@ -3,9 +3,10 @@
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Callable, cast
 
 import pytest
+from pytest import Config
 from simple_ado import ADOClient
 from simple_ado.auth import ADOTokenAuth
 
@@ -51,20 +52,20 @@ def fixture_mock_client(mock_tenant: str, mock_auth: ADOTokenAuth) -> ADOClient:
 
 
 @pytest.fixture(name="load_fixture")
-def fixture_load_fixture():
+def fixture_load_fixture() -> Callable[[str], dict[str, Any]]:
     """Load a JSON fixture file."""
 
-    def _load(filename: str) -> Dict[str, Any]:
+    def _load(filename: str) -> dict[str, Any]:
         fixture_path = FIXTURES_DIR / filename
         if not fixture_path.exists():
             raise FileNotFoundError(f"Fixture not found: {fixture_path}")
         with open(fixture_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            return cast(dict[str, Any], json.load(f))
 
     return _load
 
 
-def pytest_configure(config):
+def pytest_configure(config: Config) -> None:
     """Configure pytest with custom markers."""
     config.addinivalue_line(
         "markers", "integration: marks tests as integration tests (require real ADO access)"
@@ -72,7 +73,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "destructive: marks tests that modify ADO resources")
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config: Config, items: list[pytest.Item]) -> None:
     """Automatically skip integration tests unless --integration flag is used."""
     if config.getoption("--integration"):
         # Running with --integration flag, don't skip anything
@@ -84,7 +85,7 @@ def pytest_collection_modifyitems(config, items):
             item.add_marker(skip_integration)
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser: pytest.Parser) -> None:
     """Add custom command line options."""
     parser.addoption(
         "--integration",

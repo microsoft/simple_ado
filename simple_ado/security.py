@@ -8,7 +8,7 @@
 import enum
 import json
 import logging
-from typing import ClassVar
+from typing import Any, ClassVar, cast
 import urllib.parse
 
 
@@ -149,7 +149,7 @@ class ADOSecurityClient(ADOBaseClient):
             + "/policy/Configurations?api-version=5.0"
         )
 
-        settings = {
+        settings: dict[str, Any] = {
             "authorId": required_status_author_id,
             "defaultDisplayName": default_display_name,
             "invalidateOnSourceUpdate": invalidate_on_source_update,
@@ -168,7 +168,7 @@ class ADOSecurityClient(ADOBaseClient):
         if filename_filter:
             settings["filenamePatterns"] = filename_filter
 
-        body = {
+        body: dict[str, Any] = {
             "type": {"id": ADOBranchPolicy.STATUS_CHECK.value},
             "revision": 1,
             "isDeleted": False,
@@ -208,7 +208,7 @@ class ADOSecurityClient(ADOBaseClient):
             + "/policy/Configurations?api-version=5.0"
         )
 
-        body = {
+        body: dict[str, Any] = {
             "type": {"id": ADOBranchPolicy.BUILD.value},
             "revision": 1,
             "isDeleted": False,
@@ -257,7 +257,7 @@ class ADOSecurityClient(ADOBaseClient):
             + "/policy/Configurations?api-version=5.0"
         )
 
-        body = {
+        body: dict[str, Any] = {
             "type": {"id": ADOBranchPolicy.REQUIRED_REVIEWERS.value},
             "revision": 1,
             "isDeleted": False,
@@ -309,7 +309,7 @@ class ADOSecurityClient(ADOBaseClient):
             + "/policy/Configurations?api-version=5.0"
         )
 
-        body = {
+        body: dict[str, Any] = {
             "type": {"id": ADOBranchPolicy.APPROVAL_COUNT.value},
             "revision": 2,
             "isDeleted": False,
@@ -355,7 +355,7 @@ class ADOSecurityClient(ADOBaseClient):
             + "/policy/Configurations?api-version=5.0"
         )
 
-        body = {
+        body: dict[str, Any] = {
             "type": {"id": ADOBranchPolicy.WORK_ITEM.value},
             "revision": 2,
             "isDeleted": False,
@@ -405,7 +405,7 @@ class ADOSecurityClient(ADOBaseClient):
         request_url = self.http_client.api_endpoint(is_internal=True, project_id=project_id)
         request_url += "/_security/ManagePermissions?__v=5"
 
-        updates = []
+        updates: list[dict[str, Any]] = []
         for permission, level in permissions.items():
             updates.append(
                 {
@@ -420,7 +420,7 @@ class ADOSecurityClient(ADOBaseClient):
                 }
             )
 
-        package = {
+        package: dict[str, Any] = {
             "IsRemovingIdentity": False,
             "TeamFoundationId": identity,
             "DescriptorIdentityType": descriptor_info["type"],
@@ -462,7 +462,7 @@ class ADOSecurityClient(ADOBaseClient):
         request_url = self.http_client.api_endpoint(is_internal=True, project_id=project_id)
         request_url += "/_security/DisplayPermissions?"
 
-        parameters = {
+        parameters: dict[str, Any] = {
             "tfid": team_foundation_id,
             "permissionSetId": ADOSecurityClient.GIT_PERMISSIONS_NAMESPACE,
             "permissionSetToken": self._generate_permission_set_token(
@@ -616,7 +616,7 @@ class ADOSecurityClient(ADOBaseClient):
         team_foundation_id: TeamFoundationId,
         project_id: str,
         repository_id: str,
-    ) -> dict[str, str]:
+    ) -> dict[str, Any]:
         """Get the permissions for a branch
 
         :param branch: The name of the branch to get the permissions for
@@ -632,7 +632,7 @@ class ADOSecurityClient(ADOBaseClient):
         request_url = self.http_client.api_endpoint(is_internal=True, project_id=project_id)
         request_url += "/_security/DisplayPermissions?"
 
-        parameters = {
+        parameters: dict[str, Any] = {
             "tfid": team_foundation_id,
             "permissionSetId": ADOSecurityClient.GIT_PERMISSIONS_NAMESPACE,
             "permissionSetToken": self._generate_permission_set_token(
@@ -644,4 +644,4 @@ class ADOSecurityClient(ADOBaseClient):
         request_url += urllib.parse.urlencode(parameters)
 
         response = self.http_client.get(request_url)
-        return self.http_client.decode_response(response)
+        return cast(dict[str, Any], self.http_client.decode_response(response))

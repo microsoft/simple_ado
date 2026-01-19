@@ -16,7 +16,7 @@ class ADOBasicAuth(ADOAuth):
         self.password = password
 
     @functools.lru_cache(maxsize=1)
-    def get_authorization_header(self) -> str:
+    def get_authorization_header(self) -> str:  # pyright: ignore[reportIncompatibleMethodOverride]
         """Get the header value.
 
         :return: The header value."""
