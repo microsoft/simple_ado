@@ -21,6 +21,7 @@ from simple_ado.models import (
     WorkItemRelationType,
     ADOWorkItemBuiltInFields,
 )
+from simple_ado.work_item import ADOWorkItem
 
 
 class BatchRequest:
@@ -75,6 +76,7 @@ class ADOWorkItemsClient(ADOBaseClient):
     def __init__(self, http_client: ADOHTTPClient, log: logging.Logger) -> None:
         super().__init__(http_client, log.getChild("workitems"))
 
+    # TODO: Switch this to the default on next major version bump
     def get(self, identifier: str, project_id: str) -> ADOResponse:
         """Get the data about a work item.
 
@@ -92,6 +94,25 @@ class ADOWorkItemsClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
+    def get_work_item(self, identifier: str, project_id: str) -> ADOWorkItem:
+        """Get a work item as an ADOWorkItem object.
+
+        :param identifier: The identifier of the work item
+        :param project_id: The ID of the project
+
+        :returns: An ADOWorkItem object wrapping the work item data
+        """
+
+        self.log.debug(f"Getting work item: {identifier}")
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/wit/workitems/{identifier}?api-version=4.1&$expand=all"
+        )
+        response = self.http_client.get(request_url)
+        data = self.http_client.decode_response(response)
+        return ADOWorkItem(data, self, project_id, self.log)
+
+    # TODO: Switch this to the default on next major version bump
     def list(self, identifiers: List[int], project_id: str) -> ADOResponse:
         """Get a list of work items.
 
@@ -148,6 +169,44 @@ class ADOWorkItemsClient(ADOBaseClient):
             data = self.http_client.decode_response(response)
 
             yield from data.get("value", [])
+
+    def list_work_items(self, identifiers: List[int], project_id: str) -> Iterator[ADOWorkItem]:
+        """Get a list of work items as ADOWorkItem objects with automatic chunking.
+
+        :param identifiers: The list of requested work item ids
+        :param project_id: The ID of the project
+
+        :returns: An iterator of ADOWorkItem objects
+        """
+
+        T = TypeVar("T")
+
+        # batched is only available in Python 3.12+
+        def batched(sequence: List[T], n: int) -> Iterator[List[T]]:
+            """Batch data into lists of length n.
+
+            :param sequence: The iterable to batch
+            :param n: The batch size
+
+            :returns: An iterator of lists of size n
+            """
+            for i in range(0, len(sequence), n):
+                yield sequence[i : i + n]
+
+        for id_chunk in batched(identifiers, 200):
+
+            ids = ",".join(map(str, id_chunk))
+
+            self.log.debug(f"Getting work items: {ids}")
+            request_url = (
+                self.http_client.api_endpoint(project_id=project_id)
+                + f"/wit/workitems?api-version=4.1&ids={ids}&$expand=all"
+            )
+            response = self.http_client.get(request_url)
+            data = self.http_client.decode_response(response)
+
+            for item_data in data.get("value", []):
+                yield ADOWorkItem(item_data, self, project_id, self.log)
 
     def get_work_item_types(self, project_id: str) -> ADOResponse:
         """Get the types of work items supported by the project.
