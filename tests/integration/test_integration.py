@@ -388,3 +388,18 @@ def test_list_prs(client, project_id, repository_id):
             break
         count += 1
     assert count > 0
+
+
+@pytest.mark.integration
+def test_list_workitems(client: simple_ado.ADOClient, project_id, repository_id):
+    """Test list PRs diff."""
+
+    found_workitems = client.workitems.execute_query(
+        project_id=project_id,
+        query_string="Select [System.Id] From WorkItems where [System.ChangedDate] >= @Today - 1",
+    )
+    wids = [item["id"] for item in found_workitems["workItems"][:500]]
+    count = 0
+    for item in client.workitems.ilist(wids, project_id=project_id):
+        count += 1
+    assert count == len(wids)

@@ -6,10 +6,11 @@
 """ADO work items API wrapper."""
 
 import enum
+import itertools
 import logging
 import os
 import typing
-from typing import Any, cast
+from typing import Any, cast, Iterator, List
 
 from simple_ado.base_client import ADOBaseClient
 from simple_ado.exceptions import ADOException, ADOHTTPException
@@ -125,7 +126,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
-    def list(self, identifiers: list[int], project_id: str) -> ADOResponse:
+    def list(self, identifiers: List[int], project_id: str) -> ADOResponse:
         """Get a list of work items.
 
         :param identifiers: The list of requested work item ids
@@ -143,6 +144,31 @@ class ADOWorkItemsClient(ADOBaseClient):
         )
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
+
+    # TODO: Switch this to the default on next major version bump
+    def ilist(self, identifiers: List[int], project_id: str) -> Iterator[dict[str, Any]]:
+        """Get a list of work items.
+
+        :param identifiers: The list of requested work item ids
+        :param project_id: The ID of the project
+
+        :returns: The ADO response with the data in it
+        """
+
+        for id_chunk in itertools.batched(identifiers, 200):
+
+            ids = ",".join(map(str, id_chunk))
+
+            self.log.debug(f"Getting work items: {ids}")
+            request_url = (
+                self.http_client.api_endpoint(project_id=project_id)
+                + f"/wit/workitems?api-version=4.1&ids={ids}&$expand=all"
+            )
+            response = self.http_client.get(request_url)
+            data = self.http_client.decode_response(response)
+
+            for item in data.get("value", []):
+                yield item
 
     def get_work_item_types(self, project_id: str) -> ADOResponse:
         """Get the types of work items supported by the project.
@@ -388,7 +414,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         self,
         *,
         item_type: str,
-        operations: typing.List[AddOperation],
+        operations: List[AddOperation],
         project_id: str,
         bypass_rules: bool = False,
         supress_notifications: bool = False,
@@ -419,7 +445,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         response = self.http_client.post(
             request_url,
-            operations=cast(list[PatchOperation], operations),
+            operations=cast(List[PatchOperation], operations),
             additional_headers={"Content-Type": "application/json-patch+json"},
         )
 
@@ -429,7 +455,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         self,
         *,
         identifier: str,
-        operations: typing.List[PatchOperation],
+        operations: List[PatchOperation],
         project_id: str,
         bypass_rules: bool = False,
         supress_notifications: bool = False,
