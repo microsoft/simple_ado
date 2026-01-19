@@ -50,6 +50,7 @@ from simple_ado.pull_requests import ADOPullRequestClient, ADOPullRequestStatus
 from simple_ado.security import ADOSecurityClient
 from simple_ado.user import ADOUserClient
 from simple_ado.wiki import ADOWikiClient
+from simple_ado.work_item import ADOWorkItem
 from simple_ado.workitems import ADOWorkItemsClient
 
 # Re-export auth_module as auth to maintain public API
@@ -78,6 +79,7 @@ __all__ = [
     "ADOTokenAuth",
     "ADOUserClient",
     "ADOWikiClient",
+    "ADOWorkItem",
     "ADOWorkItemsClient",
     # Submodules
     "audit",

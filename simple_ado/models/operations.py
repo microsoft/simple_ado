@@ -78,3 +78,10 @@ class DeleteOperation(PatchOperation):
 
     def __init__(self, field: str | ADOWorkItemBuiltInFields) -> None:
         super().__init__(OperationType.REMOVE, field, None)
+
+
+class ReplaceOperation(PatchOperation):
+    """Represents a replace PATCH operation."""
+
+    def __init__(self, field: str | ADOWorkItemBuiltInFields, value: Any) -> None:
+        super().__init__(OperationType.REPLACE, field, value)

@@ -366,3 +366,22 @@ def test_list_workitems(client: simple_ado.ADOClient, project_id: str) -> None:
     for _ in client.workitems.ilist(wids, project_id=project_id):
         count += 1
     assert count == len(wids)
+
+
+@pytest.mark.integration
+@pytest.mark.destructive
+def test_get_and_update_workitem(client: simple_ado.ADOClient, project_id: str) -> None:
+    """Test get work item."""
+    workitem_info = client.workitems.get(identifier="2704094", project_id=project_id)
+    workitem = simple_ado.ADOWorkItem(workitem_info, client.workitems, project_id, client.log)
+
+    assert workitem_info["fields"]["System.Title"] == workitem["System.Title"]
+
+    try:
+        workitem["System.Title"] = "Updated Title"
+        new_workitem_info = client.workitems.get(identifier="2704094", project_id=project_id)
+        assert new_workitem_info["fields"]["System.Title"] == "Updated Title"
+
+    finally:
+        # Return to original
+        workitem["System.Title"] = workitem_info["fields"]["System.Title"]
