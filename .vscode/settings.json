@@ -19,6 +19,9 @@
     "python.testing.autoTestDiscoverOnSaveEnabled": true,
     "python.envFile": "${workspaceFolder}/.env",
     "python.languageServer": "Pylance",
+    "[python]": {
+      "editor.defaultFormatter": "ms-python.black-formatter",
+    },
     "black-formatter.args": [
         "--line-length",
         "100"
