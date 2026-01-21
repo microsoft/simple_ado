@@ -33,6 +33,7 @@ python = "^3.10"
 deserialize = "^2.2.0"
 requests = "^2.31.0"
 tenacity = "^8.2.2"
+azure-identity = "^1.25.1"
 
 [tool.poetry.dev-dependencies]
 black = "^25.9.0"
