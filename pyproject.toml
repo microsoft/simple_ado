@@ -1,18 +1,24 @@
 [tool.poetry]
 name = "simple_ado"
-version = "5.1.0"
+version = "5.1.1"
 description = "A simple wrapper around the Azure DevOps REST API"
 
 license = "MIT"
 
-authors = ["Dale Myers <dalemy@microsoft.com>"]
+authors = [
+    "Dale Myers <dalemy@microsoft.com>",
+]
 
 readme = 'README.md'
 
 repository = "https://github.com/Microsoft/simple_ado"
 homepage = "https://github.com/Microsoft/simple_ado"
 
-keywords = ['azure', 'devops', 'ado']
+keywords = [
+    'azure',
+    'devops',
+    'ado',
+]
 
 classifiers = [
     'Development Status :: 5 - Production/Stable',
@@ -61,7 +67,9 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["deserialize"]
+module = [
+    "deserialize",
+]
 ignore_missing_imports = true
 
 [tool.pyright]
@@ -79,5 +87,7 @@ pythonVersion = "3.10"
 pythonPlatform = "All"
 
 [build-system]
-requires = ["poetry-core"]
+requires = [
+    "poetry-core",
+]
 build-backend = "poetry.core.masonry.api"
