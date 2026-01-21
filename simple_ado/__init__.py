@@ -34,6 +34,7 @@ from simple_ado import (
 from simple_ado.auth.ado_auth import ADOAuth
 from simple_ado.auth.ado_basic_auth import ADOBasicAuth
 from simple_ado.auth.ado_token_auth import ADOTokenAuth
+from simple_ado.auth.ado_azid_auth import ADOAzIDAuth
 from simple_ado.audit import ADOAuditClient
 from simple_ado.builds import ADOBuildClient
 from simple_ado.endpoints import ADOEndpointsClient
@@ -59,6 +60,7 @@ auth = auth_module
 __all__ = [
     "ADOAuditClient",
     "ADOAuth",
+    "ADOAzIDAuth",
     "ADOBasicAuth",
     "ADOBuildClient",
     "ADOEndpointsClient",
