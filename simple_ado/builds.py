@@ -191,6 +191,23 @@ class ADOBuildClient(ADOBaseClient):
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
+    def get_build_timeline(self, *, project_id: str, build_id: int) -> ADOResponse:
+        """Get the build timeline.
+
+        :param project_id: The ID of the project
+        :param build_id: The ID of the build
+
+        :returns: The ADO response with the build timeline data in it
+        """
+        self.log.debug(f"Fetching build timeline for build {build_id}...")
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/build/builds/{build_id}/timeline?api-version=7.1"
+        )
+        response = self.http_client.get(request_url)
+        return self.http_client.decode_response(response)
+
     def download_artifact(
         self,
         *,
