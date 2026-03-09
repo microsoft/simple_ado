@@ -30,7 +30,7 @@ class ADOGraphClient(ADOBaseClient):
         """
 
         request_url = f"{self.http_client.graph_endpoint()}/graph/descriptors/{storage_key}"
-        request_url += "/?api-version=6.0-preview.1"
+        request_url += "/?api-version=7.1-preview.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
@@ -43,7 +43,7 @@ class ADOGraphClient(ADOBaseClient):
         """
 
         request_url = f"{self.http_client.graph_endpoint()}/graph/storagekeys/{subject_descriptor}"
-        request_url += "/?api-version=6.0-preview.1"
+        request_url += "/?api-version=7.1-preview.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
@@ -56,7 +56,7 @@ class ADOGraphClient(ADOBaseClient):
         """
 
         request_url = f"{self.http_client.graph_endpoint()}/graph/subjectlookup"
-        request_url += "/?api-version=6.0-preview.1"
+        request_url += "/?api-version=7.1-preview.1"
 
         data = {"lookupKeys": [{"descriptor": descriptor} for descriptor in subject_descriptors]}
 
@@ -72,7 +72,7 @@ class ADOGraphClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        request_url = f"{self.http_client.graph_endpoint()}/graph/groups?api-version=5.1-preview.1"
+        request_url = f"{self.http_client.graph_endpoint()}/graph/groups?api-version=7.1-preview.1"
 
         if scope_descriptor:
             request_url += f"&scopeDescriptor={scope_descriptor}"
@@ -106,7 +106,7 @@ class ADOGraphClient(ADOBaseClient):
         """
 
         request_url = f"{self.http_client.graph_endpoint()}/graph/groups"
-        request_url += f"/{descriptor}?api-version=5.1-preview.1"
+        request_url += f"/{descriptor}?api-version=7.1-preview.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
@@ -119,7 +119,7 @@ class ADOGraphClient(ADOBaseClient):
         """
 
         request_url = f"{self.http_client.graph_endpoint()}/graph/users"
-        request_url += f"/{descriptor}?api-version=5.1-preview.1"
+        request_url += f"/{descriptor}?api-version=7.1-preview.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
@@ -130,7 +130,7 @@ class ADOGraphClient(ADOBaseClient):
         """
 
         request_url = f"{self.http_client.graph_endpoint()}/graph/users"
-        request_url += "?api-version=6.0-preview.1"
+        request_url += "?api-version=7.1-preview.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 

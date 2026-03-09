@@ -89,7 +89,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         self.log.debug(f"Getting work item: {identifier}")
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + f"/wit/workitems/{identifier}?api-version=4.1&$expand=all"
+            + f"/wit/workitems/{identifier}?api-version=7.1&$expand=all"
         )
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
@@ -106,7 +106,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         self.log.debug(f"Getting work item: {identifier}")
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + f"/wit/workitems/{identifier}?api-version=4.1&$expand=all"
+            + f"/wit/workitems/{identifier}?api-version=7.1&$expand=all"
         )
         response = self.http_client.get(request_url)
         data = self.http_client.decode_response(response)
@@ -127,7 +127,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         self.log.debug(f"Getting work items: {ids}")
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + f"/wit/workitems?api-version=4.1&ids={ids}&$expand=all"
+            + f"/wit/workitems?api-version=7.1&ids={ids}&$expand=all"
         )
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
@@ -163,7 +163,7 @@ class ADOWorkItemsClient(ADOBaseClient):
             self.log.debug(f"Getting work items: {ids}")
             request_url = (
                 self.http_client.api_endpoint(project_id=project_id)
-                + f"/wit/workitems?api-version=4.1&ids={ids}&$expand=all"
+                + f"/wit/workitems?api-version=7.1&ids={ids}&$expand=all"
             )
             response = self.http_client.get(request_url)
             data = self.http_client.decode_response(response)
@@ -200,7 +200,7 @@ class ADOWorkItemsClient(ADOBaseClient):
             self.log.debug(f"Getting work items: {ids}")
             request_url = (
                 self.http_client.api_endpoint(project_id=project_id)
-                + f"/wit/workitems?api-version=4.1&ids={ids}&$expand=all"
+                + f"/wit/workitems?api-version=7.1&ids={ids}&$expand=all"
             )
             response = self.http_client.get(request_url)
             data = self.http_client.decode_response(response)
@@ -214,7 +214,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
         self.log.debug("Getting work item types")
-        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/wit/workitemtypes?api-version=4.1"
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/wit/workitemtypes?api-version=7.1"
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
 
@@ -259,7 +259,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         )
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
-        request_url += "&api-version=4.1"
+        request_url += "&api-version=7.1"
 
         response = self.http_client.patch(
             request_url,
@@ -306,7 +306,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         # Upload the file
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + f"/wit/attachments?fileName={filename}&api-version=1.0"
+            + f"/wit/attachments?fileName={filename}&api-version=7.1"
         )
 
         response = self.http_client.post_file(request_url, path_to_attachment)
@@ -329,7 +329,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         )
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
-        request_url += "&api-version=4.1"
+        request_url += "&api-version=7.1"
 
         response = self.http_client.patch(
             request_url,
@@ -379,7 +379,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/wit/workitems/{parent_identifier}"
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
-        request_url += "&api-version=4.1"
+        request_url += "&api-version=7.1"
 
         response = self.http_client.patch(
             request_url,
@@ -486,7 +486,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         )
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
-        request_url += "&api-version=4.1"
+        request_url += "&api-version=7.1"
 
         response = self.http_client.post(
             request_url,
@@ -526,7 +526,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         )
         request_url += f"?bypassRules={boolstr(bypass_rules)}"
         request_url += f"&suppressNotifications={boolstr(supress_notifications)}"
-        request_url += "&api-version=4.1"
+        request_url += "&api-version=7.1"
 
         response = self.http_client.patch(
             request_url,
@@ -548,7 +548,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         self.log.debug(f"Executing query: {query_string}")
 
         request_url = (
-            f"{self.http_client.api_endpoint(project_id=project_id)}/wit/wiql?api-version=4.1"
+            f"{self.http_client.api_endpoint(project_id=project_id)}/wit/wiql?api-version=7.1"
         )
 
         response = self.http_client.post(request_url, json_data={"query": query_string})
@@ -566,7 +566,7 @@ class ADOWorkItemsClient(ADOBaseClient):
 
         self.log.debug(f"Executing query with id: {query_id}")
 
-        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/wit/wiql/{query_id}?api-version=4.1"
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/wit/wiql/{query_id}?api-version=7.1"
 
         response = self.http_client.get(request_url)
 
@@ -602,7 +602,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         )
         request_url += f"?suppressNotifications={boolstr(supress_notifications)}"
         request_url += f"&destroy={boolstr(permanent)}"
-        request_url += "&api-version=4.1"
+        request_url += "&api-version=7.1"
 
         response = self.http_client.delete(
             request_url,

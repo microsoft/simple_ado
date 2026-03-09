@@ -39,7 +39,7 @@ def test_get_builds_with_definition_filter(mock_client: ADOClient, mock_project_
         json={"value": []},
         status=200,
         match=[
-            responses.matchers.query_param_matcher({"api-version": "4.1", "definitions": "100,101"})
+            responses.matchers.query_param_matcher({"api-version": "7.1", "definitions": "100,101"})
         ],
     )
 
@@ -58,7 +58,7 @@ def test_get_builds_with_order(mock_client: ADOClient, mock_project_id: str) -> 
         status=200,
         match=[
             responses.matchers.query_param_matcher(
-                {"api-version": "4.1", "queryOrder": "finishTimeDescending"}
+                {"api-version": "7.1", "queryOrder": "finishTimeDescending"}
             )
         ],
     )

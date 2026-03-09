@@ -181,7 +181,7 @@ class ADOClient:
         """
 
         request_url = (
-            self.http_client.api_endpoint(is_default_collection=False) + "/projects?api-version=6.0"
+            self.http_client.api_endpoint(is_default_collection=False) + "/projects?api-version=7.1"
         )
 
         try:
@@ -221,7 +221,7 @@ class ADOClient:
         self.log.debug("Creating pull request")
 
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}"
-        request_url += "/pullRequests?api-version=5.1"
+        request_url += "/pullRequests?api-version=7.1"
 
         body: dict[str, Any] = {
             "sourceRefName": _canonicalize_branch_name(source_branch),

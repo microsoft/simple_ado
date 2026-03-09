@@ -136,7 +136,7 @@ class ADOPipelineClient(ADOBaseClient):
 
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + f"/pipelines/{pipeline_id}/runs?api-version=6.0-preview.1"
+            + f"/pipelines/{pipeline_id}/runs?api-version=7.1"
         )
 
         response = self.http_client.get(request_url)
@@ -155,7 +155,7 @@ class ADOPipelineClient(ADOBaseClient):
 
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + f"/pipelines/{pipeline_id}/runs/{run_id}?api-version=6.0-preview.1"
+            + f"/pipelines/{pipeline_id}/runs/{run_id}?api-version=7.1"
         )
 
         response = self.http_client.get(request_url)
@@ -191,7 +191,7 @@ class ADOPipelineClient(ADOBaseClient):
 
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + f"/pipelines/{pipeline_id}/runs?api-version=6.1-preview.1"
+            + f"/pipelines/{pipeline_id}/runs?api-version=7.1"
         )
 
         if pipeline_version:
