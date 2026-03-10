@@ -84,7 +84,7 @@ class ADOGitClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
         self.log.debug("Getting repositories")
-        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/?api-version=1.0"
+        request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/?api-version=7.1"
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
         return self.http_client.extract_value(response_data)
@@ -100,7 +100,7 @@ class ADOGitClient(ADOBaseClient):
         self.log.debug(f"Getting repository {repository_id}")
         request_url = (
             f"{self.http_client.api_endpoint(project_id=project_id)}/git/"
-            + f"repositories/{repository_id}?api-version=6.0"
+            + f"repositories/{repository_id}?api-version=7.1"
         )
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
@@ -124,7 +124,7 @@ class ADOGitClient(ADOBaseClient):
 
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + f"/git/repositories/{repository_id}/commits/{sha}/statuses?api-version=2.1"
+            + f"/git/repositories/{repository_id}/commits/{sha}/statuses?api-version=7.1"
         )
 
         response = self.http_client.get(request_url)
@@ -171,7 +171,7 @@ class ADOGitClient(ADOBaseClient):
             self.http_client.api_endpoint(project_id=project_id)
             + f"/git/repositories/{repository_id}/commits/{sha}/"
         )
-        request_url += "statuses?api-version=2.1"
+        request_url += "statuses?api-version=7.1"
 
         body = {
             "state": state.value,
@@ -215,7 +215,7 @@ class ADOGitClient(ADOBaseClient):
 
         while True:
             parameters = {
-                "api-version": "5.1",
+                "api-version": "7.1",
                 "baseVersionType": "commit",
                 "baseVersion": base_commit,
                 "targetVersionType": "commit",
@@ -272,7 +272,7 @@ class ADOGitClient(ADOBaseClient):
             "versionDescriptor[version]": branch,
             "resolveLfs": "true",
             "$format": "zip",
-            "api-version": "5.0-preview.1",
+            "api-version": "7.1",
         }
 
         request_url += urllib.parse.urlencode(parameters)
@@ -381,7 +381,7 @@ class ADOGitClient(ADOBaseClient):
         if len(parameters) > 0:
             request_url += "&"
 
-        request_url += "api-version=5.0"
+        request_url += "api-version=7.1"
 
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
@@ -406,7 +406,7 @@ class ADOGitClient(ADOBaseClient):
         self.log.debug("Getting stats")
 
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}"
-        request_url += f"/stats/branches?name={branch_name}&api-version=6.0"
+        request_url += f"/stats/branches?name={branch_name}&api-version=7.1"
 
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
@@ -435,7 +435,7 @@ class ADOGitClient(ADOBaseClient):
         self.log.debug(f"Getting commit: {commit_id}")
 
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}"
-        request_url += f"/commits/{commit_id}?api-version=5.0"
+        request_url += f"/commits/{commit_id}?api-version=7.1"
 
         if change_count:
             request_url += f"&changeCount={change_count}"
@@ -462,7 +462,7 @@ class ADOGitClient(ADOBaseClient):
         self.log.debug("Updating references")
 
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}"
-        request_url += "/refs?api-version=5.0"
+        request_url += "/refs?api-version=7.1"
 
         data = [update.json_data() for update in updates]
 
@@ -551,7 +551,7 @@ class ADOGitClient(ADOBaseClient):
 
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/git/repositories/{repository_id}/items?"
 
-        parameters: dict[str, Any] = {"api-version": "5.1", "$format": "json"}
+        parameters: dict[str, Any] = {"api-version": "7.1", "$format": "json"}
 
         if not scope_path and not path:
             raise ADOException("Either path or scope_path must be set")
@@ -752,7 +752,7 @@ class ADOGitClient(ADOBaseClient):
         request_url += f"/git/repositories/{repository_id}/blobs/{blob_id}?"
 
         parameters: dict[str, Any] = {
-            "api-version": "5.1",
+            "api-version": "7.1",
         }
 
         if blob_format is not None:
@@ -806,7 +806,7 @@ class ADOGitClient(ADOBaseClient):
         request_url = self.http_client.api_endpoint(
             is_default_collection=False, project_id=project_id
         )
-        request_url += f"/git/repositories/{repository_id}/blobs?api-version=5.1"
+        request_url += f"/git/repositories/{repository_id}/blobs?api-version=7.1"
 
         if os.path.exists(output_path):
             raise FileExistsError("The output path already exists")

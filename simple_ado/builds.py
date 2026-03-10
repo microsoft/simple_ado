@@ -68,7 +68,7 @@ class ADOBuildClient(ADOBaseClient):
         """
 
         request_url = (
-            f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds?api-version=4.1"
+            f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds?api-version=7.1"
         )
         variable_json = json.dumps(variables)
 
@@ -97,7 +97,7 @@ class ADOBuildClient(ADOBaseClient):
 
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + f"/build/builds/{build_id}?api-version=4.1"
+            + f"/build/builds/{build_id}?api-version=7.1"
         )
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
@@ -121,7 +121,7 @@ class ADOBuildClient(ADOBaseClient):
         request_url = self.http_client.api_endpoint(project_id=project_id) + "/build/builds/?"
 
         parameters = {
-            "api-version": "4.1",
+            "api-version": "7.1",
         }
 
         if definitions:
@@ -180,7 +180,7 @@ class ADOBuildClient(ADOBaseClient):
 
         parameters = {
             "artifactName": artifact_name,
-            "api-version": "4.1",
+            "api-version": "7.1",
         }
 
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds/{build_id}/artifacts?"
@@ -229,7 +229,7 @@ class ADOBuildClient(ADOBaseClient):
         parameters = {
             "artifactName": artifact_name,
             "$format": "zip",
-            "api-version": "4.1",
+            "api-version": "7.1",
         }
 
         request_url = f"{self.http_client.api_endpoint(project_id=project_id)}/build/builds/{build_id}/artifacts?"
@@ -423,7 +423,7 @@ class ADOBuildClient(ADOBaseClient):
 
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + "/build/definitions?api-version=6.0"
+            + "/build/definitions?api-version=7.1"
         )
 
         response = self.http_client.get(request_url)
@@ -441,7 +441,7 @@ class ADOBuildClient(ADOBaseClient):
 
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + f"/build/definitions/{definition_id}?api-version=6.0"
+            + f"/build/definitions/{definition_id}?api-version=7.1"
         )
 
         response = self.http_client.get(request_url)

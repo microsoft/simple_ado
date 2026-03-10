@@ -37,7 +37,7 @@ class ADOWikiClient(ADOBaseClient):
         self.log.debug(f"Get wiki page: {page_id}")
         request_url = (
             self.http_client.api_endpoint(is_default_collection=False, project_id=project_id)
-            + f"/wiki/wikis/{wiki_id}/pages/{page_id}?api-version=6.1-preview.1"
+            + f"/wiki/wikis/{wiki_id}/pages/{page_id}?api-version=7.1"
         )
         response = self.http_client.get(request_url)
         self.http_client.validate_response(response)
@@ -70,7 +70,7 @@ class ADOWikiClient(ADOBaseClient):
         self.log.debug(f"Updating wiki page: {page_id}")
         request_url = (
             self.http_client.api_endpoint(is_default_collection=False, project_id=project_id)
-            + f"/wiki/wikis/{wiki_id}/pages/{page_id}?api-version=6.1-preview.1"
+            + f"/wiki/wikis/{wiki_id}/pages/{page_id}?api-version=7.1"
         )
         response = self.http_client.patch(
             request_url,

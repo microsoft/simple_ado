@@ -88,7 +88,7 @@ class ADOSecurityClient(ADOBaseClient):
         """
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + "/policy/Configurations?api-version=5.0"
+            + "/policy/Configurations?api-version=7.1"
         )
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)
@@ -102,7 +102,7 @@ class ADOSecurityClient(ADOBaseClient):
         """
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + f"/policy/Configurations/{policy_id}?api-version=6.0"
+            + f"/policy/Configurations/{policy_id}?api-version=7.1"
         )
         response = self.http_client.delete(request_url)
         self.http_client.validate_response(response)
@@ -146,7 +146,7 @@ class ADOSecurityClient(ADOBaseClient):
 
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + "/policy/Configurations?api-version=5.0"
+            + "/policy/Configurations?api-version=7.1"
         )
 
         settings: dict[str, Any] = {
@@ -205,7 +205,7 @@ class ADOSecurityClient(ADOBaseClient):
 
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + "/policy/Configurations?api-version=5.0"
+            + "/policy/Configurations?api-version=7.1"
         )
 
         body: dict[str, Any] = {
@@ -254,7 +254,7 @@ class ADOSecurityClient(ADOBaseClient):
 
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + "/policy/Configurations?api-version=5.0"
+            + "/policy/Configurations?api-version=7.1"
         )
 
         body: dict[str, Any] = {
@@ -306,7 +306,7 @@ class ADOSecurityClient(ADOBaseClient):
 
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + "/policy/Configurations?api-version=5.0"
+            + "/policy/Configurations?api-version=7.1"
         )
 
         body: dict[str, Any] = {
@@ -352,7 +352,7 @@ class ADOSecurityClient(ADOBaseClient):
 
         request_url = (
             self.http_client.api_endpoint(project_id=project_id)
-            + "/policy/Configurations?api-version=5.0"
+            + "/policy/Configurations?api-version=7.1"
         )
 
         body: dict[str, Any] = {

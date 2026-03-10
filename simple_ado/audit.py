@@ -37,7 +37,7 @@ class ADOAuditClient(ADOBaseClient):
 
         self.log.debug("Getting audit actions")
 
-        parameters = {"api-version": "6.0-preview.1"}
+        parameters = {"api-version": "7.1-preview.1"}
 
         if area_name:
             parameters["areaName"] = area_name
@@ -65,7 +65,7 @@ class ADOAuditClient(ADOBaseClient):
         :returns: The queried log
         """
 
-        parameters = {"api-version": "6.0-preview.1"}
+        parameters = {"api-version": "7.1-preview.1"}
 
         if start_time:
             parameters["startTime"] = start_time.strftime("%Y-%m-%dT%H:%M:%S.000Z")

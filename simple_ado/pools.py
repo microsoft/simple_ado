@@ -50,7 +50,7 @@ class ADOPoolsClient(ADOBaseClient):
         request_url = self.http_client.api_endpoint(is_default_collection=False)
         request_url += "/distributedtask/pools?"
 
-        parameters = {"api-version": "5.1"}
+        parameters = {"api-version": "7.1"}
 
         if pool_name:
             parameters["poolName"] = pool_name
@@ -91,7 +91,7 @@ class ADOPoolsClient(ADOBaseClient):
             "includeCapabilities": include_capabilities,
             "includeAssignedRequest": include_assigned_request,
             "includeLastCompletedRequest": include_last_completed_request,
-            "api-version": "5.1",
+            "api-version": "7.1",
         }
 
         if agent_name:
@@ -113,7 +113,7 @@ class ADOPoolsClient(ADOBaseClient):
         """
 
         request_url = self.http_client.api_endpoint(is_default_collection=False)
-        request_url += f"/distributedtask/pools/{pool_id}/agents/{agent_id}?api-version=5.1"
+        request_url += f"/distributedtask/pools/{pool_id}/agents/{agent_id}?api-version=7.1"
 
         response = self.http_client.get(request_url)
         return self.http_client.decode_response(response)
@@ -131,7 +131,7 @@ class ADOPoolsClient(ADOBaseClient):
         """
 
         request_url = self.http_client.api_endpoint(is_default_collection=False)
-        request_url += f"/distributedtask/pools/{pool_id}/agents/{agent_id}?api-version=5.1"
+        request_url += f"/distributedtask/pools/{pool_id}/agents/{agent_id}?api-version=7.1"
 
         response = self.http_client.patch(request_url, json_data=agent_data)
         return self.http_client.decode_response(response)
@@ -164,7 +164,7 @@ class ADOPoolsClient(ADOBaseClient):
 
         request_url = self.http_client.api_endpoint(is_default_collection=False)
         request_url += (
-            f"/distributedtask/pools/{pool_id}/agents/{agent_id}/usercapabilities?api-version=5.1"
+            f"/distributedtask/pools/{pool_id}/agents/{agent_id}/usercapabilities?api-version=7.1"
         )
 
         response = self.http_client.put(request_url, json_data=capabilities)

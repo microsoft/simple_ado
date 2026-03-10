@@ -36,7 +36,7 @@ class ADOIdentitiesClient(ADOBaseClient):
 
         request_url = self.http_client.graph_endpoint()
         request_url += f"/identities?searchFilter=General&filterValue={identity}"
-        request_url += "&queryMembership=None&api-version=6.0"
+        request_url += "&queryMembership=None&api-version=7.1"
 
         response = self.http_client.get(request_url)
         response_data = self.http_client.decode_response(response)

@@ -36,7 +36,7 @@ class ADOEndpointsClient(ADOBaseClient):
             self.http_client.api_endpoint(project_id=project_id) + "/serviceendpoint/endpoints?"
         )
 
-        parameters = {"api-version": "6.0-preview.4"}
+        parameters = {"api-version": "7.1"}
 
         if endpoint_type:
             parameters["type"] = endpoint_type
@@ -63,7 +63,7 @@ class ADOEndpointsClient(ADOBaseClient):
             + f"/serviceendpoint/{endpoint_id}/executionhistory?"
         )
 
-        parameters: dict[str, Any] = {"api-version": "6.0-preview.1"}
+        parameters: dict[str, Any] = {"api-version": "7.1"}
 
         if not top or top < 50:
             parameters["top"] = top
