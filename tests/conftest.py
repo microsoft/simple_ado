@@ -3,12 +3,16 @@
 import json
 import os
 from pathlib import Path
+from collections.abc import AsyncGenerator, Generator
 from typing import Any, Callable, cast
 
 import pytest
+import pytest_asyncio
 from pytest import Config
 from simple_ado import ADOClient
 from simple_ado.auth import ADOTokenAuth
+from simple_ado._async import ADOAsyncClient
+from simple_ado._async.auth import ADOAsyncTokenAuth
 
 
 # Test data directory
@@ -46,9 +50,27 @@ def fixture_mock_auth() -> ADOTokenAuth:
 
 
 @pytest.fixture(name="mock_client")
-def fixture_mock_client(mock_tenant: str, mock_auth: ADOTokenAuth) -> ADOClient:
+def fixture_mock_client(mock_tenant: str, mock_auth: ADOTokenAuth) -> Generator[ADOClient]:
     """Return a mock ADO client."""
-    return ADOClient(tenant=mock_tenant, auth=mock_auth)
+    client = ADOClient(tenant=mock_tenant, auth=mock_auth)
+    yield client
+    client.close()
+
+
+@pytest.fixture(name="mock_async_auth")
+def fixture_mock_async_auth() -> ADOAsyncTokenAuth:
+    """Return a mock async authentication object."""
+    return ADOAsyncTokenAuth("mock-token-12345")
+
+
+@pytest_asyncio.fixture(name="mock_async_client")
+async def fixture_mock_async_client(
+    mock_tenant: str, mock_async_auth: ADOAsyncTokenAuth
+) -> AsyncGenerator[ADOAsyncClient]:
+    """Return a mock async ADO client."""
+    client = ADOAsyncClient(tenant=mock_tenant, auth=mock_async_auth)
+    yield client
+    await client.close()
 
 
 @pytest.fixture(name="load_fixture")

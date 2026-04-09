@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# THIS FILE IS AUTO-GENERATED FROM simple_ado/_async/security.py. DO NOT EDIT.
+
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
@@ -15,7 +17,7 @@ import urllib.parse
 from simple_ado.base_client import ADOBaseClient
 from simple_ado.exceptions import ADOException
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
-from simple_ado.types import TeamFoundationId
+from simple_ado.ado_types import TeamFoundationId
 
 
 class ADOBranchPermission(enum.IntEnum):

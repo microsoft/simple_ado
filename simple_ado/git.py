@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# THIS FILE IS AUTO-GENERATED FROM simple_ado/_async/git.py. DO NOT EDIT.
+
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
@@ -12,9 +14,9 @@ from typing import Any, Callable, cast
 import urllib.parse
 
 from simple_ado.base_client import ADOBaseClient
-from simple_ado.exceptions import ADOException
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 from simple_ado.utilities import download_from_response_stream
+from simple_ado.exceptions import ADOException
 
 
 class ADOGitStatusState(enum.Enum):
@@ -280,7 +282,7 @@ class ADOGitClient(ADOBaseClient):
         if os.path.exists(output_path):
             raise ADOException("The output path already exists")
 
-        with self.http_client.get(request_url, stream=True) as response:
+        with self.http_client.stream_get(request_url) as response:
             download_from_response_stream(
                 response=response,
                 output_path=output_path,
@@ -811,10 +813,9 @@ class ADOGitClient(ADOBaseClient):
         if os.path.exists(output_path):
             raise FileExistsError("The output path already exists")
 
-        with self.http_client.post(
+        with self.http_client.stream_post(
             request_url,
             additional_headers={"Accept": "application/zip"},
-            stream=True,
             json_data=blob_ids,
         ) as response:
             download_from_response_stream(response=response, output_path=output_path, log=self.log)

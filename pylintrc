@@ -15,6 +15,7 @@ load-plugins=pylint.extensions.docparams,pylint.extensions.docstyle,pylint.exten
 
 # C0413 wrong-import-position: Import "%s" should be placed at the top of the module Used when code and imports are mixed
 # C1801 len-as-condition: Do not use `len(SEQUENCE)` as condition value
+# R0801 duplicate-code: Sync code is auto-generated from _async/ — duplication is by design
 # R0913 too-many-arguments: Too many arguments for function / method
 # R0917 too-many-positional-arguments: Too many positional arguments
 # W0511 fixme: TODO statements
@@ -23,7 +24,7 @@ load-plugins=pylint.extensions.docparams,pylint.extensions.docstyle,pylint.exten
 # W1202 logging-format-interpolation: Use % formatting in logging functions and pass the % parameters as arguments
 # W1203 logging-fstring-interpolation: Use % formatting in logging functions and pass the % parameters as arguments
 # W3101 missing-timeout: Missing timeout argument for method 'requests.*'
-disable=C0413,C1801,R0913,R0917,W0511,W0703,W1201,W1202,W1203,W3101
+disable=C0413,C1801,R0801,R0913,R0917,W0511,W0703,W1201,W1202,W1203,W3101
 
 
 [REPORTS]

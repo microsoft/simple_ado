@@ -1,0 +1,622 @@
+#!/usr/bin/env python3
+
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+"""ADO HTTP API wrapper (async)."""
+
+import asyncio
+import contextlib
+import datetime
+import logging
+import os
+from typing import Any, AsyncIterator, TypeAlias
+
+import httpx
+from tenacity import (
+    retry,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_random_exponential,
+)
+
+from simple_ado._async.auth.ado_auth import ADOAsyncAuth
+from simple_ado.exceptions import ADOException, ADOHTTPException
+from simple_ado.models import PatchOperation
+
+
+# pylint: disable=invalid-name
+ADOThread = dict[str, Any]
+ADOResponse: TypeAlias = Any
+# pylint: enable=invalid-name
+
+
+# Only retry status codes where a subsequent attempt may succeed:
+#   400 Bad Request — ADO occasionally returns transient 400s under load
+#   408 Request Timeout — server didn't receive the full request in time
+#   429 Too Many Requests — rate-limited, back off and retry
+#   500, 502, 503, 504 — server errors that are typically transient
+# Previous versions retried all 4xx, but codes like 401/403/404 are
+# deterministic failures that won't resolve on retry.
+_RETRYABLE_STATUS_CODES = {400, 408, 429, 500, 502, 503, 504}
+
+
+def _is_retryable_get_failure(exception: Exception) -> bool:
+    if not isinstance(exception, ADOHTTPException):
+        return False
+
+    return exception.response.status_code in _RETRYABLE_STATUS_CODES
+
+
+def _is_connection_failure(exception: Exception) -> bool:
+    if isinstance(exception, (httpx.ConnectError, httpx.TimeoutException)):
+        return True
+
+    exception_checks = [
+        "Operation timed out",
+        "Connection aborted.",
+        "bad handshake: ",
+        "Failed to establish a new connection",
+    ]
+
+    for check in exception_checks:
+        if check in str(exception):
+            return True
+
+    return False
+
+
+class ADOAsyncHTTPClient:
+    """Base class that actually makes API calls to Azure DevOps (async).
+
+    :param tenant: The name of the ADO tenant to connect to
+    :param extra_headers: Any extra headers which should be added to each request
+    :param user_agent: The user agent to set
+    :param auth: The authentication details
+    :param log: The logger to use for logging
+    """
+
+    log: logging.Logger
+    tenant: str
+    extra_headers: dict[str, str]
+    auth: ADOAsyncAuth
+    _not_before: datetime.datetime | None
+    _client: httpx.AsyncClient
+
+    def __init__(
+        self,
+        *,
+        tenant: str,
+        auth: ADOAsyncAuth,
+        user_agent: str,
+        log: logging.Logger,
+        extra_headers: dict[str, str] | None = None,
+    ) -> None:
+        """Construct a new client object."""
+
+        self.log = log.getChild("http")
+
+        self.tenant = tenant
+        self.auth = auth
+        self._not_before = None
+
+        self._client = httpx.AsyncClient(
+            headers={"User-Agent": f"simple_ado/{user_agent}"},
+            follow_redirects=True,
+            timeout=httpx.Timeout(300.0),
+        )
+
+        if extra_headers is None:
+            self.extra_headers = {}
+        else:
+            self.extra_headers = extra_headers
+
+    async def close(self) -> None:
+        """Close the underlying HTTP client and auth resources."""
+        await self._client.aclose()
+        await self.auth.close()
+
+    async def __aenter__(self) -> "ADOAsyncHTTPClient":
+        return self
+
+    async def __aexit__(self, *args: Any) -> None:
+        await self.close()
+
+    def graph_endpoint(self) -> str:
+        """Generate the base url for all graph API calls (this varies depending on the API).
+
+        :returns: The constructed graph URL
+        """
+        return f"https://vssps.dev.azure.com/{self.tenant}/_apis"
+
+    def audit_endpoint(self) -> str:
+        """Generate the base url for all audit API calls.
+
+        :returns: The constructed graph URL
+        """
+        return f"https://auditservice.dev.azure.com/{self.tenant}/_apis"
+
+    def api_endpoint(
+        self,
+        *,
+        is_default_collection: bool = True,
+        is_internal: bool = False,
+        subdomain: str | None = None,
+        project_id: str | None = None,
+    ) -> str:
+        """Generate the base url for all API calls (this varies depending on the API).
+
+        :param is_default_collection: Whether this URL should start with the path "/DefaultCollection"
+        :param is_internal: Whether this URL should use internal API endpoint "/_api"
+        :param subdomain: A subdomain that should be used (if any)
+        :param project_id: The project ID. This will be added if supplied
+
+        :returns: The constructed base URL
+        """
+
+        url = f"https://{self.tenant}."
+
+        if subdomain:
+            url += subdomain + "."
+
+        url += "visualstudio.com"
+
+        if is_default_collection:
+            url += "/DefaultCollection"
+
+        if project_id:
+            url += f"/{project_id}"
+
+        if is_internal:
+            url += "/_api"
+        else:
+            url += "/_apis"
+
+        return url
+
+    async def _wait(self) -> None:
+        """Wait as long as we need for rate limiting purposes."""
+        if not self._not_before:
+            return
+
+        remaining = self._not_before - datetime.datetime.now()
+
+        if remaining.total_seconds() < 0:
+            self._not_before = None
+            return
+
+        self.log.debug(f"Sleeping for {remaining} seconds before issuing next request")
+        await asyncio.sleep(remaining.total_seconds())
+
+    def _track_rate_limit(self, response: httpx.Response) -> None:
+        """Track the rate limit info from a request.
+
+        :param response: The response to track the info from.
+        """
+
+        if "Retry-After" in response.headers:
+            # We get massive windows for retry after, so we wait 10 seconds or
+            # the duration, whichever is smaller. If we get a 429, we'll increase.
+            self._not_before = datetime.datetime.now() + datetime.timedelta(
+                seconds=min(15, int(response.headers["Retry-After"]))
+            )
+            return
+
+        # Slow down if needed
+        if int(response.headers.get("X-RateLimit-Remaining", 100)) < 10:
+            self._not_before = datetime.datetime.now() + datetime.timedelta(seconds=1)
+            return
+
+        # No limit, so go at full speed
+        self._not_before = None
+
+    @retry(
+        retry=(
+            retry_if_exception(_is_connection_failure)  # type: ignore
+            | retry_if_exception(_is_retryable_get_failure)  # type: ignore
+        ),
+        wait=wait_random_exponential(max=10),
+        stop=stop_after_attempt(5),
+    )
+    async def get(
+        self,
+        request_url: str,
+        *,
+        additional_headers: dict[str, str] | None = None,
+        stream: bool = False,
+        follow_redirects: bool = True,
+        set_accept_json: bool = True,
+    ) -> httpx.Response:
+        """Issue a GET request with the correct headers.
+
+        When stream=True, the response body is not immediately loaded. The caller
+        must use the response as a context manager or call response.close() when done.
+
+        :param request_url: The URL to issue the request to
+        :param additional_headers: Any additional headers to add to the request
+        :param stream: Set to True to stream the response back
+        :param follow_redirects: Set to False to disable redirects
+        :param set_accept_json: Set to False to disable setting the Accept header
+
+        :returns: The raw response object from the API
+        """
+
+        await self._wait()
+
+        headers = await self.construct_headers(
+            additional_headers=additional_headers, set_accept_json=set_accept_json
+        )
+
+        if stream:
+            request = self._client.build_request(
+                "GET",
+                request_url,
+                headers=headers,
+            )
+            response = await self._client.send(
+                request,
+                stream=True,
+                follow_redirects=follow_redirects,
+            )
+        else:
+            response = await self._client.get(
+                request_url,
+                headers=headers,
+                follow_redirects=follow_redirects,
+            )
+
+        self._track_rate_limit(response)
+
+        return response
+
+    @contextlib.asynccontextmanager
+    async def stream_get(
+        self,
+        request_url: str,
+        *,
+        additional_headers: dict[str, str] | None = None,
+        follow_redirects: bool = True,
+        set_accept_json: bool = True,
+    ) -> AsyncIterator[httpx.Response]:
+        """Issue a streaming GET request. Must be used as an async context manager.
+
+        This is a convenience wrapper that handles cleanup automatically.
+        Prefer this over get(stream=True) when possible.
+
+        :param request_url: The URL to issue the request to
+        :param additional_headers: Any additional headers to add to the request
+        :param follow_redirects: Set to False to disable redirects
+        :param set_accept_json: Set to False to disable setting the Accept header
+
+        :yields: The raw response object from the API
+        """
+        await self._wait()
+
+        headers = await self.construct_headers(
+            additional_headers=additional_headers, set_accept_json=set_accept_json
+        )
+
+        async with self._client.stream(
+            "GET",
+            request_url,
+            headers=headers,
+            follow_redirects=follow_redirects,
+        ) as response:
+            self._track_rate_limit(response)
+            yield response
+
+    @retry(
+        retry=retry_if_exception(_is_connection_failure),  # type: ignore
+        wait=wait_random_exponential(max=10),
+        stop=stop_after_attempt(5),
+    )
+    async def post(
+        self,
+        request_url: str,
+        *,
+        operations: list[PatchOperation] | None = None,
+        additional_headers: dict[str, str] | None = None,
+        json_data: Any | None = None,
+        stream: bool = False,
+    ) -> httpx.Response:
+        """Issue a POST request with the correct headers.
+
+        Note: If `json_data` and `operations` are not None, the latter will take
+        precedence.
+
+        When stream=True, the response body is not immediately loaded. The caller
+        must use the response as a context manager or call response.close() when done.
+
+        :param request_url: The URL to issue the request to
+        :param operations: The patch operations to send with the request
+        :param additional_headers: Any additional headers to add to the request
+        :param json_data: The JSON data to send with the request
+        :param stream: Set to True to stream the response back
+
+        :returns: The raw response object from the API
+        """
+
+        await self._wait()
+
+        if operations is not None:
+            json_data = [operation.serialize() for operation in operations]
+            if additional_headers is None:
+                additional_headers = {}
+            if "Content-Type" not in additional_headers:
+                additional_headers["Content-Type"] = "application/json-patch+json"
+
+        headers = await self.construct_headers(additional_headers=additional_headers)
+
+        if stream:
+            request = self._client.build_request(
+                "POST",
+                request_url,
+                headers=headers,
+                json=json_data,
+            )
+            response = await self._client.send(request, stream=True)
+        else:
+            response = await self._client.post(
+                request_url,
+                headers=headers,
+                json=json_data,
+            )
+
+        self._track_rate_limit(response)
+
+        return response
+
+    @contextlib.asynccontextmanager
+    async def stream_post(
+        self,
+        request_url: str,
+        *,
+        additional_headers: dict[str, str] | None = None,
+        json_data: Any | None = None,
+    ) -> AsyncIterator[httpx.Response]:
+        """Issue a streaming POST request. Must be used as an async context manager.
+
+        :param request_url: The URL to issue the request to
+        :param additional_headers: Any additional headers to add to the request
+        :param json_data: The JSON data to send with the request
+
+        :yields: The raw response object from the API
+        """
+        await self._wait()
+
+        headers = await self.construct_headers(additional_headers=additional_headers)
+
+        async with self._client.stream(
+            "POST",
+            request_url,
+            headers=headers,
+            json=json_data,
+        ) as response:
+            self._track_rate_limit(response)
+            yield response
+
+    @retry(
+        retry=retry_if_exception(_is_connection_failure),  # type: ignore
+        wait=wait_random_exponential(max=10),
+        stop=stop_after_attempt(5),
+    )
+    async def patch(
+        self,
+        request_url: str,
+        *,
+        operations: list[PatchOperation] | None = None,
+        json_data: Any | None = None,
+        additional_headers: dict[str, Any] | None = None,
+    ) -> httpx.Response:
+        """Issue a PATCH request with the correct headers.
+
+        Note: If `json_data` and `operations` are not None, the latter will take
+        precedence.
+
+        :param request_url: The URL to issue the request to
+        :param additional_headers: Any additional headers to add to the request
+        :param json_data: The JSON data to send with the request
+        :param operations: The patch operations to send with the request
+
+        :returns: The raw response object from the API
+        """
+
+        await self._wait()
+
+        if operations is not None:
+            json_data = [operation.serialize() for operation in operations]
+            if additional_headers is None:
+                additional_headers = {}
+            if "Content-Type" not in additional_headers:
+                additional_headers["Content-Type"] = "application/json-patch+json"
+
+        headers = await self.construct_headers(additional_headers=additional_headers)
+        response = await self._client.patch(request_url, headers=headers, json=json_data)
+        self._track_rate_limit(response)
+        return response
+
+    @retry(
+        retry=retry_if_exception(_is_connection_failure),  # type: ignore
+        wait=wait_random_exponential(max=10),
+        stop=stop_after_attempt(5),
+    )
+    async def put(
+        self,
+        request_url: str,
+        json_data: Any | None = None,
+        *,
+        additional_headers: dict[str, Any] | None = None,
+    ) -> httpx.Response:
+        """Issue a PUT request with the correct headers.
+
+        :param request_url: The URL to issue the request to
+        :param additional_headers: Any additional headers to add to the request
+        :param json_data: The JSON data to send with the request
+
+        :returns: The raw response object from the API
+        """
+        await self._wait()
+
+        headers = await self.construct_headers(additional_headers=additional_headers)
+        response = await self._client.put(request_url, headers=headers, json=json_data)
+        self._track_rate_limit(response)
+        return response
+
+    @retry(
+        retry=retry_if_exception(_is_connection_failure),  # type: ignore
+        wait=wait_random_exponential(max=10),
+        stop=stop_after_attempt(5),
+    )
+    async def delete(
+        self, request_url: str, *, additional_headers: dict[str, Any] | None = None
+    ) -> httpx.Response:
+        """Issue a DELETE request with the correct headers.
+
+        :param request_url: The URL to issue the request to
+        :param additional_headers: Any additional headers to add to the request
+
+        :returns: The raw response object from the API
+        """
+        await self._wait()
+
+        headers = await self.construct_headers(additional_headers=additional_headers)
+        response = await self._client.delete(request_url, headers=headers)
+        self._track_rate_limit(response)
+        return response
+
+    @retry(
+        retry=retry_if_exception(_is_connection_failure),  # type: ignore
+        wait=wait_random_exponential(max=10),
+        stop=stop_after_attempt(5),
+    )
+    async def post_file(
+        self,
+        request_url: str,
+        file_path: str,
+        *,
+        additional_headers: dict[str, Any] | None = None,
+    ) -> httpx.Response:
+        """POST a file to the URL with the given file name.
+
+        :param request_url: The URL to issue the request to
+        :param file_path: The path to the file to be posted
+        :param additional_headers: Any additional headers to add to the request
+
+        :returns: The raw response object from the API"""
+
+        await self._wait()
+
+        file_size = os.path.getsize(file_path)
+
+        headers = await self.construct_headers(additional_headers=additional_headers)
+        headers["Content-Length"] = str(file_size)
+        headers["Content-Type"] = "application/json"
+
+        content = await asyncio.to_thread(self._read_file, file_path)
+
+        response = await self._client.post(
+            request_url,
+            headers=headers,
+            content=content,
+        )
+        self._track_rate_limit(response)
+        return response
+
+    @staticmethod
+    def _read_file(file_path: str) -> bytes:
+        """Read a file's contents as bytes.
+
+        :param file_path: The path to the file to read
+        :returns: The file contents
+        """
+        with open(file_path, "rb") as file_handle:
+            return file_handle.read()
+
+    def validate_response(self, response: httpx.Response) -> None:
+        """Checking a response for errors.
+
+        :param response: The response to check
+
+        :raises ADOHTTPException: Raised if the request returned a non-200 status code
+        :raises ADOException: Raise if the response was not JSON
+        """
+
+        self.log.debug("Validating response from ADO")
+
+        if not response.is_success:
+            raise ADOHTTPException(
+                f"ADO returned a non-200 status code, configuration={self}",
+                response,
+            )
+
+    def decode_response(self, response: httpx.Response) -> ADOResponse:
+        """Decode the response from ADO, checking for errors.
+
+        :param response: The response to check and parse
+
+        :returns: The JSON data from the ADO response
+
+        :raises ADOHTTPException: Raised if the request returned a non-200 status code
+        :raises ADOException: Raise if the response was not JSON
+        """
+
+        self.validate_response(response)
+
+        self.log.debug("Decoding response from ADO")
+
+        try:
+            content: ADOResponse = response.json()
+        except Exception as ex:
+            raise ADOException("The response did not contain JSON") from ex
+
+        return content
+
+    def extract_value(self, response_data: ADOResponse) -> ADOResponse:
+        """Extract the "value" from the raw JSON data from an API response
+
+        :param response_data: The raw JSON data from an API response
+
+        :returns: The ADO response with the data in it
+
+        :raises ADOException: If the response is invalid (does not support value extraction)
+        """
+
+        self.log.debug("Extracting value")
+
+        try:
+            value: ADOResponse = response_data["value"]
+            return value
+        except Exception as ex:
+            raise ADOException("The response was invalid (did not contain a value).") from ex
+
+    async def construct_headers(
+        self,
+        *,
+        additional_headers: dict[str, str] | None = None,
+        set_accept_json: bool = True,
+    ) -> dict[str, str]:
+        """Contruct the headers used for a request, adding anything additional.
+
+        :param additional_headers: A dictionary of the additional headers to add.
+        :param set_accept_json: Set to False to disable setting the Accept header
+
+        :returns: A dictionary of the headers for a request
+        """
+
+        headers: dict[str, str] = {}
+
+        if set_accept_json:
+            headers["Accept"] = "application/json"
+
+        headers["Authorization"] = await self.auth.get_authorization_header()
+
+        for header_name, header_value in self.extra_headers.items():
+            headers[header_name] = header_value
+
+        if additional_headers is None:
+            return headers
+
+        for header_name, header_value in additional_headers.items():
+            headers[header_name] = header_value
+
+        return headers

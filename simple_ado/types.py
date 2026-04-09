@@ -1,10 +1,16 @@
-"""Custom types for the library."""
+"""Custom types for the library.
+
+.. deprecated::
+    This module is deprecated. Use :mod:`simple_ado.ado_types` instead.
+    This module shadows the stdlib ``types`` module and will be removed in a
+    future major version.
+"""
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
-from typing import NewType
+# pylint: disable=wildcard-import,unused-wildcard-import,useless-import-alias
 
-# pylint: disable=invalid-name
-
-TeamFoundationId = NewType("TeamFoundationId", str)
+# Re-export everything from ado_types for backward compatibility.
+from simple_ado.ado_types import *  # noqa: F401,F403
+from simple_ado.ado_types import TeamFoundationId as TeamFoundationId  # noqa: F811

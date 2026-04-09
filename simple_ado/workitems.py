@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# THIS FILE IS AUTO-GENERATED FROM simple_ado/_async/workitems.py. DO NOT EDIT.
+
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
@@ -8,12 +10,13 @@
 import logging
 import os
 import typing
-from typing import Any, cast, Iterator, List, TypeVar
+from typing import Any, Iterator, List, TypeVar, cast
 
 from simple_ado.base_client import ADOBaseClient
-from simple_ado.exceptions import ADOException, ADOHTTPException
 from simple_ado.http_client import ADOHTTPClient, ADOResponse
 from simple_ado.utilities import boolstr
+from simple_ado.work_item import ADOWorkItem
+from simple_ado.exceptions import ADOException, ADOHTTPException
 
 from simple_ado.models import (
     PatchOperation,
@@ -21,7 +24,21 @@ from simple_ado.models import (
     WorkItemRelationType,
     ADOWorkItemBuiltInFields,
 )
-from simple_ado.work_item import ADOWorkItem
+
+T = TypeVar("T")
+
+
+# batched is only available in Python 3.12+
+def _batched(sequence: List[T], n: int) -> Iterator[List[T]]:
+    """Batch data into lists of length n.
+
+    :param sequence: The iterable to batch
+    :param n: The batch size
+
+    :yields: Lists of size n (or smaller for the last batch)
+    """
+    for i in range(0, len(sequence), n):
+        yield sequence[i : i + n]
 
 
 class BatchRequest:
@@ -142,21 +159,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         :returns: The ADO response with the data in it
         """
 
-        T = TypeVar("T")
-
-        # batched is only available in Python 3.12+
-        def batched(sequence: List[T], n: int) -> Iterator[List[T]]:
-            """Batch data into lists of length n.
-
-            :param sequence: The iterable to batch
-            :param n: The batch size
-
-            :returns: An iterator of lists of size n
-            """
-            for i in range(0, len(sequence), n):
-                yield sequence[i : i + n]
-
-        for id_chunk in batched(identifiers, 200):
+        for id_chunk in _batched(identifiers, 200):
 
             ids = ",".join(map(str, id_chunk))
 
@@ -179,21 +182,7 @@ class ADOWorkItemsClient(ADOBaseClient):
         :returns: An iterator of ADOWorkItem objects
         """
 
-        T = TypeVar("T")
-
-        # batched is only available in Python 3.12+
-        def batched(sequence: List[T], n: int) -> Iterator[List[T]]:
-            """Batch data into lists of length n.
-
-            :param sequence: The iterable to batch
-            :param n: The batch size
-
-            :returns: An iterator of lists of size n
-            """
-            for i in range(0, len(sequence), n):
-                yield sequence[i : i + n]
-
-        for id_chunk in batched(identifiers, 200):
+        for id_chunk in _batched(identifiers, 200):
 
             ids = ",".join(map(str, id_chunk))
 

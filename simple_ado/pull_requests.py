@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# THIS FILE IS AUTO-GENERATED FROM simple_ado/_async/pull_requests.py. DO NOT EDIT.
+
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
@@ -10,9 +12,10 @@ import logging
 from typing import Any
 
 import deserialize
-import requests
 
 from simple_ado.base_client import ADOBaseClient
+from simple_ado.git import ADOGitStatusState
+from simple_ado.http_client import ADOHTTPClient, ADOResponse, ADOThread
 from simple_ado.comments import (
     ADOComment,
     ADOCommentLocation,
@@ -20,8 +23,6 @@ from simple_ado.comments import (
     ADOCommentStatus,
 )
 from simple_ado.exceptions import ADOException
-from simple_ado.git import ADOGitStatusState
-from simple_ado.http_client import ADOHTTPClient, ADOResponse, ADOThread
 
 from simple_ado.models import (
     PatchOperation,
@@ -253,10 +254,7 @@ class ADOPullRequestClient(ADOBaseClient):
             request_url += f"/git/repositories/{self.repository_id}"
             request_url += f"/pullRequests/{self.pull_request_id}/threads/{thread_id}"
             request_url += f"/comments/{comment_id}?api-version=7.1"
-            requests.delete(
-                request_url,
-                headers=self.http_client.construct_headers(),
-            )
+            self.http_client.delete(request_url)
 
     def create_thread_list(
         self,
