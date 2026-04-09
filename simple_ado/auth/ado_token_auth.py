@@ -1,3 +1,5 @@
+# THIS FILE IS AUTO-GENERATED FROM simple_ado/_async/auth/ado_token_auth.py. DO NOT EDIT.
+
 """Token authentication auth class."""
 
 from simple_ado.auth.ado_auth import ADOAuth

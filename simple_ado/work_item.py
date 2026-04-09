@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# THIS FILE IS AUTO-GENERATED FROM simple_ado/_async/work_item.py. DO NOT EDIT.
+
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
@@ -86,7 +88,7 @@ class ADOWorkItem:
         if field_name in fields:
             return fields[field_name]
 
-        # Field not found, try refreshing from server
+        # Field not found — refresh from server (sync only; async must use get_field())
         self._log.debug(f"Field '{field_name}' not found, refreshing work item")
         self.refresh()
 
@@ -95,13 +97,58 @@ class ADOWorkItem:
         if field_name in fields:
             return fields[field_name]
 
-        # Still not found, raise KeyError
+        raise KeyError(f"Field '{field_name}' not found in work item {self.id}")
+
+    def get_field(
+        self,
+        key: str | ADOWorkItemBuiltInFields,
+        *,
+        auto_refresh: bool = True,
+    ) -> Any:
+        """Get a field value, optionally refreshing from the server if not found.
+
+        Unlike ``__getitem__``, this method can auto-refresh the work item data
+        from the server when a field is missing, which is useful for fields that
+        weren't included in the initial response.
+
+        :param key: The field name or ADOWorkItemBuiltInFields enum value
+        :param auto_refresh: If True (default), refresh from server when field is missing
+
+        :returns: The field value
+
+        :raises KeyError: If the field is not found (even after refresh)
+        """
+        field_name = key.value if isinstance(key, ADOWorkItemBuiltInFields) else key
+        fields = self._data.get("fields", {})
+
+        if field_name in fields:
+            return fields[field_name]
+
+        if not auto_refresh:
+            raise KeyError(f"Field '{field_name}' not found in work item {self.id}")
+
+        self.refresh()
+
+        fields = self._data.get("fields", {})
+        if field_name in fields:
+            return fields[field_name]
+
         raise KeyError(f"Field '{field_name}' not found in work item {self.id}")
 
     def __setitem__(self, key: str | ADOWorkItemBuiltInFields, value: Any) -> None:
         """Set a field value and patch it on the server.
 
-        This is a convenience method that calls patch() internally.
+        Equivalent to ``work_item.patch(key, value)``.
+
+        :param key: The field name or ADOWorkItemBuiltInFields enum value
+        :param value: The new value for the field
+        """
+        self.patch(key, value)
+
+    def set(self, key: str | ADOWorkItemBuiltInFields, value: Any) -> None:
+        """Set a field value and patch it on the server.
+
+        Convenience alias for ``work_item.patch(key, value)``.
 
         :param key: The field name or ADOWorkItemBuiltInFields enum value
         :param value: The new value for the field

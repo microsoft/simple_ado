@@ -1,3 +1,5 @@
+# THIS FILE IS AUTO-GENERATED FROM simple_ado/_async/auth/__init__.py. DO NOT EDIT.
+
 """Umbrella module for all authentication classes."""
 
 from .ado_auth import ADOAuth

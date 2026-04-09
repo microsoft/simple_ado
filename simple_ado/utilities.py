@@ -1,9 +1,11 @@
+# THIS FILE IS AUTO-GENERATED FROM simple_ado/_async/utilities.py. DO NOT EDIT.
+
 """Utilities for dealing with the ADO REST API."""
 
 import logging
 from typing import Callable
 
-import requests
+import httpx
 
 from simple_ado.exceptions import ADOHTTPException
 
@@ -20,7 +22,7 @@ def boolstr(value: bool) -> str:
 
 def download_from_response_stream(
     *,
-    response: requests.Response,
+    response: httpx.Response,
     output_path: str,
     log: logging.Logger,
     callback: Callable[[int, int], None] | None = None,
@@ -47,7 +49,7 @@ def download_from_response_stream(
         total_size = int(content_length_string)
         total_downloaded = 0
 
-        for data in response.iter_content(chunk_size=chunk_size):
+        for data in response.iter_bytes(chunk_size=chunk_size):
             total_downloaded += len(data)
             output_file.write(data)
 

@@ -1,0 +1,649 @@
+#!/usr/bin/env python3
+
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT license.
+
+"""ADO security API wrapper (async)."""
+
+import enum
+import json
+import logging
+from typing import Any, ClassVar, cast
+import urllib.parse
+
+
+from simple_ado._async.base_client import ADOAsyncBaseClient
+from simple_ado.exceptions import ADOException
+from simple_ado._async.http_client import ADOAsyncHTTPClient, ADOResponse
+from simple_ado.ado_types import TeamFoundationId
+
+
+class ADOBranchPermission(enum.IntEnum):
+    """Possible types of git branch permissions."""
+
+    ADMINISTER = 2**0
+    READ = 2**1
+    CONTRIBUTE = 2**2
+    FORCE_PUSH = 2**3
+    CREATE_BRANCH = 2**4
+    CREATE_TAG = 2**5
+    MANAGE_NOTES = 2**6
+    BYPASS_PUSH_POLICIES = 2**7
+    CREATE_REPOSITORY = 2**8
+    DELETE_REPOSITORY = 2**9
+    RENAME_REPOSITORY = 2**10
+    EDIT_POLICIES = 2**11
+    REMOVE_OTHERS_LOCKS = 2**12
+    MANAGE_PERMISSIONS = 2**13
+    CONTRIBUTE_TO_PULL_REQUESTS = 2**14
+    BYPASS_PULL_REQUEST_POLICIES = 2**15
+
+
+class ADOBranchPermissionLevel(enum.IntEnum):
+    """Possible values of git branch permissions."""
+
+    NOT_SET = 0
+    ALLOW = 1
+    DENY = 2
+
+
+class ADOBranchPolicy(enum.Enum):
+    """Possible types of git branch protections."""
+
+    APPROVAL_COUNT = "fa4e907d-c16b-4a4c-9dfa-4906e5d171dd"
+    BUILD = "0609b952-1397-4640-95ec-e00a01b2c241"
+    CASE_ENFORCEMENT = "7ed39669-655c-494e-b4a0-a08b4da0fcce"
+    MAXIMUM_BLOB_SIZE = "2e26e725-8201-4edd-8bf5-978563c34a80"
+    MERGE_STRATEGY = "fa4e907d-c16b-4a4c-9dfa-4916e5d171ab"
+    REQUIRED_REVIEWERS = "fd2167ab-b0be-447a-8ec8-39368250530e"
+    STATUS_CHECK = "cbdc66da-9728-4af8-aada-9a5a32e4a226"
+    WORK_ITEM = "40e92b44-2fe1-4dd6-b3d8-74a9c21d0c6e"
+
+
+class ADOPolicyApplicability(enum.Enum):
+    """Different types of policy applicability."""
+
+    APPLY_BY_DEFAULT = None
+    CONDITIONAL = 1
+
+
+class ADOAsyncSecurityClient(ADOAsyncBaseClient):
+    """Wrapper class around the undocumented ADO Security APIs.
+
+    :param http_client: The HTTP client to use for the client
+    :param log: The logger to use
+    """
+
+    GIT_PERMISSIONS_NAMESPACE: ClassVar[str] = "2e9eb7ed-3c0a-47d4-87c1-0ffdd275fd87"
+
+    def __init__(self, http_client: ADOAsyncHTTPClient, log: logging.Logger) -> None:
+        super().__init__(http_client, log.getChild("security"))
+
+    async def get_policies(self, project_id: str) -> ADOResponse:
+        """Gets the existing policies.
+
+        :param project_id: The identifier for the project
+
+        :returns: The ADO response with the data in it
+        """
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + "/policy/Configurations?api-version=7.1"
+        )
+        response = await self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
+
+    async def delete_policy(self, project_id: str, policy_id: int) -> None:
+        """Delete a policy.
+
+        :param project_id: The identifier for the project
+        :param policy_id: The ID of the policy to delete
+        """
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + f"/policy/Configurations/{policy_id}?api-version=7.1"
+        )
+        response = await self.http_client.delete(request_url)
+        self.http_client.validate_response(response)
+
+    # pylint: disable=too-many-locals
+    async def add_branch_status_check_policy(
+        self,
+        *,
+        branch: str,
+        is_blocking: bool = True,
+        is_enabled: bool = True,
+        required_status_author_id: str | None = None,
+        default_display_name: str | None = None,
+        invalidate_on_source_update: bool = True,
+        filename_filter: list[str] | None = None,
+        applicability: ADOPolicyApplicability = ADOPolicyApplicability.APPLY_BY_DEFAULT,
+        status_name: str,
+        status_genre: str,
+        project_id: str,
+        repository_id: str,
+    ) -> ADOResponse:
+        """Adds a new status check policy for a given branch.
+
+        :param branch: The git branch to set the policy for
+        :param is_blocking: Whether the status blocks PR completion or not.
+        :param is_enabled: Whether the status is enabled or not.
+        :param required_status_author_id: The ID of a required author (None if anyone)
+        :param default_display_name: The default display name for the policy
+        :param invalidate_on_source_update: Set to True to invalid the status when an update to
+                                                 the PR happens, False otherwise
+        :param filename_filter: A list of file name filters this policy should
+                                                    only apply to
+        :param applicability: Set to apply always or just if the status is posted
+        :param status_name: The name of the status
+        :param status_genre: The genre of the status
+        :param project_id: The identifier for the project
+        :param repository_id: The ID for the repository
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + "/policy/Configurations?api-version=7.1"
+        )
+
+        settings: dict[str, Any] = {
+            "authorId": required_status_author_id,
+            "defaultDisplayName": default_display_name,
+            "invalidateOnSourceUpdate": invalidate_on_source_update,
+            "policyApplicability": applicability.value,
+            "statusName": status_name,
+            "statusGenre": status_genre,
+            "scope": [
+                {
+                    "repositoryId": repository_id,
+                    "refName": f"refs/heads/{branch}",
+                    "matchKind": "Exact",
+                }
+            ],
+        }
+
+        if filename_filter:
+            settings["filenamePatterns"] = filename_filter
+
+        body: dict[str, Any] = {
+            "type": {"id": ADOBranchPolicy.STATUS_CHECK.value},
+            "revision": 1,
+            "isDeleted": False,
+            "isBlocking": is_blocking,
+            "isEnabled": is_enabled,
+            "settings": settings,
+        }
+
+        response = await self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
+
+    # pylint: enable=too-many-locals
+
+    async def add_branch_build_policy(
+        self,
+        *,
+        branch: str,
+        build_definition_id: int,
+        build_expiration: int | None = None,
+        project_id: str,
+        repository_id: str,
+    ) -> ADOResponse:
+        """Adds a new build policy for a given branch.
+
+        :param branch: The git branch to set the build policy for
+        :param build_definition_id: The build definition to use when creating the build policy
+        :param build_expiration: How long in minutes before the build expires. Set to None for
+                                     immediately on changes to source branch.
+        :param project_id: The identifier for the project
+        :param repository_id: The ID for the repository
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + "/policy/Configurations?api-version=7.1"
+        )
+
+        body: dict[str, Any] = {
+            "type": {"id": ADOBranchPolicy.BUILD.value},
+            "revision": 1,
+            "isDeleted": False,
+            "isBlocking": True,
+            "isEnabled": True,
+            "settings": {
+                "buildDefinitionId": build_definition_id,
+                "displayName": None,
+                "queueOnSourceUpdateOnly": build_expiration is not None,
+                "manualQueueOnly": False,
+                "validDuration": (build_expiration if build_expiration is not None else 0),
+                "scope": [
+                    {
+                        "refName": f"refs/heads/{branch}",
+                        "matchKind": "Exact",
+                        "repositoryId": repository_id,
+                    }
+                ],
+            },
+        }
+
+        response = await self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
+
+    async def add_branch_required_reviewers_policy(
+        self,
+        *,
+        branch: str,
+        identities: list[str],
+        project_id: str,
+        repository_id: str,
+    ) -> ADOResponse:
+        """Adds required reviewers when opening PRs against a given branch.
+
+        :param branch: The git branch to set required reviewers for
+        :param identities: A list of identities to become required
+                                     reviewers (should be team foundation IDs)
+        :param project_id: The identifier for the project
+        :param repository_id: The ID for the repository
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + "/policy/Configurations?api-version=7.1"
+        )
+
+        body: dict[str, Any] = {
+            "type": {"id": ADOBranchPolicy.REQUIRED_REVIEWERS.value},
+            "revision": 1,
+            "isDeleted": False,
+            "isBlocking": True,
+            "isEnabled": True,
+            "settings": {
+                "requiredReviewerIds": identities,
+                "filenamePatterns": [],
+                "addedFilesOnly": False,
+                "ignoreIfSourceIsInScope": False,
+                "message": None,
+                "scope": [
+                    {
+                        "refName": f"refs/heads/{branch}",
+                        "matchKind": "Exact",
+                        "repositoryId": repository_id,
+                    }
+                ],
+            },
+        }
+
+        response = await self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
+
+    async def set_branch_approval_count_policy(
+        self,
+        *,
+        branch: str,
+        minimum_approver_count: int,
+        creator_vote_counts: bool = False,
+        reset_on_source_push: bool = False,
+        project_id: str,
+        repository_id: str,
+    ) -> ADOResponse:
+        """Set minimum number of reviewers for a branch.
+
+        :param branch: The git branch to set minimum number of reviewers on
+        :param minimum_approver_count: The minimum number of approvals required
+        :param creator_vote_counts: Allow users to approve their own changes
+        :param reset_on_source_push: Reset reviewer votes when there are new changes
+        :param project_id: The identifier for the project
+        :param repository_id: The ID for the repository
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + "/policy/Configurations?api-version=7.1"
+        )
+
+        body: dict[str, Any] = {
+            "type": {"id": ADOBranchPolicy.APPROVAL_COUNT.value},
+            "revision": 2,
+            "isDeleted": False,
+            "isBlocking": True,
+            "isEnabled": True,
+            "settings": {
+                "minimumApproverCount": minimum_approver_count,
+                "creatorVoteCounts": creator_vote_counts,
+                "resetOnSourcePush": reset_on_source_push,
+                "scope": [
+                    {
+                        "refName": f"refs/heads/{branch}",
+                        "matchKind": "exact",
+                        "repositoryId": repository_id,
+                    }
+                ],
+            },
+        }
+
+        response = await self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
+
+    async def set_branch_work_item_policy(
+        self,
+        *,
+        branch: str,
+        required: bool = True,
+        project_id: str,
+        repository_id: str,
+    ) -> ADOResponse:
+        """Set the work item policy for a branch.
+
+        :param branch: The git branch to set the work item policy on
+        :param required: Whether or not linked work items should be mandatory
+        :param project_id: The identifier for the project
+        :param repository_id: The ID for the repository
+
+        :returns: The ADO response with the data in it
+        """
+
+        request_url = (
+            self.http_client.api_endpoint(project_id=project_id)
+            + "/policy/Configurations?api-version=7.1"
+        )
+
+        body: dict[str, Any] = {
+            "type": {"id": ADOBranchPolicy.WORK_ITEM.value},
+            "revision": 2,
+            "isDeleted": False,
+            "isBlocking": required,
+            "isEnabled": True,
+            "settings": {
+                "scope": [
+                    {
+                        "refName": f"refs/heads/{branch}",
+                        "matchKind": "Exact",
+                        "repositoryId": repository_id,
+                    }
+                ]
+            },
+        }
+
+        response = await self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
+
+    async def set_branch_permissions(
+        self,
+        *,
+        branch: str,
+        identity: TeamFoundationId,
+        permissions: dict[ADOBranchPermission, ADOBranchPermissionLevel],
+        project_id: str,
+        repository_id: str,
+    ) -> ADOResponse:
+        """Set permissions for an identity on a branch.
+
+        :param branch: The git branch to set permissions on
+        :param identity: The identity to set permissions for (should be team foundation ID)
+        :param permissions: A dictionary of permissions to set
+        :param project_id: The identifier for the project
+        :param repository_id: The ID for the repository
+
+        :returns: The ADO response with the data in it
+        """
+
+        descriptor_info = await self._get_descriptor_info(
+            branch=branch,
+            team_foundation_id=identity,
+            project_id=project_id,
+            repository_id=repository_id,
+        )
+
+        request_url = self.http_client.api_endpoint(is_internal=True, project_id=project_id)
+        request_url += "/_security/ManagePermissions?__v=5"
+
+        updates: list[dict[str, Any]] = []
+        for permission, level in permissions.items():
+            updates.append(
+                {
+                    "PermissionId": level,
+                    "PermissionBit": permission,
+                    "NamespaceId": ADOAsyncSecurityClient.GIT_PERMISSIONS_NAMESPACE,
+                    "Token": self.generate_updates_token(
+                        branch_name=branch,
+                        project_id=project_id,
+                        repository_id=repository_id,
+                    ),
+                }
+            )
+
+        package: dict[str, Any] = {
+            "IsRemovingIdentity": False,
+            "TeamFoundationId": identity,
+            "DescriptorIdentityType": descriptor_info["type"],
+            "DescriptorIdentifier": descriptor_info["id"],
+            "PermissionSetId": ADOAsyncSecurityClient.GIT_PERMISSIONS_NAMESPACE,
+            "PermissionSetToken": self._generate_permission_set_token(
+                branch=branch, project_id=project_id, repository_id=repository_id
+            ),
+            "RefreshIdentities": False,
+            "Updates": updates,
+            "TokenDisplayName": None,
+        }
+
+        body = {"updatePackage": json.dumps(package)}
+
+        response = await self.http_client.post(request_url, json_data=body)
+        return self.http_client.decode_response(response)
+
+    async def _get_descriptor_info(
+        self,
+        *,
+        branch: str,
+        team_foundation_id: TeamFoundationId,
+        project_id: str,
+        repository_id: str,
+    ) -> dict[str, str]:
+        """Fetch the descriptor identity information for a given identity.
+
+        :param branch: The git branch of interest
+        :param team_foundation_id: the unique Team Foundation GUID for the identity
+        :param project_id: The identifier for the project
+        :param repository_id: The ID for the repository
+
+        :returns: The raw descriptor info
+
+        :raises ADOException: If we can't determine the descriptor info from the response
+        """
+
+        request_url = self.http_client.api_endpoint(is_internal=True, project_id=project_id)
+        request_url += "/_security/DisplayPermissions?"
+
+        parameters: dict[str, Any] = {
+            "tfid": team_foundation_id,
+            "permissionSetId": ADOAsyncSecurityClient.GIT_PERMISSIONS_NAMESPACE,
+            "permissionSetToken": self._generate_permission_set_token(
+                branch=branch, project_id=project_id, repository_id=repository_id
+            ),
+            "__v": "5",
+        }
+
+        request_url += urllib.parse.urlencode(parameters)
+
+        response = await self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+
+        try:
+            descriptor_info = {
+                "type": response_data["descriptorIdentityType"],
+                "id": response_data["descriptorIdentifier"],
+            }
+        except Exception as ex:
+            raise ADOException(
+                "Could not determine descriptor info for team_foundation_id: "
+                + str(team_foundation_id)
+            ) from ex
+
+        return descriptor_info
+
+    def _generate_permission_set_token(
+        self,
+        branch: str,
+        project_id: str,
+        repository_id: str,
+    ) -> str:
+        """Generate the token required for reading identity details and writing permissions.
+
+        :param branch: The git branch of interest
+        :param project_id: The ID for the project
+        :param repository_id: The ID for the repository
+
+        :returns: The permission token
+        """
+        _ = self
+        encoded_branch = branch.replace("/", "^")
+        return f"repoV2/{project_id}/{repository_id}/refs^heads^{encoded_branch}/"
+
+    def generate_updates_token(
+        self,
+        *,
+        project_id: str,
+        repository_id: str | None = None,
+        branch_name: str | None = None,
+    ) -> str:
+        """Generate the token required for updating permissions.
+
+        A project ID must always be set. Repository ID and branch name are
+        optional, but if a branch name is set, then a repository ID must also be
+        set.
+
+        :param project_id: The ID for the project
+        :param repository_id: The ID for the repository
+        :param branch_name: The git branch of interest
+
+        :returns: The update token
+        """
+
+        _ = self
+
+        token = f"repoV2/{project_id}/"
+
+        if not repository_id:
+            return token
+
+        token += f"{repository_id}/"
+
+        if not branch_name:
+            return token
+
+        # Encode each node in the branch to hex
+        encoded_branch_nodes = [node.encode("utf-16le").hex() for node in branch_name.split("/")]
+
+        encoded_branch = "/".join(encoded_branch_nodes)
+
+        return token + f"refs/heads/{encoded_branch}/"
+
+    async def query_namespaces(
+        self, *, namespace_id: str, local_only: bool | None = None
+    ) -> ADOResponse:
+        """Query a namespace
+
+        :param namespace_id: The identifier for the namespace
+        :param local_only: Specify whether to check local namespaces only or not
+
+        :returns: The ADO response with the data in it
+        """
+        request_url = (
+            self.http_client.api_endpoint()
+            + f"/securitynamespaces/{namespace_id}?api-version=7.1-preview.1"
+        )
+
+        if local_only is not None:
+            request_url += f"&localOnly={local_only}".lower()
+
+        response = await self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
+
+    async def query_access_control_lists(
+        self,
+        *,
+        namespace_id: str,
+        descriptors: list[str] | None = None,
+        token: str | None = None,
+    ) -> ADOResponse:
+        """Query a namespace
+
+        :param namespace_id: The identifier for the namespace
+        :param descriptors: An optional of list of descriptors to filter down to those.
+        :param token: An optional token to filter down to
+
+        :returns: The ADO response with the data in it
+        """
+
+        if descriptors is None:
+            descriptors = []
+
+        descriptors = [
+            (
+                "Microsoft.TeamFoundation.Identity;" + descriptor
+                if not descriptor.startswith("Microsoft.TeamFoundation.Identity;")
+                else descriptor
+            )
+            for descriptor in descriptors
+        ]
+
+        request_url = (
+            self.http_client.api_endpoint()
+            + f"/accesscontrollists/{namespace_id}?api-version=7.1-preview.1"
+        )
+
+        if len(descriptors) > 0:
+            request_url += "&descriptors=" + ",".join(descriptors)
+
+        if token:
+            request_url += f"&token={token}"
+
+        response = await self.http_client.get(request_url)
+        response_data = self.http_client.decode_response(response)
+        return self.http_client.extract_value(response_data)
+
+    async def get_permissions(
+        self,
+        *,
+        branch: str,
+        team_foundation_id: TeamFoundationId,
+        project_id: str,
+        repository_id: str,
+    ) -> dict[str, Any]:
+        """Get the permissions for a branch
+
+        :param branch: The name of the branch to get the permissions for
+        :param team_foundation_id: the unique Team Foundation GUID for the identity
+        :param project_id: The identifier for the project
+        :param repository_id: The ID for the repository
+
+        :returns: The raw descriptor info
+
+        :raises ADOException: If we can't determine the descriptor info from the response
+        """
+
+        request_url = self.http_client.api_endpoint(is_internal=True, project_id=project_id)
+        request_url += "/_security/DisplayPermissions?"
+
+        parameters: dict[str, Any] = {
+            "tfid": team_foundation_id,
+            "permissionSetId": ADOAsyncSecurityClient.GIT_PERMISSIONS_NAMESPACE,
+            "permissionSetToken": self._generate_permission_set_token(
+                branch=branch, project_id=project_id, repository_id=repository_id
+            ),
+            "__v": "5",
+        }
+
+        request_url += urllib.parse.urlencode(parameters)
+
+        response = await self.http_client.get(request_url)
+        return cast(dict[str, Any], self.http_client.decode_response(response))

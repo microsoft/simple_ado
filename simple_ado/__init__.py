@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# THIS FILE IS AUTO-GENERATED FROM simple_ado/_async/__init__.py. DO NOT EDIT.
+
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
@@ -14,20 +16,16 @@ from simple_ado import (
     audit,
     auth as auth_module,
     builds,
-    comments,
     endpoints,
-    exceptions,
     git,
     governance,
     graph,
     http_client,
     identities,
-    models,
     pipelines,
     pools,
     pull_requests,
     security,
-    types,
     user,
     wiki,
 )
@@ -53,6 +51,14 @@ from simple_ado.user import ADOUserClient
 from simple_ado.wiki import ADOWikiClient
 from simple_ado.work_item import ADOWorkItem
 from simple_ado.workitems import ADOWorkItemsClient
+
+# Re-export submodules
+from simple_ado import (
+    ado_types,
+    comments,
+    exceptions,
+    models,
+)
 
 # Re-export auth_module as auth to maintain public API
 auth = auth_module
@@ -100,7 +106,7 @@ __all__ = [
     "pools",
     "pull_requests",
     "security",
-    "types",
+    "ado_types",
     "user",
     "wiki",
 ]
@@ -173,6 +179,16 @@ class ADOClient:
         self.user = ADOUserClient(self.http_client, self.log)
         self.wiki = ADOWikiClient(self.http_client, self.log)
         self.workitems = ADOWorkItemsClient(self.http_client, self.log)
+
+    def close(self) -> None:
+        """Close the underlying HTTP client."""
+        self.http_client.close()
+
+    def __enter__(self) -> "ADOClient":
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        self.close()
 
     def verify_access(self) -> bool:
         """Verify that we have access to ADO.
@@ -249,7 +265,7 @@ class ADOClient:
         :param project_id: The ID of the project the PR is in
         :param repository_id: The ID of repository the pull request is on
 
-        :returns: A new ADOPullRequest client for the pull request specified
+        :returns: A new ADOPullRequestClient for the pull request specified
         """
         return ADOPullRequestClient(
             self.http_client, self.log, pull_request_id, project_id, repository_id
@@ -425,3 +441,9 @@ def _canonicalize_branch_name(branch_name: str) -> str:
         return "refs/heads/" + branch_name
 
     return branch_name
+
+
+# Async API access
+from simple_ado import _async as aio  # noqa: F401 — provides simple_ado.aio namespace
+
+__all__ += ["aio"]

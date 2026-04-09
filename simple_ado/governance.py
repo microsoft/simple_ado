@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# THIS FILE IS AUTO-GENERATED FROM simple_ado/_async/governance.py. DO NOT EDIT.
+
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
@@ -128,7 +130,7 @@ class ADOGovernanceClient(ADOBaseClient):
 
         response = self.http_client.delete(request_url)
 
-        if not response.ok:
+        if not response.is_success:
             raise ADOHTTPException(
                 f"Failed to remove policy {policy_id} from {governed_repository_id}",
                 response,
@@ -159,7 +161,7 @@ class ADOGovernanceClient(ADOBaseClient):
 
         response = self.http_client.put(request_url, alert_settings)
 
-        if not response.ok:
+        if not response.is_success:
             raise ADOHTTPException(
                 f"Failed to set alert settings on repo {governed_repository_id}",
                 response,

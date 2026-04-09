@@ -37,7 +37,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.10"
 deserialize = "^2.2.0"
-requests = "^2.31.0"
+httpx = "^0.28.0"
 tenacity = "^8.2.2"
 azure-identity = "^1.25.1"
 
@@ -50,10 +50,10 @@ pytest-cov = "^7.0.0"
 pytest-mock = "^3.11.1"
 python-dotenv = "^1.1.1"
 PyYAML = "^6.0.3"
-responses = "^0.23.1"
+respx = "^0.22.0"
 toml = "^0.10.2"
 types-PyYAML = "^6.0.12.11"
-types-requests = "^2.31.0.2"
+pytest-asyncio = "^0.25.0"
 types-toml = "^0.10.8.7"
 
 [tool.poetry.group.dev.dependencies]

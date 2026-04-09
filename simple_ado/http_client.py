@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
+# THIS FILE IS AUTO-GENERATED FROM simple_ado/_async/http_client.py. DO NOT EDIT.
+
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
 """ADO HTTP API wrapper."""
 
+import contextlib
+import time
 import datetime
 import logging
 import os
-import time
-from typing import Any, TypeAlias
+from typing import Any, Iterator, TypeAlias
 
-import requests
+import httpx
 from tenacity import (
     retry,
     retry_if_exception,
@@ -30,14 +33,27 @@ ADOResponse: TypeAlias = Any
 # pylint: enable=invalid-name
 
 
+# Only retry status codes where a subsequent attempt may succeed:
+#   400 Bad Request — ADO occasionally returns transient 400s under load
+#   408 Request Timeout — server didn't receive the full request in time
+#   429 Too Many Requests — rate-limited, back off and retry
+#   500, 502, 503, 504 — server errors that are typically transient
+# Previous versions retried all 4xx, but codes like 401/403/404 are
+# deterministic failures that won't resolve on retry.
+_RETRYABLE_STATUS_CODES = {400, 408, 429, 500, 502, 503, 504}
+
+
 def _is_retryable_get_failure(exception: Exception) -> bool:
     if not isinstance(exception, ADOHTTPException):
         return False
 
-    return exception.response.status_code in range(400, 500)
+    return exception.response.status_code in _RETRYABLE_STATUS_CODES
 
 
 def _is_connection_failure(exception: Exception) -> bool:
+    if isinstance(exception, (httpx.ConnectError, httpx.TimeoutException)):
+        return True
+
     exception_checks = [
         "Operation timed out",
         "Connection aborted.",
@@ -67,7 +83,7 @@ class ADOHTTPClient:
     extra_headers: dict[str, str]
     auth: ADOAuth
     _not_before: datetime.datetime | None
-    _session: requests.Session
+    _client: httpx.Client
 
     def __init__(
         self,
@@ -86,13 +102,33 @@ class ADOHTTPClient:
         self.auth = auth
         self._not_before = None
 
-        self._session = requests.Session()
-        self._session.headers.update({"User-Agent": f"simple_ado/{user_agent}"})
+        self._client = httpx.Client(
+            headers={"User-Agent": f"simple_ado/{user_agent}"},
+            follow_redirects=True,
+            timeout=httpx.Timeout(300.0),
+        )
 
         if extra_headers is None:
             self.extra_headers = {}
         else:
             self.extra_headers = extra_headers
+
+    def close(self) -> None:
+        """Close the underlying HTTP client and auth resources."""
+        self._client.close()
+        self.auth.close()
+
+    def __enter__(self) -> "ADOHTTPClient":
+        return self
+
+    def __exit__(self, *args: Any) -> None:
+        self.close()
+
+    def __del__(self) -> None:
+        try:
+            self._client.close()
+        except Exception:
+            pass
 
     def graph_endpoint(self) -> str:
         """Generate the base url for all graph API calls (this varies depending on the API).
@@ -160,7 +196,7 @@ class ADOHTTPClient:
         self.log.debug(f"Sleeping for {remaining} seconds before issuing next request")
         time.sleep(remaining.total_seconds())
 
-    def _track_rate_limit(self, response: requests.Response) -> None:
+    def _track_rate_limit(self, response: httpx.Response) -> None:
         """Track the rate limit info from a request.
 
         :param response: The response to track the info from.
@@ -196,18 +232,71 @@ class ADOHTTPClient:
         *,
         additional_headers: dict[str, str] | None = None,
         stream: bool = False,
-        allow_redirects: bool = True,
+        follow_redirects: bool = True,
         set_accept_json: bool = True,
-    ) -> requests.Response:
+    ) -> httpx.Response:
         """Issue a GET request with the correct headers.
+
+        When stream=True, the response body is not immediately loaded. The caller
+        must use the response as a context manager or call response.close() when done.
 
         :param request_url: The URL to issue the request to
         :param additional_headers: Any additional headers to add to the request
         :param stream: Set to True to stream the response back
-        :param allow_redirects: Set to False to disable redirects
+        :param follow_redirects: Set to False to disable redirects
         :param set_accept_json: Set to False to disable setting the Accept header
 
         :returns: The raw response object from the API
+        """
+
+        self._wait()
+
+        headers = self.construct_headers(
+            additional_headers=additional_headers, set_accept_json=set_accept_json
+        )
+
+        if stream:
+            request = self._client.build_request(
+                "GET",
+                request_url,
+                headers=headers,
+            )
+            response = self._client.send(
+                request,
+                stream=True,
+                follow_redirects=follow_redirects,
+            )
+        else:
+            response = self._client.get(
+                request_url,
+                headers=headers,
+                follow_redirects=follow_redirects,
+            )
+
+        self._track_rate_limit(response)
+
+        return response
+
+    @contextlib.contextmanager
+    def stream_get(
+        self,
+        request_url: str,
+        *,
+        additional_headers: dict[str, str] | None = None,
+        follow_redirects: bool = True,
+        set_accept_json: bool = True,
+    ) -> Iterator[httpx.Response]:
+        """Issue a streaming GET request. Must be used as a context manager.
+
+        This is a convenience wrapper that handles cleanup automatically.
+        Prefer this over get(stream=True) when possible.
+
+        :param request_url: The URL to issue the request to
+        :param additional_headers: Any additional headers to add to the request
+        :param follow_redirects: Set to False to disable redirects
+        :param set_accept_json: Set to False to disable setting the Accept header
+
+        :yields: The raw response object from the API
         """
         self._wait()
 
@@ -215,16 +304,14 @@ class ADOHTTPClient:
             additional_headers=additional_headers, set_accept_json=set_accept_json
         )
 
-        response = self._session.get(
+        with self._client.stream(
+            "GET",
             request_url,
             headers=headers,
-            stream=stream,
-            allow_redirects=allow_redirects,
-        )
-
-        self._track_rate_limit(response)
-
-        return response
+            follow_redirects=follow_redirects,
+        ) as response:
+            self._track_rate_limit(response)
+            yield response
 
     @retry(
         retry=retry_if_exception(_is_connection_failure),  # type: ignore
@@ -239,11 +326,14 @@ class ADOHTTPClient:
         additional_headers: dict[str, str] | None = None,
         json_data: Any | None = None,
         stream: bool = False,
-    ) -> requests.Response:
-        """Issue a POST request with the correct  headers.
+    ) -> httpx.Response:
+        """Issue a POST request with the correct headers.
 
         Note: If `json_data` and `operations` are not None, the latter will take
         precedence.
+
+        When stream=True, the response body is not immediately loaded. The caller
+        must use the response as a context manager or call response.close() when done.
 
         :param request_url: The URL to issue the request to
         :param operations: The patch operations to send with the request
@@ -254,6 +344,8 @@ class ADOHTTPClient:
         :returns: The raw response object from the API
         """
 
+        self._wait()
+
         if operations is not None:
             json_data = [operation.serialize() for operation in operations]
             if additional_headers is None:
@@ -262,12 +354,54 @@ class ADOHTTPClient:
                 additional_headers["Content-Type"] = "application/json-patch+json"
 
         headers = self.construct_headers(additional_headers=additional_headers)
-        return self._session.post(
+
+        if stream:
+            request = self._client.build_request(
+                "POST",
+                request_url,
+                headers=headers,
+                json=json_data,
+            )
+            response = self._client.send(request, stream=True)
+        else:
+            response = self._client.post(
+                request_url,
+                headers=headers,
+                json=json_data,
+            )
+
+        self._track_rate_limit(response)
+
+        return response
+
+    @contextlib.contextmanager
+    def stream_post(
+        self,
+        request_url: str,
+        *,
+        additional_headers: dict[str, str] | None = None,
+        json_data: Any | None = None,
+    ) -> Iterator[httpx.Response]:
+        """Issue a streaming POST request. Must be used as a context manager.
+
+        :param request_url: The URL to issue the request to
+        :param additional_headers: Any additional headers to add to the request
+        :param json_data: The JSON data to send with the request
+
+        :yields: The raw response object from the API
+        """
+        self._wait()
+
+        headers = self.construct_headers(additional_headers=additional_headers)
+
+        with self._client.stream(
+            "POST",
             request_url,
             headers=headers,
             json=json_data,
-            stream=stream,
-        )
+        ) as response:
+            self._track_rate_limit(response)
+            yield response
 
     @retry(
         retry=retry_if_exception(_is_connection_failure),  # type: ignore
@@ -281,7 +415,7 @@ class ADOHTTPClient:
         operations: list[PatchOperation] | None = None,
         json_data: Any | None = None,
         additional_headers: dict[str, Any] | None = None,
-    ) -> requests.Response:
+    ) -> httpx.Response:
         """Issue a PATCH request with the correct headers.
 
         Note: If `json_data` and `operations` are not None, the latter will take
@@ -295,6 +429,8 @@ class ADOHTTPClient:
         :returns: The raw response object from the API
         """
 
+        self._wait()
+
         if operations is not None:
             json_data = [operation.serialize() for operation in operations]
             if additional_headers is None:
@@ -303,7 +439,9 @@ class ADOHTTPClient:
                 additional_headers["Content-Type"] = "application/json-patch+json"
 
         headers = self.construct_headers(additional_headers=additional_headers)
-        return self._session.patch(request_url, headers=headers, json=json_data)
+        response = self._client.patch(request_url, headers=headers, json=json_data)
+        self._track_rate_limit(response)
+        return response
 
     @retry(
         retry=retry_if_exception(_is_connection_failure),  # type: ignore
@@ -316,7 +454,7 @@ class ADOHTTPClient:
         json_data: Any | None = None,
         *,
         additional_headers: dict[str, Any] | None = None,
-    ) -> requests.Response:
+    ) -> httpx.Response:
         """Issue a PUT request with the correct headers.
 
         :param request_url: The URL to issue the request to
@@ -325,8 +463,12 @@ class ADOHTTPClient:
 
         :returns: The raw response object from the API
         """
+        self._wait()
+
         headers = self.construct_headers(additional_headers=additional_headers)
-        return self._session.put(request_url, headers=headers, json=json_data)
+        response = self._client.put(request_url, headers=headers, json=json_data)
+        self._track_rate_limit(response)
+        return response
 
     @retry(
         retry=retry_if_exception(_is_connection_failure),  # type: ignore
@@ -335,7 +477,7 @@ class ADOHTTPClient:
     )
     def delete(
         self, request_url: str, *, additional_headers: dict[str, Any] | None = None
-    ) -> requests.Response:
+    ) -> httpx.Response:
         """Issue a DELETE request with the correct headers.
 
         :param request_url: The URL to issue the request to
@@ -343,8 +485,12 @@ class ADOHTTPClient:
 
         :returns: The raw response object from the API
         """
+        self._wait()
+
         headers = self.construct_headers(additional_headers=additional_headers)
-        return self._session.delete(request_url, headers=headers)
+        response = self._client.delete(request_url, headers=headers)
+        self._track_rate_limit(response)
+        return response
 
     @retry(
         retry=retry_if_exception(_is_connection_failure),  # type: ignore
@@ -357,7 +503,7 @@ class ADOHTTPClient:
         file_path: str,
         *,
         additional_headers: dict[str, Any] | None = None,
-    ) -> requests.Response:
+    ) -> httpx.Response:
         """POST a file to the URL with the given file name.
 
         :param request_url: The URL to issue the request to
@@ -366,23 +512,35 @@ class ADOHTTPClient:
 
         :returns: The raw response object from the API"""
 
+        self._wait()
+
         file_size = os.path.getsize(file_path)
 
         headers = self.construct_headers(additional_headers=additional_headers)
         headers["Content-Length"] = str(file_size)
         headers["Content-Type"] = "application/json"
 
-        request = requests.Request("POST", request_url, headers=headers)
-        prepped = request.prepare()
+        content = self._read_file(file_path)
 
-        # Send the raw content, not with "Content-Disposition", etc.
-        with open(file_path, "rb") as file_handle:
-            prepped.body = file_handle.read(file_size)
-
-        response: requests.Response = self._session.send(prepped)
+        response = self._client.post(
+            request_url,
+            headers=headers,
+            content=content,
+        )
+        self._track_rate_limit(response)
         return response
 
-    def validate_response(self, response: requests.models.Response) -> None:
+    @staticmethod
+    def _read_file(file_path: str) -> bytes:
+        """Read a file's contents as bytes.
+
+        :param file_path: The path to the file to read
+        :returns: The file contents
+        """
+        with open(file_path, "rb") as file_handle:
+            return file_handle.read()
+
+    def validate_response(self, response: httpx.Response) -> None:
         """Checking a response for errors.
 
         :param response: The response to check
@@ -393,13 +551,13 @@ class ADOHTTPClient:
 
         self.log.debug("Validating response from ADO")
 
-        if response.status_code < 200 or response.status_code >= 300:
+        if not response.is_success:
             raise ADOHTTPException(
                 f"ADO returned a non-200 status code, configuration={self}",
                 response,
             )
 
-    def decode_response(self, response: requests.models.Response) -> ADOResponse:
+    def decode_response(self, response: httpx.Response) -> ADOResponse:
         """Decode the response from ADO, checking for errors.
 
         :param response: The response to check and parse

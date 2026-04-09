@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# THIS FILE IS AUTO-GENERATED FROM simple_ado/_async/pipelines.py. DO NOT EDIT.
+
 
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
@@ -6,7 +8,7 @@
 """ADO pipeline API wrapper."""
 
 import logging
-from typing import Any, cast, Iterator
+from typing import Any, Iterator, cast
 import urllib.parse
 
 
