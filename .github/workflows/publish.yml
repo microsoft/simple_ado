@@ -10,15 +10,67 @@ on:
         required: true
         type: boolean
         default: false
+      version_type:
+        description: 'Bump, commit, and tag a new PyPI release (requires publish)'
+        required: true
+        type: choice
+        default: none
+        options:
+          - none
+          - patch
+          - minor
+          - major
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   build:
     name: Build distribution
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      release_tag: ${{ steps.version_bump.outputs.release_tag }}
     
     steps:
+      - name: Validate release inputs
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERSION_TYPE: ${{ inputs.version_type }}
+          PUBLISH: ${{ inputs.publish }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          HAS_RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN != '' }}
+        run: |
+          case "$VERSION_TYPE" in
+            ""|none) exit 0 ;;
+            patch|minor|major) ;;
+            *) echo "::error::Invalid version type: $VERSION_TYPE"; exit 1 ;;
+          esac
+          if [ "$PUBLISH" != "true" ]; then
+            echo "::error::Version bumps require publish=true; use none for TestPyPI."
+            exit 1
+          fi
+          if [ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]; then
+            echo "::error::New releases must run from the default branch."
+            exit 1
+          fi
+          if [ "$HAS_RELEASE_TOKEN" != "true" ]; then
+            echo "::error::Configure RELEASE_TOKEN with permission to push to the protected default branch."
+            exit 1
+          fi
+
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+          token: >-
+            ${{ github.event_name == 'workflow_dispatch' && inputs.version_type != '' &&
+                inputs.version_type != 'none' && secrets.RELEASE_TOKEN || github.token }}
       
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -32,6 +84,15 @@ jobs:
       
       - name: Install dependencies
         run: poetry install --no-interaction
+
+      - name: Bump version number
+        id: version_bump
+        if: github.event_name == 'workflow_dispatch' && inputs.version_type != '' && inputs.version_type != 'none'
+        env:
+          VERSION_TYPE: ${{ inputs.version_type }}
+        run: |
+          poetry version "$VERSION_TYPE"
+          echo "release_tag=v$(poetry version --short)" >> "$GITHUB_OUTPUT"
       
       - name: Build package
         run: poetry build
@@ -41,6 +102,20 @@ jobs:
         with:
           name: python-package-distributions
           path: dist/
+
+      - name: Commit, tag, and create GitHub release
+        if: steps.version_bump.outputs.release_tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version_bump.outputs.release_tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml
+          git commit -m "Bump version to $RELEASE_TAG"
+          git tag "$RELEASE_TAG"
+          git push --atomic origin "HEAD:$GITHUB_REF" "refs/tags/$RELEASE_TAG"
+          gh release create "$RELEASE_TAG" --verify-tag --title "Release $RELEASE_TAG" --generate-notes
 
   publish-to-pypi:
     name: Publish to PyPI
@@ -89,9 +164,10 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
 
   github-release:
-    name: Create GitHub Release
-    if: github.event_name == 'release'
+    name: Sign and upload release artifacts
+    if: github.event_name == 'release' || needs.build.outputs.release_tag != ''
     needs:
+      - build
       - publish-to-pypi
     runs-on: ubuntu-latest
     permissions:
@@ -115,8 +191,10 @@ jobs:
       - name: Upload artifact signatures to GitHub Release
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ needs.build.outputs.release_tag || github.ref_name }}
+          REPOSITORY: ${{ github.repository }}
         # Upload to GitHub Release using the `gh` CLI.
         run: >-
           gh release upload
-          '${{ github.ref_name }}' dist/**
-          --repo '${{ github.repository }}'
+          "$RELEASE_TAG" dist/**
+          --repo "$REPOSITORY"
