@@ -26,28 +26,42 @@ poetry build
 
 # Releasing
 
-To bump the version and publish a new release, run **Actions > Publish to PyPI > Run workflow**
-from the default branch. Check **publish** and select **patch**, **minor**, or **major** for
-**version_type**. The workflow updates `pyproject.toml` with `poetry version`, builds the package,
-commits the version bump, atomically pushes the commit and a `v<version>` tag, and creates a
-GitHub release. It then publishes to PyPI and attaches signed distributions to the release.
-Publishing stays in the same workflow run because releases created using `GITHUB_TOKEN` do
-not trigger another release workflow.
+Run **Actions > Prepare release PR > Run workflow** from `main` and select **patch**, **minor**,
+or **major**. The workflow runs `poetry version` and opens a PR containing the `pyproject.toml`
+change. Repeated runs update the same `release/version-bump` branch and PR.
+Review the change and merge it normally after the required checks pass.
 
-Leave **version_type** as **none** to publish the existing version without committing or tagging.
-With **publish** unchecked (the default), this uploads to **TestPyPI**, not a dry run.
-Publishing a GitHub release manually also continues to publish its existing version to PyPI;
-pushing a tag alone does not trigger this workflow.
+When a version change reaches `main`, **Publish to PyPI** builds that exact merged commit,
+creates its `v<version>` tag and GitHub release, publishes to PyPI, and attaches signed
+distributions. Dependency-only changes to `pyproject.toml` do not publish.
+The publisher never pushes commits to `main`. Publishing stays in the same workflow run
+because releases created using `GITHUB_TOKEN` do not trigger another release workflow.
 
-Before bumping a release, configure the **RELEASE_TOKEN** Actions secret with repository contents
-write permission and an identity allowed to bypass the default branch's required checks and any
-other applicable branch/tag rules. It is used only for the checkout and version commit/tag push
-on version-bump runs. Creating the GitHub release still uses `GITHUB_TOKEN` to avoid duplicate
-publishing runs. Existing-version publishing does not require `RELEASE_TOKEN`.
-PyPI and TestPyPI must have trusted
-publishing configured for `publish.yml` and their respective `pypi` and `testpypi` environments.
-If publishing fails after the tag/release is created, rerun the failed jobs rather than starting
-another version bump.
+## Release PR authentication
+
+Install an organization-approved GitHub App on this repository with **Contents: read and write**
+and **Pull requests: read and write**. Configure its client ID as the Actions variable
+**RELEASE_APP_CLIENT_ID** and its private key as the Actions secret **RELEASE_APP_PRIVATE_KEY**.
+The workflow requests a short-lived token scoped to this repository and those two permissions.
+It uses the App token rather than `GITHUB_TOKEN` to create the PR and trigger normal PR checks.
+No branch-protection bypass, administrative permission, or automatic merge is required.
+The App installation and credentials must comply with organization policy.
+
+Without an App, run `poetry version patch` (or `minor`/`major`) on your own branch and open a PR
+yourself. The same post-merge publishing runs; neither manual PR creation nor publishing needs
+the App credentials. There is no `RELEASE_TOKEN` requirement.
+
+## Existing-version publishing
+
+**Actions > Publish to PyPI > Run workflow** still publishes the selected ref's existing version.
+Check **publish** for PyPI; leaving it unchecked uploads to **TestPyPI**, not a dry run.
+Publishing a GitHub release manually also publishes its existing version to PyPI.
+Pushing a tag alone does not trigger this workflow.
+
+PyPI and TestPyPI must have trusted publishing configured for `publish.yml` and their respective
+`pypi` and `testpypi` environments. Repository rules must allow Actions to create release tags;
+protected-branch writes are not needed. If PyPI publishing fails after a tag/release is created,
+rerun the failed jobs instead of preparing another bump or publishing that GitHub release again.
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us

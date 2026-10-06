@@ -1,0 +1,96 @@
+name: Prepare release PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version increment'
+        required: true
+        type: choice
+        default: patch
+        options:
+          - patch
+          - minor
+          - major
+
+concurrency:
+  group: prepare-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  prepare:
+    name: Prepare version-bump PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate release inputs
+        env:
+          VERSION_TYPE: ${{ inputs.version_type }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          APP_CLIENT_ID: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          HAS_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY != '' }}
+        run: |
+          case "$VERSION_TYPE" in
+            patch|minor|major) ;;
+            *) echo "::error::Invalid version type: $VERSION_TYPE"; exit 1 ;;
+          esac
+          if [ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]; then
+            echo "::error::Prepare releases from the default branch."
+            exit 1
+          fi
+          if [ -z "$APP_CLIENT_ID" ] || [ "$HAS_APP_PRIVATE_KEY" != "true" ]; then
+            echo "::error::Configure RELEASE_APP_CLIENT_ID and RELEASE_APP_PRIVATE_KEY for a GitHub App with contents:write and pull_requests:write."
+            exit 1
+          fi
+
+      - name: Checkout default branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        uses: snok/install-poetry@a783c322200f0519c7926aa6faa857c4e23e9263 # v1.4.2
+        with:
+          version: latest
+
+      - name: Bump version number
+        id: version_bump
+        env:
+          VERSION_TYPE: ${{ inputs.version_type }}
+        run: |
+          poetry version "$VERSION_TYPE"
+          echo "release_tag=v$(poetry version --short)" >> "$GITHUB_OUTPUT"
+          poetry check --lock
+
+      - name: Generate release App token
+        id: app_token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Create or update release PR
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
+        with:
+          token: ${{ steps.app_token.outputs.token }}
+          base: ${{ github.event.repository.default_branch }}
+          branch: release/version-bump
+          add-paths: pyproject.toml
+          commit-message: Bump version to ${{ steps.version_bump.outputs.release_tag }}
+          title: Release ${{ steps.version_bump.outputs.release_tag }}
+          body: |
+            Bumps the package version using `poetry version ${{ inputs.version_type }}`.
+
+            Review and merge this PR after the required checks pass.
+            Merging the version change into main tags and publishes the merged commit.
+            No branch-protection bypass or automatic merge is used.

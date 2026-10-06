@@ -1,6 +1,10 @@
 name: Publish to PyPI
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - pyproject.toml
   release:
     types: [published]
   workflow_dispatch:
@@ -10,19 +14,9 @@ on:
         required: true
         type: boolean
         default: false
-      version_type:
-        description: 'Bump, commit, and tag a new PyPI release (requires publish)'
-        required: true
-        type: choice
-        default: none
-        options:
-          - none
-          - patch
-          - minor
-          - major
 
 concurrency:
-  group: publish-release
+  group: publish-${{ github.sha }}
   cancel-in-progress: false
 
 permissions:
@@ -35,42 +29,14 @@ jobs:
     permissions:
       contents: write
     outputs:
-      release_tag: ${{ steps.version_bump.outputs.release_tag }}
+      release_tag: ${{ steps.version_change.outputs.release_tag }}
     
     steps:
-      - name: Validate release inputs
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          VERSION_TYPE: ${{ inputs.version_type }}
-          PUBLISH: ${{ inputs.publish }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-          HAS_RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN != '' }}
-        run: |
-          case "$VERSION_TYPE" in
-            ""|none) exit 0 ;;
-            patch|minor|major) ;;
-            *) echo "::error::Invalid version type: $VERSION_TYPE"; exit 1 ;;
-          esac
-          if [ "$PUBLISH" != "true" ]; then
-            echo "::error::Version bumps require publish=true; use none for TestPyPI."
-            exit 1
-          fi
-          if [ "$GITHUB_REF" != "refs/heads/$DEFAULT_BRANCH" ]; then
-            echo "::error::New releases must run from the default branch."
-            exit 1
-          fi
-          if [ "$HAS_RELEASE_TOKEN" != "true" ]; then
-            echo "::error::Configure RELEASE_TOKEN with permission to push to the protected default branch."
-            exit 1
-          fi
-
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.ref }}
-          token: >-
-            ${{ github.event_name == 'workflow_dispatch' && inputs.version_type != '' &&
-                inputs.version_type != 'none' && secrets.RELEASE_TOKEN || github.token }}
+          ref: ${{ github.sha }}
+          fetch-depth: 0
       
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
@@ -82,44 +48,61 @@ jobs:
         with:
           version: latest
       
-      - name: Install dependencies
-        run: poetry install --no-interaction
-
-      - name: Bump version number
-        id: version_bump
-        if: github.event_name == 'workflow_dispatch' && inputs.version_type != '' && inputs.version_type != 'none'
+      - name: Detect merged version change
+        id: version_change
+        if: github.event_name == 'push'
         env:
-          VERSION_TYPE: ${{ inputs.version_type }}
+          BEFORE_SHA: ${{ github.event.before }}
         run: |
-          poetry version "$VERSION_TYPE"
-          echo "release_tag=v$(poetry version --short)" >> "$GITHUB_OUTPUT"
+          previous_project="$(mktemp -d)"
+          trap 'rm -f "$previous_project/pyproject.toml"; rmdir "$previous_project"' EXIT
+          git show "$BEFORE_SHA:pyproject.toml" > "$previous_project/pyproject.toml"
+          previous_version="$(poetry -C "$previous_project" version --short)"
+          current_version="$(poetry version --short)"
+          if [ "$previous_version" = "$current_version" ]; then
+            echo "Package version unchanged; nothing to publish." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          echo "release_tag=v$current_version" >> "$GITHUB_OUTPUT"
+
+      - name: Install dependencies
+        if: github.event_name != 'push' || steps.version_change.outputs.release_tag != ''
+        run: poetry install --no-interaction
       
       - name: Build package
+        if: github.event_name != 'push' || steps.version_change.outputs.release_tag != ''
         run: poetry build
       
       - name: Store the distribution packages
+        if: github.event_name != 'push' || steps.version_change.outputs.release_tag != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: python-package-distributions
           path: dist/
 
-      - name: Commit, tag, and create GitHub release
-        if: steps.version_bump.outputs.release_tag != ''
+      - name: Tag merged commit and create GitHub release
+        if: steps.version_change.outputs.release_tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ steps.version_bump.outputs.release_tag }}
+          RELEASE_TAG: ${{ steps.version_change.outputs.release_tag }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml
-          git commit -m "Bump version to $RELEASE_TAG"
-          git tag "$RELEASE_TAG"
-          git push --atomic origin "HEAD:$GITHUB_REF" "refs/tags/$RELEASE_TAG"
+          if git show-ref --verify --quiet "refs/tags/$RELEASE_TAG"; then
+            if [ "$(git rev-parse "$RELEASE_TAG^{commit}")" != "$GITHUB_SHA" ]; then
+              echo "::error::Release tag $RELEASE_TAG already points at another commit."
+              exit 1
+            fi
+          else
+            git tag "$RELEASE_TAG" "$GITHUB_SHA"
+          fi
+          git push origin "refs/tags/$RELEASE_TAG"
           gh release create "$RELEASE_TAG" --verify-tag --title "Release $RELEASE_TAG" --generate-notes
 
   publish-to-pypi:
     name: Publish to PyPI
-    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.publish == 'true')
+    if: >-
+      github.event_name == 'release' ||
+      (github.event_name == 'workflow_dispatch' && inputs.publish) ||
+      needs.build.outputs.release_tag != ''
     needs:
       - build
     runs-on: ubuntu-latest
