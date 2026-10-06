@@ -9,6 +9,21 @@ Simply put, it's because the existing one is very complex and difficult to use. 
 
 # Contributing
 
+Runtime dependencies use compatible-version ranges in `pyproject.toml`; development dependencies
+are pinned to exact versions in its `dev` group.
+When updating them, refresh `poetry.lock` with `poetry lock` and run the checks below.
+
+```sh
+poetry install
+poetry run black --check --line-length 100 simple_ado tests
+poetry run pylint --rcfile=pylintrc simple_ado tests
+poetry run mypy --strict --ignore-missing-imports simple_ado/ tests/
+poetry run pyright simple_ado/ tests/
+poetry run pytest tests/unit/ --cov=simple_ado
+poetry check --lock
+poetry build
+```
+
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
 the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.

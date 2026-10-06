@@ -23,7 +23,6 @@ from simple_ado.auth.ado_auth import ADOAuth
 from simple_ado.exceptions import ADOException, ADOHTTPException
 from simple_ado.models import PatchOperation
 
-
 # pylint: disable=invalid-name
 ADOThread = dict[str, Any]
 ADOResponse: TypeAlias = Any
