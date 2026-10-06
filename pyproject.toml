@@ -36,28 +36,26 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.10"
-deserialize = "^2.2.0"
-requests = "^2.31.0"
-tenacity = "^8.2.2"
-azure-identity = "^1.25.1"
-
-[tool.poetry.dev-dependencies]
-black = "^25.9.0"
-mypy = "^1.18.2"
-pylint = "^3.3.9"
-pytest = "^9.0.3"
-pytest-cov = "^7.0.0"
-pytest-mock = "^3.11.1"
-python-dotenv = "^1.2.2"
-PyYAML = "^6.0.3"
-responses = "^0.23.1"
-toml = "^0.10.2"
-types-PyYAML = "^6.0.12.11"
-types-requests = "^2.31.0.2"
-types-toml = "^0.10.8.7"
+deserialize = "^2.3.0"
+requests = "^2.34.2"
+tenacity = "^9.1.4"
+azure-identity = "^1.26.0"
 
 [tool.poetry.group.dev.dependencies]
-pyright = "^1.1.408"
+black = "26.5.1"
+mypy = "2.3.1"
+pylint = "4.0.9"
+pytest = "9.1.1"
+pytest-cov = "7.1.0"
+pytest-mock = "3.16.0"
+python-dotenv = "1.2.3"
+PyYAML = "6.0.3"
+responses = "0.26.3"
+toml = "0.10.2"
+types-PyYAML = "6.0.12.20260906"
+types-requests = "2.33.0.20260906"
+types-toml = "0.10.8.20260518"
+pyright = "1.1.414"
 
 [tool.mypy]
 strict = true
