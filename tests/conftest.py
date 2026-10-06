@@ -10,7 +10,6 @@ from pytest import Config
 from simple_ado import ADOClient
 from simple_ado.auth import ADOTokenAuth
 
-
 # Test data directory
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
